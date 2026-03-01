@@ -1,0 +1,21 @@
+Every collaborator MUST log their work using the format below.
+No vague entries. No one-line nonsense.
+============================================================
+                    PROJECT PROGRESS LOG
+============================================================
+------------------------------------------------------------
+Date:
+Name:
+Module (backend/frontend/database/etc):
+Branch Name:
+------------------------------------------------------------
+Task Description:
+- What exactly was implemented/changed?
+Status:
+- Completed / In Progress / Blocked
+------------------------------------------------------------
+============================================================
+
+
+date : 01/02/2026 | Name : Himesh Badlani | Madoule : Backend | branch : Main | task : Intialized entire backend structure with basic setup , Completed  
+
