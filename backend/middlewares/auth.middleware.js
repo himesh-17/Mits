@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const verifyGoogleToken = asyncHandler(async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader || !authHeader.startsWith("Bearer")) {
         return sendError(res, "Authorization token missing or invalid", 401);
     }
 
