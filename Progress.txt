@@ -17,5 +17,5 @@ Status:
 ============================================================
 
 
-date : 01/02/2026 | Name : Himesh Badlani | Madoule : Backend | branch : Main | task : Intialized entire backend structure with basic setup , Completed  
+date : 01/02/2026 | Name : Himesh Badlani | Module : Backend | branch : Main | task : Intialized entire backend structure with basic setup , Completed  
 

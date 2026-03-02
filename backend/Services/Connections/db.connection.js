@@ -5,8 +5,12 @@ import 'dotenv/config' ;
 const dbUrl = process.env.DBURL;
 
 async function main() {
-    mongoose.connect(dbUrl)
+    if (!dbUrl) {
+        throw new Error("DBURL is missing in environment variables");
+    }
+
+    await mongoose.connect(dbUrl);
 }
 
 
-module.exports = {main} ;
+export { main };
