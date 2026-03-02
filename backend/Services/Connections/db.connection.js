@@ -4,9 +4,8 @@ import 'dotenv/config' ;
 
 const dbUrl = process.env.DBURL;
 
-async function main() {
+export async function main() {
     mongoose.connect(dbUrl)
 }
 
 
-module.exports = {main} ;

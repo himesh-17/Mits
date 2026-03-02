@@ -1,11 +1,10 @@
 import express from "express";
 import 'dotenv/config'
 
-import {main} from "./Services/Connections/db.connection"
+import {main}  from "./Services/Connections/db.connection.js"
 
 let app = express();
 const port = process.env.PORT || 8080;
-
 
 main().then(()=>{
     console.log("Mongoosh is connected");
