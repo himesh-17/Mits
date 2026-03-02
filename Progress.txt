@@ -19,3 +19,5 @@ Status:
 
 date : 01/02/2026 | Name : Himesh Badlani | Module : Backend | branch : Main | task : Intialized entire backend structure with basic setup , Completed  
 
+date : 01/02/2026 | Name : varun pahuja | Module : Backend | branch : feature-varun | task : added auth and controller middleware models and utils , Completed  
+
