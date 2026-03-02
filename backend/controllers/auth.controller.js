@@ -44,8 +44,8 @@ const googleLogin = asyncHandler(async (req, res) => {
                     ...(profile.emailVerified ? { email: profile.email } : {}),
                 },
                 $setOnInsert: {
-                    email: profile.email,
                     role: profile.role,
+                    ...(profile.emailVerified ? { email: profile.email } : {}),
                 },
             },
             { upsert: true, new: true }
@@ -55,6 +55,14 @@ const googleLogin = asyncHandler(async (req, res) => {
             user = await User.findOne({ googleSub: profile.googleSub })
                 || (profile.emailVerified ? await User.findOne({ email: profile.email }) : null);
             if (!user) throw error;
+
+            user.name = profile.name;
+            user.picture = profile.picture;
+            user.emailVerified = profile.emailVerified;
+            if (profile.emailVerified) {
+                user.email = profile.email;
+            }
+            await user.save();
         } else {
             throw error;
         }
@@ -70,11 +78,11 @@ const googleLogin = asyncHandler(async (req, res) => {
         throw new ApiError(500, "JWT_SECRET is missing in environment variables");
     }
 
+    // Email is intentionally excluded from JWT claims; always resolve current email from DB when needed.
     const token = jwt.sign(
         {
             sub: user._id.toString(),
             role: user.role,
-            email: user.email,
         },
         jwtSecret,
         { expiresIn: "7d" }

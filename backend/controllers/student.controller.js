@@ -63,7 +63,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
-    if (!app.progressBar.formFilled || !["submitted", "re_upload"].includes(app.status)) {
+    if (!app.progressBar.formFilled || !["submitted", "re_upload", "under_review"].includes(app.status)) {
         throw new ApiError(400, "Application must be submitted before uploading documents");
     }
 
