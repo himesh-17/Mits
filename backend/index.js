@@ -4,7 +4,14 @@ import cors from "cors";
 
 import { main } from "./Services/Connections/db.connection.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+
 import authRoutes from "./routes/auth.routes.js";
+import studentRoutes from "./routes/student.routes.js";
+import admissionCellRoutes from "./routes/admissionCell.routes.js";
+import generalOfficeRoutes from "./routes/generalOffice.routes.js";
+import accountOfficeRoutes from "./routes/accountOffice.routes.js";
+import hodRoutes from "./routes/hod.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -22,6 +29,12 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/student", studentRoutes);
+app.use("/api/admission-cell", admissionCellRoutes);
+app.use("/api/general-office", generalOfficeRoutes);
+app.use("/api/account-office", accountOfficeRoutes);
+app.use("/api/hod", hodRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { verifyGoogleIdToken } from "../services/googleAuth.service.js";
+import { verifyGoogleIdToken } from "../Services/googleAuth.service.js";
 
 const googleLogin = asyncHandler(async (req, res) => {
     const { idToken } = req.body;
