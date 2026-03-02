@@ -63,6 +63,9 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
+    if (!app.progressBar.formFilled || !["submitted", "re_upload"].includes(app.status)) {
+        throw new ApiError(400, "Application must be submitted before uploading documents");
+    }
 
     const doc = await Document.findOneAndUpdate(
         { application: app._id, docType },
@@ -120,6 +123,11 @@ const submitPayment = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Payment not allowed at status: ${app.status}`);
     }
 
+    const normalizedAmount = Number(amount);
+    if (amount === undefined || Number.isNaN(normalizedAmount) || normalizedAmount <= 0) {
+        throw new ApiError(400, "amount is required and must be a number greater than 0");
+    }
+
     const payment = await Payment.findOneAndUpdate(
         { application: app._id },
         {
@@ -129,7 +137,7 @@ const submitPayment = asyncHandler(async (req, res) => {
                 challanFileUrl: challanFileUrl || "",
                 paymentMode: paymentMode || "",
                 transactionId: transactionId || "",
-                amount: amount || 0,
+                amount: normalizedAmount,
                 status: "submitted",
             },
         },

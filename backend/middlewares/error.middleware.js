@@ -6,11 +6,20 @@ function notFoundHandler(req, res, next) {
 
 function errorHandler(err, req, res, next) {
     const statusCode = err.statusCode || 500;
+    const isDevelopment = process.env.NODE_ENV === "development";
 
-    res.status(statusCode).json({
+    console.error(err);
+
+    const response = {
         success: false,
-        message: err.message || "Internal Server Error",
-    });
+        message: isDevelopment ? (err.message || "Internal Server Error") : "Internal Server Error",
+    };
+
+    if (isDevelopment && err.stack) {
+        response.stack = err.stack;
+    }
+
+    res.status(statusCode).json(response);
 }
 
 export { notFoundHandler, errorHandler };

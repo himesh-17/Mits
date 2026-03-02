@@ -8,6 +8,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
+function escapeRegex(value = "") {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // GET /api/admin/overview
 // Full DB summary — the "database of admission portal and student data matching"
 const getOverview = asyncHandler(async (req, res) => {
@@ -52,10 +56,13 @@ const listUsers = asyncHandler(async (req, res) => {
     const { role, search, page = 1, limit = 20 } = req.query;
     const filter = {};
     if (role) filter.role = role;
-    if (search) filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-    ];
+    if (search) {
+        const safeSearch = escapeRegex(search);
+        filter.$or = [
+            { name: { $regex: safeSearch, $options: "i" } },
+            { email: { $regex: safeSearch, $options: "i" } },
+        ];
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [users, total] = await Promise.all([
@@ -78,22 +85,29 @@ const setUserRole = asyncHandler(async (req, res) => {
     const validRoles = ["student", "administrator", "admissionCell", "generalOffice", "accountOffice", "hod"];
     if (!validRoles.includes(role)) throw new ApiError(400, `Invalid role`);
 
-    const user = await User.findByIdAndUpdate(
-        req.params.userId,
-        { role },
-        { new: true }
-    ).select("-googleSub");
-    if (!user) throw new ApiError(404, "User not found");
+    const session = await User.startSession();
+    let user;
+    try {
+        await session.withTransaction(async () => {
+            user = await User.findByIdAndUpdate(
+                req.params.userId,
+                { role },
+                { new: true, session }
+            ).select("-googleSub");
+            if (!user) throw new ApiError(404, "User not found");
 
-    // Sync RoleAssignment
-    if (role === "student") {
-        await RoleAssignment.findOneAndDelete({ email: user.email });
-    } else {
-        await RoleAssignment.findOneAndUpdate(
-            { email: user.email },
-            { role, assignedBy: req.user.id },
-            { upsert: true }
-        );
+            if (role === "student") {
+                await RoleAssignment.findOneAndDelete({ email: user.email }, { session });
+            } else {
+                await RoleAssignment.findOneAndUpdate(
+                    { email: user.email },
+                    { role, assignedBy: req.user.id },
+                    { upsert: true, session }
+                );
+            }
+        });
+    } finally {
+        await session.endSession();
     }
 
     return sendSuccess(res, "User role updated", { user });
@@ -129,10 +143,13 @@ const listAllApplications = asyncHandler(async (req, res) => {
     if (status) filter.status = status;
     if (branch) filter.branch = branch;
     if (course) filter.course = course;
-    if (search) filter.$or = [
-        { fullName: { $regex: search, $options: "i" } },
-        { rollNumber: { $regex: search, $options: "i" } },
-    ];
+    if (search) {
+        const safeSearch = escapeRegex(search);
+        filter.$or = [
+            { fullName: { $regex: safeSearch, $options: "i" } },
+            { rollNumber: { $regex: safeSearch, $options: "i" } },
+        ];
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [applications, total] = await Promise.all([
@@ -162,26 +179,40 @@ const dataMatching = asyncHandler(async (req, res) => {
     const filter = listId ? { _id: listId } : {};
 
     const lists = await StudentList.find(filter).lean();
-    const results = await Promise.all(
-        lists.map(async (list) => {
-            const enriched = await Promise.all(
-                list.students.map(async (s) => {
-                    const user = s.email
-                        ? await User.findOne({ email: s.email.toLowerCase() }).select("name email role isActive")
-                        : null;
-                    const app = user
-                        ? await Application.findOne({ student: user._id }).select("status progressBar branch course")
-                        : null;
-                    return {
-                        ...s,
-                        matchedUser: user || null,
-                        application: app || null,
-                    };
-                })
-            );
-            return { ...list, students: enriched };
-        })
-    );
+
+    const normalizedEmails = [...new Set(
+        lists
+            .flatMap((list) => list.students || [])
+            .map((student) => (student.email || "").toLowerCase().trim())
+            .filter(Boolean)
+    )];
+
+    const users = normalizedEmails.length
+        ? await User.find({ email: { $in: normalizedEmails } }).select("name email role isActive")
+        : [];
+    const emailToUser = new Map(users.map((user) => [user.email.toLowerCase(), user]));
+
+    const userIds = users.map((user) => user._id);
+    const applications = userIds.length
+        ? await Application.find({ student: { $in: userIds } }).select("student status progressBar branch course")
+        : [];
+    const studentIdToApp = new Map(applications.map((app) => [String(app.student), app]));
+
+    const results = lists.map((list) => {
+        const enriched = (list.students || []).map((student) => {
+            const normalizedEmail = (student.email || "").toLowerCase().trim();
+            const matchedUser = normalizedEmail ? (emailToUser.get(normalizedEmail) || null) : null;
+            const application = matchedUser ? (studentIdToApp.get(String(matchedUser._id)) || null) : null;
+
+            return {
+                ...student,
+                matchedUser,
+                application,
+            };
+        });
+
+        return { ...list, students: enriched };
+    });
 
     return sendSuccess(res, "Data matching complete", { lists: results });
 });
@@ -189,11 +220,20 @@ const dataMatching = asyncHandler(async (req, res) => {
 // DELETE /api/admin/applications/:applicationId
 // Hard delete an application (admin only)
 const deleteApplication = asyncHandler(async (req, res) => {
-    const app = await Application.findByIdAndDelete(req.params.applicationId);
-    if (!app) throw new ApiError(404, "Application not found");
+    const session = await Application.startSession();
 
-    await Document.deleteMany({ application: app._id });
-    await Payment.findOneAndDelete({ application: app._id });
+    try {
+        await session.withTransaction(async () => {
+            const app = await Application.findById(req.params.applicationId).session(session);
+            if (!app) throw new ApiError(404, "Application not found");
+
+            await Application.deleteOne({ _id: app._id }, { session });
+            await Document.deleteMany({ application: app._id }, { session });
+            await Payment.deleteMany({ application: app._id }, { session });
+        });
+    } finally {
+        await session.endSession();
+    }
 
     return sendSuccess(res, "Application deleted");
 });

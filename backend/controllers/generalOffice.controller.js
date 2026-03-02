@@ -5,6 +5,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
+function escapeRegex(value = "") {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // GET /api/general-office/applications
 // Filter applications by status, branch, course, name
 const filterApplications = asyncHandler(async (req, res) => {
@@ -13,7 +17,10 @@ const filterApplications = asyncHandler(async (req, res) => {
     if (status) filter.status = status;
     if (branch) filter.branch = branch;
     if (course) filter.course = course;
-    if (search) filter.fullName = { $regex: search, $options: "i" };
+    if (search) {
+        const safeSearch = escapeRegex(search);
+        filter.fullName = { $regex: safeSearch, $options: "i" };
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [applications, total] = await Promise.all([
@@ -39,6 +46,7 @@ const filterApplications = asyncHandler(async (req, res) => {
 const getProgressOverview = asyncHandler(async (req, res) => {
     const statuses = [
         "draft", "submitted", "under_review",
+        "documents_pending",
         "documents_verified", "payment_pending", "payment_submitted",
         "payment_verified", "admitted", "rejected",
     ];
@@ -82,7 +90,14 @@ const reviewApplication = asyncHandler(async (req, res) => {
     }
 
     await app.save();
-    return sendSuccess(res, `Application ${action}d`, { application: app });
+    const actionMessageMap = {
+        approve: "approved",
+        reject: "rejected",
+        re_upload: "re-uploaded",
+    };
+    const actionMessage = actionMessageMap[action] || `${action}d`;
+
+    return sendSuccess(res, `Application ${actionMessage}`, { application: app });
 });
 
 // GET /api/general-office/roles
@@ -124,7 +139,12 @@ const assignRole = asyncHandler(async (req, res) => {
 // Remove a role assignment (reverts user to student)
 const removeRoleAssignment = asyncHandler(async (req, res) => {
     const email = req.params.email.toLowerCase();
-    await RoleAssignment.findOneAndDelete({ email });
+    const deletedAssignment = await RoleAssignment.findOneAndDelete({ email });
+
+    if (!deletedAssignment) {
+        return sendSuccess(res, "No role assignment found for this email");
+    }
+
     await User.findOneAndUpdate({ email }, { role: "student" });
     return sendSuccess(res, "Role assignment removed");
 });

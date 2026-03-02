@@ -10,8 +10,16 @@ import { ApiError } from "../utils/ApiError.js";
 // List all submitted/under_review students
 const listStudents = asyncHandler(async (req, res) => {
     const { status, branch, course, page = 1, limit = 20 } = req.query;
+    const allowedStatuses = ["submitted", "under_review"];
     const filter = {};
-    if (status) filter.status = status;
+    if (status) {
+        if (!allowedStatuses.includes(status)) {
+            throw new ApiError(400, "status must be 'submitted' or 'under_review'");
+        }
+        filter.status = status;
+    } else {
+        filter.status = { $in: allowedStatuses };
+    }
     if (branch) filter.branch = branch;
     if (course) filter.course = course;
 
@@ -51,19 +59,30 @@ const uploadStudentList = asyncHandler(async (req, res) => {
         throw new ApiError(400, "students array is required");
     }
 
-    // Try to match emails to existing users
-    const enriched = await Promise.all(
-        students.map(async (s) => {
-            const user = s.email ? await User.findOne({ email: s.email.toLowerCase() }) : null;
-            return {
-                name: s.name || "",
-                email: s.email || "",
-                rollNumber: s.rollNumber || "",
-                status: "not_admitted",
-                matchedUser: user ? user._id : null,
-            };
-        })
+    const emails = [...new Set(
+        students
+            .map((s) => (s.email || "").toLowerCase().trim())
+            .filter(Boolean)
+    )];
+
+    const matchedUsers = emails.length
+        ? await User.find({ email: { $in: emails } }).select("_id email")
+        : [];
+    const emailToUserId = new Map(
+        matchedUsers.map((user) => [user.email.toLowerCase(), user._id])
     );
+
+    const enriched = students.map((s) => {
+        const normalizedEmail = (s.email || "").toLowerCase().trim();
+
+        return {
+            name: s.name || "",
+            email: s.email || "",
+            rollNumber: s.rollNumber || "",
+            status: "not_admitted",
+            matchedUser: normalizedEmail ? (emailToUserId.get(normalizedEmail) || null) : null,
+        };
+    });
 
     const list = await StudentList.create({
         uploadedBy: req.user.id,
@@ -110,6 +129,9 @@ const markEmailSent = asyncHandler(async (req, res) => {
 const markVerificationComplete = asyncHandler(async (req, res) => {
     const app = await Application.findById(req.params.applicationId);
     if (!app) throw new ApiError(404, "Application not found");
+    if (!["documents_pending", "under_review"].includes(app.status)) {
+        throw new ApiError(400, `Verification cannot be completed at status: ${app.status}`);
+    }
 
     app.status = "documents_verified";
     app.progressBar.documentsVerified = true;

@@ -32,7 +32,7 @@ const applicationSchema = new mongoose.Schema(
         rollNumber: { type: String, trim: true, default: "" },
         previousInstitution: { type: String, trim: true, default: "" },
         previousPercentage: { type: Number, default: null },
-        admissionYear: { type: Number, default: new Date().getFullYear() },
+        admissionYear: { type: Number, default: () => new Date().getFullYear() },
 
         // ── Application Status ─────────────────────────────────────
         status: {

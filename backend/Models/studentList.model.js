@@ -9,7 +9,7 @@ const studentListSchema = new mongoose.Schema(
         },
         fileName: { type: String, trim: true, default: "" },
         fileUrl: { type: String, trim: true, default: "" },
-        batchYear: { type: Number, default: new Date().getFullYear() },
+        batchYear: { type: Number, default: () => new Date().getFullYear() },
         branch: { type: String, trim: true, default: "" },
         course: { type: String, trim: true, default: "" },
 

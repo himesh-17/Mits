@@ -9,26 +9,28 @@ import { ApiError } from "../utils/ApiError.js";
 // List all doc-verified applications (awaiting payment verification)
 const listVerifiedApplications = asyncHandler(async (req, res) => {
     const { status, branch, page = 1, limit = 20 } = req.query;
+    const normalizedPage = Math.max(1, parseInt(page, 10) || 1);
+    const normalizedLimit = Math.min(Math.max(1, parseInt(limit, 10) || 20), 100);
     const filter = {
         status: status || { $in: ["documents_verified", "payment_pending", "payment_submitted", "payment_verified"] },
     };
     if (branch) filter.branch = branch;
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (normalizedPage - 1) * normalizedLimit;
     const [applications, total] = await Promise.all([
         Application.find(filter)
             .populate("student", "name email picture")
             .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(parseInt(limit)),
+            .limit(normalizedLimit),
         Application.countDocuments(filter),
     ]);
 
     return sendSuccess(res, "Applications fetched", {
         applications,
         total,
-        page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
+        page: normalizedPage,
+        pages: Math.ceil(total / normalizedLimit),
     });
 });
 
@@ -51,6 +53,12 @@ const verifyDocument = asyncHandler(async (req, res) => {
     const { action, reason } = req.body;
     // action: "verified" | "rejected"
     if (!action) throw new ApiError(400, "action is required (verified | rejected)");
+    if (!["verified", "rejected"].includes(action)) {
+        throw new ApiError(400, "action must be 'verified' or 'rejected'");
+    }
+
+    const existingDocument = await Document.findById(req.params.documentId);
+    if (!existingDocument) throw new ApiError(404, "Document not found");
 
     const doc = await Document.findByIdAndUpdate(
         req.params.documentId,
@@ -64,7 +72,6 @@ const verifyDocument = asyncHandler(async (req, res) => {
         },
         { new: true }
     );
-    if (!doc) throw new ApiError(404, "Document not found");
 
     // If all docs for this application are verified, update app status
     const allDocs = await Document.find({ application: doc.application });
@@ -86,6 +93,24 @@ const setPaymentDetails = asyncHandler(async (req, res) => {
 
     const app = await Application.findById(req.params.applicationId);
     if (!app) throw new ApiError(404, "Application not found");
+    if (app.status !== "documents_verified") {
+        throw new ApiError(400, `Cannot set payment details at status: ${app.status}`);
+    }
+
+    if (minLimit === undefined || maxLimit === undefined) {
+        throw new ApiError(400, "minLimit and maxLimit are required");
+    }
+
+    const normalizedMinLimit = Number(minLimit);
+    const normalizedMaxLimit = Number(maxLimit);
+
+    if (Number.isNaN(normalizedMinLimit) || Number.isNaN(normalizedMaxLimit)) {
+        throw new ApiError(400, "minLimit and maxLimit must be valid numbers");
+    }
+
+    if (normalizedMinLimit > normalizedMaxLimit) {
+        throw new ApiError(400, "minLimit must be less than or equal to maxLimit");
+    }
 
     const payment = await Payment.findOneAndUpdate(
         { application: app._id },
@@ -94,8 +119,8 @@ const setPaymentDetails = asyncHandler(async (req, res) => {
                 student: app.student,
                 application: app._id,
                 utsId: utsId || "",
-                minLimit: minLimit || 0,
-                maxLimit: maxLimit || 0,
+                minLimit: normalizedMinLimit,
+                maxLimit: normalizedMaxLimit,
                 sendLink: sendLink || "",
                 remarks: remarks || "",
                 status: "pending",
@@ -117,6 +142,12 @@ const verifyPayment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "action must be 'verified' or 'rejected'");
     }
 
+    const existingPayment = await Payment.findById(req.params.paymentId);
+    if (!existingPayment) throw new ApiError(404, "Payment record not found");
+    if (existingPayment.status !== "submitted") {
+        throw new ApiError(400, `Payment can only be processed from submitted status. Current status: ${existingPayment.status}`);
+    }
+
     const payment = await Payment.findByIdAndUpdate(
         req.params.paymentId,
         {
@@ -129,7 +160,6 @@ const verifyPayment = asyncHandler(async (req, res) => {
         },
         { new: true }
     );
-    if (!payment) throw new ApiError(404, "Payment record not found");
 
     if (action === "verified") {
         await Application.findByIdAndUpdate(payment.application, {

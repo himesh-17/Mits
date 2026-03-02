@@ -30,13 +30,15 @@ async function verifyGoogleIdToken(idToken) {
         throw new Error("Invalid Google token payload");
     }
 
+    const emailVerified = Boolean(payload.email_verified);
+
     return {
         googleSub: payload.sub,
         email: payload.email,
         name: payload.name || "",
         picture: payload.picture || "",
-        role: resolveRoleFromEmail(payload.email),
-        emailVerified: Boolean(payload.email_verified),
+        role: emailVerified ? resolveRoleFromEmail(payload.email) : "student",
+        emailVerified,
     };
 }
 
