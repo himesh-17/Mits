@@ -30,7 +30,7 @@ const paymentSchema = new mongoose.Schema(
 
         paymentMode: {
             type: String,
-            enum: ["online", "challan", "dd", ""],
+            enum: ["online", "offline", "hybrid", ""],
             default: "",
         },
 

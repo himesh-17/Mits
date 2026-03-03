@@ -1,7 +1,7 @@
-import Application from "../models/application.model.js";
-import Document from "../models/document.model.js";
-import StudentList from "../models/studentList.model.js";
-import User from "../models/user.model.js";
+import Application from "../Models/application.model.js";
+import Document from "../Models/document.model.js";
+import StudentList from "../Models/studentList.model.js";
+import User from "../Models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";

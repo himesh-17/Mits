@@ -28,10 +28,7 @@ const applicationSchema = new mongoose.Schema(
         // ── Academic Info ──────────────────────────────────────────
         branch: { type: String, trim: true, default: "" },
         course: { type: String, trim: true, default: "" },
-        semester: { type: Number, default: 1 },
-        rollNumber: { type: String, trim: true, default: "" },
-        previousInstitution: { type: String, trim: true, default: "" },
-        previousPercentage: { type: Number, default: null },
+
         admissionYear: { type: Number, default: () => new Date().getFullYear() },
 
         // ── Application Status ─────────────────────────────────────
