@@ -26,8 +26,10 @@ const applicationSchema = new mongoose.Schema(
         pincode: { type: String, trim: true, default: "" },
 
         // ── Academic Info ──────────────────────────────────────────
-        branch: { type: String, trim: true, default: "" },
+        branch: { type: String,  enum: ["CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"], default: "" },
         course: { type: String, trim: true, default: "" },
+
+
 
         admissionYear: { type: Number, default: () => new Date().getFullYear() },
 
