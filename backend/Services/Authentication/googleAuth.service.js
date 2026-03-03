@@ -1,45 +1,38 @@
 import { OAuth2Client } from "google-auth-library";
+import { ApiError } from "../../utils/ApiError.js";
 
-const client = new OAuth2Client();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-function resolveRoleFromEmail(email) {
-    const adminDomain = process.env.ADMIN_EMAIL_DOMAIN;
+export const verifyGoogleIdToken = async (idToken) => {
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
 
-    if (adminDomain && email?.toLowerCase().endsWith(`@${adminDomain.toLowerCase()}`)) {
-        return "admin";
+        const payload = ticket.getPayload();
+
+        if (!payload) {
+            throw new ApiError(401, "Invalid Google token payload");
+        }
+
+        if (payload.iss !== "accounts.google.com" && payload.iss !== "https://accounts.google.com") {
+            throw new ApiError(401, "Invalid token issuer");
+        }
+
+        if (!payload.email_verified) {
+            throw new ApiError(403, "Google email not verified");
+        }
+
+        return {
+            googleSub: payload.sub,
+            email: payload.email,
+            name: payload.name,
+            picture: payload.picture,
+            emailVerified: payload.email_verified,
+        };
+
+    } catch (error) {
+        throw new ApiError(401, "Invalid or expired Google token");
     }
-
-    return "student";
-}
-
-async function verifyGoogleIdToken(idToken) {
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-
-    if (!googleClientId) {
-        throw new Error("GOOGLE_CLIENT_ID is missing in environment variables");
-    }
-
-    const ticket = await client.verifyIdToken({
-        idToken,
-        audience: googleClientId,
-    });
-
-    const payload = ticket.getPayload();
-
-    if (!payload?.sub || !payload?.email) {
-        throw new Error("Invalid Google token payload");
-    }
-
-    const emailVerified = Boolean(payload.email_verified);
-
-    return {
-        googleSub: payload.sub,
-        email: payload.email,
-        name: payload.name || "",
-        picture: payload.picture || "",
-        role: emailVerified ? resolveRoleFromEmail(payload.email) : "student",
-        emailVerified,
-    };
-}
-
-export { verifyGoogleIdToken, resolveRoleFromEmail };
+};
