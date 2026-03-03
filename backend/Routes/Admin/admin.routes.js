@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../middlewares/auth.middleware.js";
+import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     getOverview,
     listUsers,
@@ -9,7 +9,7 @@ import {
     listAllApplications,
     dataMatching,
     deleteApplication,
-} from "../controllers/admin.controller.js";
+} from "../../Controllers/admin.controller.js";
 
 const router = express.Router();
 

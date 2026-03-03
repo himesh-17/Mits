@@ -2,7 +2,7 @@ import User from "../Models/user.model.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { verifyGoogleIdToken } from "../Services/googleAuth.service.js";
+import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
 import jwt from "jsonwebtoken";
 
 function sanitizeUser(user) {

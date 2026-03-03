@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../middlewares/auth.middleware.js";
+import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     filterApplications,
     getProgressOverview,
@@ -7,7 +7,7 @@ import {
     listRoleAssignments,
     assignRole,
     removeRoleAssignment,
-} from "../controllers/generalOffice.controller.js";
+} from "../../Controllers/generalOffice.controller.js";
 
 const router = express.Router();
 
