@@ -13,6 +13,7 @@ import {
 
 const router = express.Router();
 
+// Protect all admin routes
 router.use(verifyGoogleToken, requireRole("administrator"));
 
 router.get("/overview", getOverview);

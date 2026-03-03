@@ -3,7 +3,6 @@ import { sendSuccess } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
-import jwt from "jsonwebtoken";
 
 function sanitizeUser(user) {
     return {
@@ -27,11 +26,13 @@ const googleLogin = asyncHandler(async (req, res) => {
     const profile = await verifyGoogleIdToken(idToken);
 
     const lookupConditions = [{ googleSub: profile.googleSub }];
+
     if (profile.emailVerified) {
         lookupConditions.push({ email: profile.email });
     }
 
     let user;
+
     try {
         user = await User.findOneAndUpdate(
             { $or: lookupConditions },
@@ -44,24 +45,29 @@ const googleLogin = asyncHandler(async (req, res) => {
                     ...(profile.emailVerified ? { email: profile.email } : {}),
                 },
                 $setOnInsert: {
-                    role: profile.role,
-                    ...(profile.emailVerified ? { email: profile.email } : {}),
+                    role: profile.role || "student",
                 },
             },
             { upsert: true, new: true }
         );
     } catch (error) {
         if (error?.code === 11000) {
-            user = await User.findOne({ googleSub: profile.googleSub })
-                || (profile.emailVerified ? await User.findOne({ email: profile.email }) : null);
+            user =
+                await User.findOne({ googleSub: profile.googleSub }) ||
+                (profile.emailVerified
+                    ? await User.findOne({ email: profile.email })
+                    : null);
+
             if (!user) throw error;
 
             user.name = profile.name;
             user.picture = profile.picture;
             user.emailVerified = profile.emailVerified;
+
             if (profile.emailVerified) {
                 user.email = profile.email;
             }
+
             await user.save();
         } else {
             throw error;
@@ -69,41 +75,16 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
 
     if (!user.role) {
-        user.role = profile.role;
+        user.role = profile.role || "student";
         await user.save();
     }
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-        throw new ApiError(500, "JWT_SECRET is missing in environment variables");
-    }
-
-    // Email is intentionally excluded from JWT claims; always resolve current email from DB when needed.
-    const token = jwt.sign(
-        {
-            sub: user._id.toString(),
-            role: user.role,
-        },
-        jwtSecret,
-        { expiresIn: "7d" }
-    );
-
-    res.cookie("authToken", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
 
     const safeUser = sanitizeUser(user);
 
     return sendSuccess(
         res,
         "Google authentication successful",
-        {
-            user: safeUser,
-            token,
-        },
+        { user: safeUser },
         200
     );
 });
@@ -120,9 +101,7 @@ const getMe = asyncHandler(async (req, res) => {
     return sendSuccess(
         res,
         "Authenticated user fetched successfully",
-        {
-            user: safeUser,
-        },
+        { user: safeUser },
         200
     );
 });
