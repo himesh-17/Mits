@@ -1,10 +1,10 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../middlewares/auth.middleware.js";
+import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     getAdmittedStudents,
     getAdmittedStudentDetail,
     getBranchStats,
-} from "../controllers/hod.controller.js";
+} from "../../Controllers/hod.controller.js";
 
 const router = express.Router();
 

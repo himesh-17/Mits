@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../middlewares/auth.middleware.js";
+import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     listStudents,
     getStudentDetail,
@@ -9,7 +9,7 @@ import {
     markVerificationComplete,
     rejectApplication,
     getPendingVerification,
-} from "../controllers/admissionCell.controller.js";
+} from "../../Controllers/admissionCell.controller.js";
 
 const router = express.Router();
 

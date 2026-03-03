@@ -1,18 +1,21 @@
 import User from "../Models/user.model.js";
-import { verifyGoogleIdToken } from "../Services/googleAuth.service.js";
+import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
 import { sendError } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const verifyGoogleToken = asyncHandler(async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer")) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return sendError(res, "Authorization token missing or invalid", 401);
     }
 
     const idToken = authHeader.split(" ")[1];
+
+    // Verify token with Google
     const profile = await verifyGoogleIdToken(idToken);
 
+    // Always trust Google sub as unique identity
     const user = await User.findOne({ googleSub: profile.googleSub }).select(
         "_id name email role picture isActive"
     );
@@ -36,7 +39,7 @@ const verifyGoogleToken = asyncHandler(async (req, res, next) => {
     next();
 });
 
-function requireRole(...allowedRoles) {
+const requireRole = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user?.role) {
             return sendError(res, "Role not found in authenticated user", 403);
@@ -48,6 +51,6 @@ function requireRole(...allowedRoles) {
 
         next();
     };
-}
+};
 
 export { verifyGoogleToken, requireRole };
