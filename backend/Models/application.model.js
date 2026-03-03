@@ -11,27 +11,52 @@ const applicationSchema = new mongoose.Schema(
 
         // ── Personal Info ──────────────────────────────────────────
         fullName: { type: String, trim: true, default: "" },
-        fatherName: { type: String, trim: true, default: "" },
-        motherName: { type: String, trim: true, default: "" },
-        dateOfBirth: { type: Date, default: null },
-        gender: { type: String, enum: ["male", "female", "other", ""], default: "" },
-        category: { type: String, trim: true, default: "" },
-        nationality: { type: String, trim: true, default: "Indian" },
-        religion: { type: String, trim: true, default: "" },
-        phone: { type: String, trim: true, default: "" },
-        alternatePhone: { type: String, trim: true, default: "" },
-        address: { type: String, trim: true, default: "" },
-        city: { type: String, trim: true, default: "" },
-        state: { type: String, trim: true, default: "" },
-        pincode: { type: String, trim: true, default: "" },
+    fatherName: { type: String, trim: true, default: "" },
+    motherName: { type: String, trim: true, default: "" },
+    dateOfBirth: { type: Date, default: null },
+    gender: { type: String, enum: ["male", "female", "other", ""], default: "" },
+
+    email: { type: String, trim: true, lowercase: true, default: "" },
+    phone: { type: String, trim: true, default: "" }, // student mobile
+    fatherPhone: { type: String, trim: true, default: "" },
+    motherPhone: { type: String, trim: true, default: "" },
+
+    address: { type: String, trim: true, default: "" },
+    city: { type: String, trim: true, default: "" },
+    state: { type: String, trim: true, default: "" },
+    pincode: { type: String, trim: true, default: "" },
+
+    hobbies: [{ type: String, trim: true }],
+    otherAchievements: { type: String, trim: true, default: "" },
 
         // ── Academic Info ──────────────────────────────────────────
-        branch: { type: String,  enum: ["CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"], default: "" },
-        course: { type: String, trim: true, default: "" },
-
-
-
-        admissionYear: { type: Number, default: () => new Date().getFullYear() },
+           programApplied: { type: String, trim: true, default: "" },
+    branch: {
+      type: String,
+      enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
+      default: "",
+    },
+    tenthMarks: { type: Number, default: null },
+    twelfthMarks: { type: Number, default: null },
+    tenthBoard: { type: String, trim: true, default: "" },
+    twelfthBoard: { type: String, trim: true, default: "" },
+    tenthPassingYear: { type: Number, default: null },
+    twelfthPassingYear: { type: Number, default: null },
+    entranceExam: { type: String, trim: true, default: "" },
+    entranceScoreOrRank: { type: String, trim: true, default: "" },
+    
+ // Step 3: Documents
+    documents: {
+      identityProof: { type: documentSchema, default: () => ({}) },
+      tenthMarksheet: { type: documentSchema, default: () => ({}) },
+      twelfthMarksheet: { type: documentSchema, default: () => ({}) },
+      entranceScorecard: { type: documentSchema, default: () => ({}) },
+      categoryCertificate: { type: documentSchema, default: () => ({}) },
+      domicileCertificate: { type: documentSchema, default: () => ({}) },
+      abcId: { type: documentSchema, default: () => ({}) },
+      passportPhoto: { type: documentSchema, default: () => ({}) },
+      signature: { type: documentSchema, default: () => ({}) },
+    },
 
         // ── Application Status ─────────────────────────────────────
         status: {
