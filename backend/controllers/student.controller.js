@@ -1,6 +1,6 @@
-import Application from "../models/application.model.js";
-import Document from "../models/document.model.js";
-import Payment from "../models/payment.model.js";
+import Application from "../Models/application.model.js";
+import Document from "../Models/document.model.js";
+import Payment from "../Models/payment.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";

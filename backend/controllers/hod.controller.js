@@ -1,5 +1,5 @@
-import Application from "../models/application.model.js";
-import User from "../models/user.model.js";
+import Application from "../Models/application.model.js";
+import User from "../Models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -18,7 +18,7 @@ const getAdmittedStudents = asyncHandler(async (req, res) => {
     if (!hodUser) throw new ApiError(404, "HOD user not found");
 
     // HOD's branch comes from their RoleAssignment
-    const RoleAssignment = (await import("../models/roleAssignment.model.js")).default;
+    const RoleAssignment = (await import("../Models/roleAssignment.model.js")).default;
     const assignment = await RoleAssignment.findOne({ email: hodUser.email });
     const assignedBranch = (assignment && assignment.branch) || "";
 
@@ -61,7 +61,7 @@ const getAdmittedStudentDetail = asyncHandler(async (req, res) => {
     const hodUser = await User.findById(req.user.id);
     if (!hodUser) throw new ApiError(404, "User not found");
 
-    const RoleAssignment = (await import("../models/roleAssignment.model.js")).default;
+    const RoleAssignment = (await import("../Models/roleAssignment.model.js")).default;
     const assignment = await RoleAssignment.findOne({ email: hodUser.email });
     const hodBranch = (assignment && assignment.branch) || "";
 
@@ -83,7 +83,7 @@ const getBranchStats = asyncHandler(async (req, res) => {
     const hodUser = await User.findById(req.user.id);
     if (!hodUser) throw new ApiError(404, "User not found");
 
-    const RoleAssignment = (await import("../models/roleAssignment.model.js")).default;
+    const RoleAssignment = (await import("../Models/roleAssignment.model.js")).default;
     const assignment = await RoleAssignment.findOne({ email: hodUser.email });
     const assignedBranch = (assignment && assignment.branch) || "";
 
