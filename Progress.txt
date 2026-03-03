@@ -17,5 +17,9 @@ Status:
 ============================================================
 
 
-date : 01/02/2026 | Name : Himesh Badlani | Madoule : Backend | branch : Main | task : Intialized entire backend structure with basic setup , Completed  
+date : 01/02/2026 | Name : Himesh Badlani | Module : Backend | branch : Main | task : Initialized entire backend structure with basic setup , Completed  
 
+date : 02/02/2026 | Name : Varun Pahuja | Module : Backend | branch : feature-varun | task : added auth.controller, auth.middleware, googleAuth.service, user.model, roleAssignment.model, asyncHandler, ApiError, and apiResponse utilities , Completed  
+
+date : 03/02/2026 | Name : Varun Pahuja | Module : Backend | branch : feature-varun | task : added student/admissionCell/generalOffice/accountOffice/hod/admin controllers, application/document/payment/studentList models,
+ auth/student/admissionCell/generalOffice/accountOffice/hod/admin routes, and updated index plus environment configuration, Completed  
