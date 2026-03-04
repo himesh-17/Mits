@@ -10,21 +10,21 @@ export default function HeroSection() {
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/heroimg.webp')" }}
+        style={{ backgroundImage: "url('/mainhall.jpeg')" }}
       />
 
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/60" />
 
       {/* Content */}
-      <div className="relative z-10 l-110 flex h-full items-center">
-        <div className="max-w-4xl px-12 text-white">
+      <div className="relative z-10 flex h-full items-center">
+        <div className="w-full px-12 lg:px-24 xl:px-45 text-white">
           <h1 className="text-4xl md:text-6xl  font-bold leading-tight">
             Engineering Excellence <br />
             to Shape a Better Future
           </h1>
 
-          <p className="mt-6 text-lg md:text-xl text-gray-200 max-w-2xl">
+          <p className="mt-6 text-lg md:text-xl text-gray-200 max-w-3xl">
             Experience quality technical education at MITS Gwalior with modern
             laboratories, expert faculty, and strong industry placements.
           </p>
