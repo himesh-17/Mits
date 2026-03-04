@@ -17,7 +17,7 @@ export default function StatsSection() {
           <div className="absolute w-[440px] h-[440px] bg-sky-500 rounded-full -left-10"></div>
 
           {/* White Main Circle */}
-          <div className="relative w-[420px] h-[420px] bg-white rounded-full shadow-xl flex flex-col items-center justify-center text-center">
+          <div className="relative w-[420px] h-[420px] bg-white  rounded-full shadow-2xl flex flex-col items-center justify-center text-center">
             <h2 className="text-6xl font-bold text-sky-600">65+</h2>
 
             <p className="mt-4 text-4xl font-semibold text-gray-900 leading-snug">

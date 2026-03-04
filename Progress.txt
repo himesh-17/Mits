@@ -4,14 +4,14 @@ No vague entries. No one-line nonsense.
                     PROJECT PROGRESS LOG
 ============================================================
 ------------------------------------------------------------
-Date:
-Name:
-Module (backend/frontend/database/etc):
-Branch Name:
+Date:04/03/26
+Name: Manas Kukreja
+Module (backend/frontend/database/etc): frontend
+Branch Name:login-refinement
 ------------------------------------------------------------
-Task Description:
-- What exactly was implemented/changed?
-Status:
+Task Description: completed landing page and login page 
+- What exactly was implemented/changed? 
+Status:Completed
 - Completed / In Progress / Blocked
 ------------------------------------------------------------
 ============================================================
