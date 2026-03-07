@@ -5,13 +5,13 @@ import cors from "cors";
 import { main } from "./Services/Connections/db.connection.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
-import authRoutes from "./routes/auth.routes.js";
-import studentRoutes from "./routes/student.routes.js";
-import admissionCellRoutes from "./routes/admissionCell.routes.js";
-import generalOfficeRoutes from "./routes/generalOffice.routes.js";
-import accountOfficeRoutes from "./routes/accountOffice.routes.js";
-import hodRoutes from "./routes/hod.routes.js";
-import adminRoutes from "./routes/admin.routes.js";
+import authRoutes from "./Routes/Authentication/auth.routes.js";
+import studentRoutes from "./Routes/Students/student.routes.js";
+import admissionCellRoutes from "./Routes/Admission_Cell/admissionCell.routes.js";
+import generalOfficeRoutes from "./Routes/General_Office/generalOffice.routes.js";
+import accountOfficeRoutes from "./Routes/Account_Office/accountOffice.routes.js";
+import hodRoutes from "./Routes/HOD/hod.routes.js";
+import adminRoutes from "./Routes/Admin/admin.routes.js";
 
 const app = express();
 const port = process.env.PORT || 8080;
