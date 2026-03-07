@@ -1,8 +1,10 @@
 "use client";
 
 import Navbar from "../layout/Navbar";
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
+  const router = useRouter();
   return (
     <section id="home" className="relative h-screen w-full overflow-hidden">
       <Navbar />
@@ -33,7 +35,10 @@ export default function HeroSection() {
             NAAC A++ Accredited | Deemed University
           </p>
 
-          <button className="mt-8 rounded-lg bg-sky-500 px-8 py-3 text-lg font-semibold hover:bg-sky-600 transition shadow-lg">
+          <button
+            onClick={() => router.push('/admission')}
+            className="mt-8 rounded-lg bg-sky-500 px-8 py-3 text-lg font-semibold hover:bg-sky-600 transition shadow-lg cursor-pointer"
+          >
             Start Your Application
           </button>
         </div>
