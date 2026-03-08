@@ -24,7 +24,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.get("/health", (req, res) => {
+app.get("/", (req, res) => {
     res.status(200).json({ status: "ok", message: "Server is healthy" });
 });
 
@@ -56,5 +56,4 @@ async function startServer() {
         process.exit(1);
     }
 }
-
 startServer();

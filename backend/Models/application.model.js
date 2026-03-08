@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import User from "../Models/user.model.js"
+import User from "../Models/user.model.js";
+import Document from "../Models/document.model.js"; 
 const applicationSchema = new mongoose.Schema(
     {
         student: {
@@ -15,21 +16,48 @@ const applicationSchema = new mongoose.Schema(
         motherName: { type: String, trim: true, default: "" },
         dateOfBirth: { type: Date, default: null },
         gender: { type: String, enum: ["male", "female", "other", ""], default: "" },
-        category: { type: String, trim: true, default: "" },
-        nationality: { type: String, trim: true, default: "Indian" },
-        religion: { type: String, trim: true, default: "" },
-        phone: { type: String, trim: true, default: "" },
-        alternatePhone: { type: String, trim: true, default: "" },
+
+        email: { type: String, trim: true, lowercase: true, default: "" },
+        phone: { type: String, trim: true, default: "" }, // student mobile
+        fatherPhone: { type: String, trim: true, default: "" },
+        motherPhone: { type: String, trim: true, default: "" },
+
         address: { type: String, trim: true, default: "" },
         city: { type: String, trim: true, default: "" },
         state: { type: String, trim: true, default: "" },
         pincode: { type: String, trim: true, default: "" },
 
-        // ── Academic Info ──────────────────────────────────────────
-        branch: { type: String, trim: true, default: "" },
-        course: { type: String, trim: true, default: "" },
+        hobbies: [{ type: String, trim: true }],
+        otherAchievements: { type: String, trim: true, default: "" },
 
-        admissionYear: { type: Number, default: () => new Date().getFullYear() },
+        // ── Academic Info ──────────────────────────────────────────
+        programApplied: { type: String, trim: true, default: "" },
+        branch: {
+        type: String,
+        enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
+        default: "",
+    },
+    tenthMarks: { type: Number, default: null },
+    twelfthMarks: { type: Number, default: null },
+    tenthBoard: { type: String, trim: true, default: "" },
+    twelfthBoard: { type: String, trim: true, default: "" },
+    tenthPassingYear: { type: Number, default: null },
+    twelfthPassingYear: { type: Number, default: null },
+    entranceExam: { type: String, trim: true, default: "" },
+    entranceScoreOrRank: { type: String, trim: true, default: "" },
+    
+ // Step 3: Documents
+    documents: {
+      identityProof: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      tenthMarksheet: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      twelfthMarksheet: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      entranceScorecard: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      categoryCertificate: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      domicileCertificate: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      abcId: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      passportPhoto: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+      signature: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
+    },
 
         // ── Application Status ─────────────────────────────────────
         status: {

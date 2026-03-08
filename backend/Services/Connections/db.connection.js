@@ -12,5 +12,4 @@ async function main() {
     await mongoose.connect(dbUrl);
 }
 
-
 export { main };
