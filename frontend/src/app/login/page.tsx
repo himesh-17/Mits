@@ -1,114 +1,83 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
+import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false);
-
   return (
     <div className="h-screen w-screen flex overflow-hidden">
       {/* LEFT SIDE */}
-      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center px-8 py-8">
-        <div className="w-full max-w-sm">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="w-full max-w-sm backdrop-blur-lg bg-white/70 border border-gray-200 shadow-xl rounded-2xl p-10 text-center">
           {/* Logo */}
-          <div className="mb-5 ">
-            <Image src="/mits.png" alt="MITS Logo" width={120} height={120} />
+          <div className="flex justify-center mb-6">
+            <Image src="/mits.png" alt="MITS Logo" width={140} height={140} />
           </div>
 
-          <h1 className="text-3xl font-bold text-black mb-1">Login</h1>
-          <p className="text-gray-600 mb-6">Enter your account details</p>
+          {/* Heading */}
+          <h1 className="text-3xl font-bold text-gray-900">Sign In</h1>
 
-          {/* Role */}
-          <div className="mb-4">
-            <label className="block mb-1 font-medium text-gray-700 text-sm">
-              Select Your Role
-            </label>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-              <option>Student</option>
-              <option>Admin</option>
-              <option>Accounts</option>
-            </select>
-          </div>
+          <p className="text-gray-500 mt-2 mb-8 text-sm">
+            <b>MITS Admission Portal</b> for smooth and secure access to your
+            application status, updates, and personalized information.
+          </p>
 
-          {/* Username */}
-          <div className="mb-4">
-            <label className="block mb-1 font-medium text-gray-700 text-sm">
-              Username
-            </label>
-            <input
-              type="text"
-              placeholder="Username"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-            />
-          </div>
-
-          {/* Password */}
-          <div className="mb-2 relative">
-            <label className="block mb-1 font-medium text-gray-700 text-sm">
-              Password
-            </label>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-[32px] text-gray-500 text-sm"
-            >
-              👁
-            </button>
-          </div>
-
-          <div className="text-right mb-4 text-sm">
-            <Link href="#" className="text-gray-600 hover:text-sky-600">
-              Forgot password?
-            </Link>
-          </div>
-
-          <button className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 rounded-md transition">
-            Login
+          {/* Google Button */}
+          <button className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200">
+            <FcGoogle size={22} />
+            <span className="font-medium text-gray-700">
+              Continue with Google
+            </span>
           </button>
 
-          <div className="mt-4 text-center text-gray-600 text-sm">
-            Don’t have an account?{" "}
-            <Link
-              href="/signup"
-              className="bg-sky-600 text-white px-3 py-1 rounded-md ml-2 hover:bg-sky-700"
-            >
-              Sign up
-            </Link>
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="h-px bg-gray-300 flex-1"></div>
+            <span className="text-xs text-gray-400">secure login</span>
+            <div className="h-px bg-gray-300 flex-1"></div>
           </div>
+
+          {/* Footer text */}
+          <p className="text-xs text-gray-500">
+            Use Valid Mail ID used in MPDTE counselling to login. For any
+            issues, contact us at {"Manaskukreja2910@gmail.com"}
+          </p>
         </div>
       </div>
 
       {/* RIGHT SIDE */}
       <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-sky-500 to-sky-600 items-center justify-center overflow-hidden">
-        {/* BUBBLE EFFECT */}
-        <div className="absolute w-80 h-80 bg-white/10 rounded-full blur-2xl top-10 left-20"></div>
-        <div className="absolute w-96 h-96 bg-white/10 rounded-full blur-3xl bottom-10 right-10"></div>
-        <div className="absolute w-60 h-60 bg-white/10 rounded-full blur-xl top-1/3 right-1/3"></div>
+        {/* Bubble Effect */}
+        {/* Blob Effects */}
+        <div className="absolute w-60 h-60 bg-sky-300/20 rounded-full blur-l top-130 left-[470]"></div>
+        <div className="absolute w-60 h-70 bg-sky-300/20 rotate-30 rounded-full blur-l top-90 left-[-40]"></div>
+
+        <div className="absolute w-76 h-76 bg-indigo-300/20  rounded-full blur-l bottom-45 right-[-145]"></div>
+
+        <div className="absolute w-52 h-52 bg-blue-200/20 rounded-full blur-l top-[-80] right-140"></div>
+        <div className="absolute w-52 h-72 bg-blue-200/20 rounded-full blur-l top-[-128] right-10"></div>
 
         {/* Text */}
-        <div className="absolute top-20 left-16 text-white z-10">
-          <h2 className="text-5xl font-bold leading-tight">
-            Welcome to <br /> student portal
+        <div className="absolute top-15 left-16 text-white z-10">
+          <h2 className="text-7xl ml-12 mb-0 font-bold leading-none [text-shadow:3px_2px_6px_rgba(0,0,0,0.4),3px_10px_30px_rgba(0,0,0,0.35)]">
+            Welcome to 
           </h2>
-          <p className="mt-3 text-base opacity-90">
+          <h2 className="text-7xl ml-12 mt-0 font-semibold leading-none [text-shadow:3px_2px_6px_rgba(0,0,0,0.4),3px_10px_30px_rgba(0,0,0,0.35)]">
+            Admission Portal
+          </h2>
+          <p className="mt-3 text-2xl ml-12 opacity-90">
             Login to access your account
           </p>
         </div>
 
         {/* Illustration */}
-        <div className="relative z-20">
+        <div className="relative mt-[40%] ml-7 z-20">
           <Image
-            src="/illustration.png"
+            src="/illu3.png"
             alt="Student Illustration"
-            width={480}
-            height={480}
+            width={560}
+            height={560}
             priority
             className="object-contain"
           />

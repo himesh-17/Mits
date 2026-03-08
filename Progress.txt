@@ -4,14 +4,14 @@ No vague entries. No one-line nonsense.
                     PROJECT PROGRESS LOG
 ============================================================
 ------------------------------------------------------------
-Date:
-Name:
-Module (backend/frontend/database/etc):
-Branch Name:
+Date:04/03/26
+Name: Manas Kukreja
+Module (backend/frontend/database/etc): frontend
+Branch Name:login-refinement
 ------------------------------------------------------------
-Task Description:
-- What exactly was implemented/changed?
-Status:
+Task Description: completed landing page and login page 
+- What exactly was implemented/changed? 
+Status:Completed
 - Completed / In Progress / Blocked
 ------------------------------------------------------------
 ============================================================
@@ -26,3 +26,5 @@ date : 03/02/2026 | Name : Varun Pahuja | Module : Backend | branch : feature-va
 
 date : 03/03/2026 | Name : Himesh Badlani | Module : Backend | branch : feature-admin-hardening | task : cleaned duplicate admin controller code, finalized admin routes with OAuth protection, integrated AdminActionLog for audit tracking, 
 updated admin operations with transactional logging, verified role-based access control and backend security flow , Completed
+
+date : 03/02/2026 | Name : Varun Pahuja | Module : Backend | branch : feature-varun | task : models and student form ids  and input bna diye h
