@@ -19,7 +19,11 @@ const dmSans = DM_Sans({
   variable: "--font-dmSans",
 });
 
-const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+if (!googleClientId) {
+  throw new Error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is required");
+}
 
 export default function RootLayout({
   children,

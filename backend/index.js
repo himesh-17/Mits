@@ -7,13 +7,14 @@ import cookieParser from "cookie-parser";
 
 import { main } from "./Services/Connections/db.connection.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+import { simpleRateLimit } from "./middlewares/rateLimit.middleware.js";
 
 import authRoutes from "./Routes/Authentication/auth.routes.js";
 import studentRoutes from "./Routes/Students/student.routes.js";
 import admissionCellRoutes from "./Routes/Admission_Cell/admissionCell.routes.js";
 import generalOfficeRoutes from "./Routes/General_Office/generalOffice.routes.js";
 import accountOfficeRoutes from "./Routes/Account_Office/accountOffice.routes.js";
-import hodRoutes from "./Routes/HOD/hod.routes.js";
+import hodRoutes from "./Routes/Hod/hod.routes.js";
 import adminRoutes from "./Routes/Admin/admin.routes.js";
 
 const app = express();
@@ -28,6 +29,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use("/api", simpleRateLimit);
 
 app.get("/", (req, res) => {
     res.status(200).json({ status: "ok", message: "Server is healthy" });

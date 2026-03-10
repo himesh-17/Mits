@@ -3,19 +3,27 @@
 import Image from "next/image";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-  const handleLoginSuccess = async (credentialResponse: any) => {
+  const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+
+    if (!credentialResponse.credential) {
+      console.error("Google credential not provided");
+      return;
+    }
 
     try {
 
       await axios.post(
-        "http://localhost:8080/api/auth/google",
+        `${apiBaseUrl}/api/auth/google`,
         {
           idToken: credentialResponse.credential
         },
@@ -26,6 +34,7 @@ export default function LoginPage() {
   
 
       console.log("Login Success:");
+        router.push("/admission");
 
     } catch (error) {
       console.error("Login failed:", error);

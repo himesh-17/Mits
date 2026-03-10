@@ -1,5 +1,4 @@
 import User from "../Models/user.model.js";
-import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
 import { sendError } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
@@ -44,6 +43,8 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
 });
 
 export { verifyJWT };
+// Backward-compatible export used by existing route files.
+export { verifyJWT as verifyGoogleToken };
 
 const requireRole = (...allowedRoles) => {
     return (req, res, next) => {
