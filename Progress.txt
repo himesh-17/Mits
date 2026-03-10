@@ -28,3 +28,6 @@ date : 03/03/2026 | Name : Himesh Badlani | Module : Backend | branch : feature-
 updated admin operations with transactional logging, verified role-based access control and backend security flow , Completed
 
 date : 03/02/2026 | Name : Varun Pahuja | Module : Backend | branch : feature-varun | task : models and student form ids  and input bna diye h
+
+date : 09/03/2026 | Name : Himesh Badlani | Module : Backend/Frontend | branch : features-himesh | task : Complete the login route with the frontend connection with the upgrade only googleOauth to with the mix of JWT and cookies
+,Installed axios in frontend for API communication and cookie-parser in backend for cookie handling , Completed

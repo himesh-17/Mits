@@ -1,6 +1,9 @@
 import express from "express";
 import 'dotenv/config'
 import cors from "cors";
+import cookieParser from "cookie-parser";
+
+
 
 import { main } from "./Services/Connections/db.connection.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
@@ -21,8 +24,10 @@ app.use(cors({
     origin: frontendUrl,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials : true,
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
     res.status(200).json({ status: "ok", message: "Server is healthy" });
