@@ -31,30 +31,62 @@ export default function Footer() {
             </p>
 
             {/* Social Icons */}
-            <div className="flex gap-3 mt-5">
-              <div className="bg-blue-600 p-2 rounded-full hover:scale-110 transition cursor-pointer">
+            <div className="flex gap-3 justify-center md:justify-start">
+            <div className="flex gap-3 mt-5 justify-center">
+              <a
+                href="https://www.facebook.com/share/1NScjkyV8m/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 p-2 rounded-full hover:scale-110 transition cursor-pointer text-white"
+              >
                 <Facebook size={16} />
-              </div>
-              <div className="bg-sky-500 p-2 rounded-full hover:scale-110 transition cursor-pointer">
+              </a>
+
+              <a
+                href="https://x.com/mitsgwl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-sky-500 p-2 rounded-full hover:scale-110 transition cursor-pointer text-white"
+              >
                 <Twitter size={16} />
-              </div>
-              <div className="bg-blue-700 p-2 rounded-full hover:scale-110 transition cursor-pointer">
+              </a>
+
+              <a
+                href="https://www.linkedin.com/school/mitsdugwalior/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-700 p-2 rounded-full hover:scale-110 transition cursor-pointer text-white"
+              >
                 <Linkedin size={16} />
-              </div>
-              <div className="bg-pink-500 p-2 rounded-full hover:scale-110 transition cursor-pointer">
+              </a>
+
+              <a
+                href="https://www.instagram.com/mits_gwalior?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-pink-500 p-2 rounded-full hover:scale-110 transition cursor-pointer text-white"
+              >
                 <Instagram size={16} />
-              </div>
-            </div>
+              </a>
+            </div></div>
           </div>
 
           {/* Quick Links */}
           <div className="mt-15 md:mt-0">
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text- text-gray-300">
-              <li className="hover:text-white transition cursor-pointer">Home</li>
-              <li className="hover:text-white transition cursor-pointer">About</li>
-              <li className="hover:text-white transition cursor-pointer">Privacy</li>
-              <li className="hover:text-white transition cursor-pointer">Contact</li>
+              <li className="hover:text-white transition cursor-pointer">
+                Home
+              </li>
+              <li className="hover:text-white transition cursor-pointer">
+                About
+              </li>
+              <li className="hover:text-white transition cursor-pointer">
+                Privacy
+              </li>
+              <li className="hover:text-white transition cursor-pointer">
+                Contact
+              </li>
             </ul>
           </div>
 
@@ -62,9 +94,13 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Portal</h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li className="hover:text-white transition cursor-pointer">Student Login</li>
-              <li className="hover:text-white transition cursor-pointer">Apply Now</li>
-              <li className="hover:text-white transition cursor-pointer">Reset Password</li>
+              <li className="hover:text-white transition cursor-pointer">
+                Student Login
+              </li>
+              <li className="hover:text-white transition cursor-pointer">
+                Apply Now
+              </li>
+              
             </ul>
           </div>
 
