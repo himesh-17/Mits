@@ -1,5 +1,4 @@
 import User from "../Models/user.model.js";
-import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
 import { sendError } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";

@@ -10,10 +10,12 @@ export default function LoginPage() {
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleLoginSuccess = async (credentialResponse: any) => {
+  type GoggleCredentialResposnse = {
+    credential : string;
+  };
 
+  const handleLoginSuccess = async (credentialResponse: GoggleCredentialResposnse) => {
     try {
-
       await axios.post(
         "http://localhost:8080/api/auth/google",
         {

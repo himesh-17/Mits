@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
+import { verifyJWT, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     listStudents,
     getStudentDetail,
@@ -13,7 +13,7 @@ import {
 
 const router = express.Router();
 
-router.use(verifyGoogleToken, requireRole("admissionCell", "administrator"));
+router.use(verifyJWT, requireRole("admissionCell", "administrator"));
 
 router.get("/students", listStudents);
 router.get("/students/:applicationId", getStudentDetail);
