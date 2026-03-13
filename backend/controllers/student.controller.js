@@ -1,9 +1,40 @@
 import Application from "../Models/application.model.js";
 import Document from "../Models/document.model.js";
 import Payment from "../Models/payment.model.js";
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+
+const ALLOWED_MIME_TYPES = new Set([
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+]);
+
+function isAllowedFileUrl(fileUrl) {
+    try {
+        const parsed = new URL(fileUrl);
+        if (parsed.protocol !== "https:") {
+            return false;
+        }
+
+        const rawAllowedHosts = process.env.ALLOWED_UPLOAD_HOSTS || "";
+        const allowedHosts = rawAllowedHosts
+            .split(",")
+            .map((v) => v.trim().toLowerCase())
+            .filter(Boolean);
+
+        if (allowedHosts.length === 0) {
+            return true;
+        }
+
+        return allowedHosts.includes(parsed.hostname.toLowerCase());
+    } catch {
+        return false;
+    }
+}
 
 // GET /api/student/application
 const getOrCreateApplication = asyncHandler(async (req, res) => {
@@ -60,6 +91,15 @@ const submitApplication = asyncHandler(async (req, res) => {
 const uploadDocument = asyncHandler(async (req, res) => {
     const { docType, fileUrl, fileName, mimeType } = req.body;
     if (!docType || !fileUrl) throw new ApiError(400, "docType and fileUrl are required");
+    if (!isAllowedFileUrl(fileUrl)) {
+        throw new ApiError(400, "fileUrl must be a valid https URL and pass allowed host checks");
+    }
+    if (fileName && fileName.length > 255) {
+        throw new ApiError(400, "fileName must be at most 255 characters");
+    }
+    if (mimeType && !ALLOWED_MIME_TYPES.has(String(mimeType).toLowerCase())) {
+        throw new ApiError(400, "mimeType is not allowed");
+    }
 
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
@@ -116,6 +156,23 @@ const submitPayment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Provide challanFileUrl or transactionId");
     }
 
+    const normalizedMode = (paymentMode || "").toLowerCase();
+    if (normalizedMode && !["online", "offline"].includes(normalizedMode)) {
+        throw new ApiError(400, "paymentMode must be online or offline");
+    }
+    if (normalizedMode === "online" && !transactionId) {
+        throw new ApiError(400, "transactionId is required for online payments");
+    }
+    if (normalizedMode === "offline" && !challanFileUrl) {
+        throw new ApiError(400, "challanFileUrl is required for offline payments");
+    }
+    if (challanFileUrl && !isAllowedFileUrl(challanFileUrl)) {
+        throw new ApiError(400, "challanFileUrl must be a valid https URL and pass allowed host checks");
+    }
+    if (transactionId && !/^[a-zA-Z0-9_-]{6,64}$/.test(transactionId)) {
+        throw new ApiError(400, "transactionId format is invalid");
+    }
+
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
 
@@ -128,26 +185,38 @@ const submitPayment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "amount is required and must be a number greater than 0");
     }
 
-    const payment = await Payment.findOneAndUpdate(
-        { application: app._id },
-        {
-            $set: {
-                student: req.user.id,
-                application: app._id,
-                challanFileUrl: challanFileUrl || "",
-                paymentMode: paymentMode || "",
-                transactionId: transactionId || "",
-                amount: normalizedAmount,
-                status: "submitted",
-            },
-        },
-        { upsert: true, new: true }
-    );
+    const session = await mongoose.startSession();
+    let payment;
+    try {
+        await session.withTransaction(async () => {
+            payment = await Payment.findOneAndUpdate(
+                { application: app._id },
+                {
+                    $set: {
+                        student: req.user.id,
+                        application: app._id,
+                        challanFileUrl: challanFileUrl || "",
+                        paymentMode: normalizedMode || "",
+                        transactionId: transactionId || "",
+                        amount: normalizedAmount,
+                        status: "submitted",
+                    },
+                },
+                { upsert: true, new: true, session }
+            );
 
-    await Application.findByIdAndUpdate(app._id, {
-        status: "payment_submitted",
-        "progressBar.paymentDone": true,
-    });
+            await Application.findByIdAndUpdate(
+                app._id,
+                {
+                    status: "payment_submitted",
+                    "progressBar.paymentDone": true,
+                },
+                { session }
+            );
+        });
+    } finally {
+        await session.endSession();
+    }
 
     return sendSuccess(res, "Payment submitted", { payment });
 });

@@ -67,6 +67,19 @@ const defaultFormData: AdmissionFormData = {
     transactionId: "",
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isValidDraft(value: unknown): value is Partial<AdmissionFormData> {
+    if (!isRecord(value)) return false;
+
+    if ("hobbies" in value && !Array.isArray(value.hobbies)) return false;
+    if ("docsUploaded" in value && !isRecord(value.docsUploaded)) return false;
+
+    return true;
+}
+
 interface AdmissionContextType {
     formData: AdmissionFormData;
     updateFormData: (data: Partial<AdmissionFormData>) => void;
@@ -85,9 +98,15 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
         const savedDraft = localStorage.getItem("admissionFormDraft");
         if (savedDraft) {
             try {
-                setFormData(JSON.parse(savedDraft));
+                const parsed: unknown = JSON.parse(savedDraft);
+                if (isValidDraft(parsed)) {
+                    setFormData({ ...defaultFormData, ...parsed });
+                } else {
+                    localStorage.removeItem("admissionFormDraft");
+                }
             } catch (e) {
                 console.error("Failed to parse draft", e);
+                localStorage.removeItem("admissionFormDraft");
             }
         }
         setIsLoaded(true);

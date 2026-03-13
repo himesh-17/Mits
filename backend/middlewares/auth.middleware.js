@@ -43,6 +43,8 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
 });
 
 export { verifyJWT };
+// Backward-compatible export used by existing route files.
+export { verifyJWT as verifyGoogleToken };
 
 const requireRole = (...allowedRoles) => {
     return (req, res, next) => {
