@@ -98,15 +98,15 @@ export default function Navbar() {
           Main Website
         </a>
 
-        <a href="#about" onClick={() => setOpen(false)}>
+        <Link href="/about" className="hover:text-sky-400 transition">
           About
-        </a>
+        </Link>
 
-        <a href="#team" onClick={() => setOpen(false)}>
+        <a href="/meet-the-team" className="hover:text-sky-400 transition">
           Meet the Team
         </a>
 
-        <a href="#contact" onClick={() => setOpen(false)}>
+        <a href="/contact" className="hover:text-sky-400 transition">
           Contact
         </a>
 
