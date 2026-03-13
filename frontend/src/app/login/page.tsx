@@ -13,15 +13,12 @@ export default function LoginPage() {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-  const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+  type GoggleCredentialResposnse = {
+    credential : string;
+  };
 
-    if (!credentialResponse.credential) {
-      console.error("Google credential not provided");
-      return;
-    }
-
+  const handleLoginSuccess = async (credentialResponse: GoggleCredentialResposnse) => {
     try {
-
       await axios.post(
         `${apiBaseUrl}/api/auth/google`,
         {

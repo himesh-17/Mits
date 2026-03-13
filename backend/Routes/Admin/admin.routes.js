@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
+import { verifyJWT, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     getOverview,
     listUsers,
@@ -14,7 +14,7 @@ import {
 const router = express.Router();
 
 // Protect all admin routes
-router.use(verifyGoogleToken, requireRole("administrator"));
+router.use(verifyJWT, requireRole("administrator"));
 
 router.get("/overview", getOverview);
 router.get("/data-matching", dataMatching);

@@ -59,32 +59,36 @@ const reasons = [
 
 export default function ReasonsSection() {
   return (
-    <section className="bg-gray-100 py-5">
-      <div className="mx-auto max-w-7xl px-6">
+    <section className="bg-gray-100 py-16">
+      <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-16">
         {/* Heading */}
-        <h2 className="text-center text-3xl md:text-4xl font-bold text-sky-600 mb-16">
+        <h2 className="text-center text-3xl md:text-4xl font-bold text-sky-600 mb-14">
           Some Reasons
         </h2>
 
         {/* Grid */}
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {reasons.map((reason) => (
-            <div key={reason.number} className="space-y-4">
+            <div
+              key={reason.number}
+              className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition duration-300"
+            >
               {/* Number + Line */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 mb-4">
                 <span className="text-sky-600 font-bold text-xl">
                   {reason.number}
                 </span>
+
                 <div className="h-[2px] w-12 bg-sky-500"></div>
               </div>
 
               {/* Title */}
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {reason.title}
               </h3>
 
               {/* Description */}
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 text-sm leading-relaxed">
                 {reason.description}
               </p>
             </div>

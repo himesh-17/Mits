@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
+import { requireRole, verifyJWT } from "../../middlewares/auth.middleware.js";
 import {
     getOrCreateApplication,
     updateApplication,
@@ -12,7 +12,7 @@ import {
 
 const router = express.Router();
 
-router.use(verifyGoogleToken, requireRole("student"));
+router.use(verifyJWT, requireRole("student"));
 
 router.get("/application", getOrCreateApplication);
 router.patch("/application", updateApplication);
