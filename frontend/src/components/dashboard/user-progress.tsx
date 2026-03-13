@@ -2,7 +2,11 @@ type UserProgressProps = {
   name: string;
   progress: number;
 };
-
+function getProgressColor(progress: number) {
+  if (progress < 50) return "bg-red-600";
+  if (progress < 80) return "bg-yellow-400";
+  return "bg-green-600";
+}
 export default function UserProgress({ name, progress }: UserProgressProps) {
   return (
     <div className="flex items-center gap-4 mb-6">
@@ -24,11 +28,11 @@ export default function UserProgress({ name, progress }: UserProgressProps) {
         </div>
 
         {/* Progress Bar */}
-        <div className="w-45 h-2 bg-gray-200 rounded-full mt-2">
+        <div className="w-full max-w-xs h-2 bg-gray-200 rounded-full mt-2">
           <div
-            className="h-2 bg-[#2DA8E1] rounded-full"
+            className={`h-2 rounded-full ${getProgressColor(progress)}`}
             style={{ width: `${progress}%` }}
-          ></div>
+          />
         </div>
       </div>
     </div>

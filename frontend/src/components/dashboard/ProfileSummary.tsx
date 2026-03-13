@@ -1,23 +1,32 @@
-export default function ProfileSummary() {
+type Props = {
+  user: {
+    course: string;
+    category: string;
+    email: string;
+    phone: string;
+  };
+};
+
+export default function ProfileSummary({ user }: Props) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <h3 className="text-[#2DA8E1] font-semibold mb-4">PROFILE SUMMARY</h3>
 
       <div className="space-y-2 text-sm">
         <p>
-          <b>Applied Course</b> Btech CSE 
+          <b>Applied Course</b> {user.course}
         </p>
+
         <p>
-          <b>Academic Year</b>  2026–27
+          <b>Category</b> {user.category}
         </p>
+
         <p>
-          <b>Category</b> General
+          <b>Email</b> {user.email}
         </p>
+
         <p>
-          <b>Email</b> manaskukreja2910@email.com
-        </p>
-        <p>
-          <b>Phone</b> 9827437110
+          <b>Phone</b> {user.phone}
         </p>
       </div>
     </div>

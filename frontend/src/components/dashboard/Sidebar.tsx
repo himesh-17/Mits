@@ -1,112 +1,160 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogOut } from "lucide-react";
 import Image from "next/image";
+import { LogOut } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 type Props = {
   name: string;
+  open: boolean;
+  setOpen: (value: boolean) => void;
 };
 
-export default function Sidebar({ name }: Props) {
-    const router = useRouter();
-      const [showLogoutModal, setShowLogoutModal] = useState(false);
-
+export default function Sidebar({ name, open, setOpen }: Props) {
+  // const router = useRouter();
+  const router = useRouter();
+  const pathname = usePathname();
+  const navItem = (path: string) =>
+    `block w-full text-left px-4 py-2 rounded transition ${
+      pathname === path
+        ? "bg-[#2DA8E1] text-white"
+        : "hover:bg-gray-100 text-gray-700"
+    }`;
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
-    <div className="w-84 h-screen bg-white border-r border-gray-400 p-6 flex flex-col justify-between ">
-      <div>
-        <div className="p-0 pb-5 flex items-center gap-4 border-b border-gray-300">
-          <Image src="/mits.png" alt="MITS Logo" width={80} height={80} />
+    <>
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 lg:hidden z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
-          <h2 className="text-[#2DA8E1] font-semibold text-2xl">
+      <aside
+        className={`
+  fixed lg:relative
+  bg-white border-r
+  h-screen w-72
+  transform transition-transform duration-300
+  ${open ? "translate-x-0" : "-translate-x-full"}
+  lg:translate-x-0
+  flex flex-col justify-between
+  z-50
+  `}
+      >
+        {/* Top Section */}
+        <div className="p-6">
+          <div className="p-6 border-b flex items-center gap-3">
+
+  <Image
+    src="/mits.png"
+    alt="MITS Logo"
+    width={80}
+    height={80}
+    className="object-contain"
+  />
+          <h2 className="text-xl font-semibold text-[#2DA8E1]">
             Admission Portal
           </h2>
-          
-        </div>
-        <div className="mt-7 space-y-3">
-          <button
-            onClick={() => router.push("/student-dashboard")}
-            className="w-full text-left bg-[#2DA8E1] text-white px-4 py-2 rounded-md"
-          >
-            Dashboard
-          </button>
-
-          <button
-            onClick={() => router.push("/admission")}
-            className="w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-          >
-            Application Form
-          </button>
-
-          <button
-            onClick={() => router.push("/admission/payment")}
-            className="w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-          >
-            Payments
-          </button>
-
-          <button
-            onClick={() => router.push("/admission")}
-            className="w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-          >
-            Status Tracker
-          </button>
-        </div>
-      </div>
-
-      <div className="p-4 border-t border-gray-300">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-[#2DA8E1] text-white rounded-full flex items-center justify-center font-semibold">
-            {name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")}
           </div>
 
-          <div>
-            <p className="font-semibold text-sm">Manas Kukreja</p>
-            <p className="text-xs text-gray-500">Student Portal</p>
-          </div>
+          <nav className="mt-6 space-y-3">
+            <button
+              onClick={() => router.push("/student-dashboard")}
+              className={navItem("/student-dashboard")}
+            >
+              Dashboard
+            </button>
+
+            <button
+              onClick={() => router.push("/admission")}
+              className={navItem("/admission")}
+            >
+              Application Form
+            </button>
+
+            <button
+              onClick={() => router.push("/admission/payment")}
+              className={navItem("/admission/payment")}
+            >
+              Payments
+            </button>
+
+            <button
+              onClick={() => router.push("/profile")}
+              className={navItem("/profile")}
+            >
+              Profile
+            </button>
+          </nav>
         </div>
 
-        <div className="mt-3">
+        {/* Bottom Section */}
+        <div className="p-4 border-t border-gray-300">
+          {/* User */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-[#2DA8E1] text-white rounded-full flex items-center justify-center font-semibold">
+              {name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </div>
+
+            <div>
+              <p className="font-semibold text-sm">{name}</p>
+              <p className="text-xs text-gray-500">Student Portal</p>
+            </div>
+          </div>
+
+          {/* Student ID */}
+          <p className="text-xs text-gray-500 mb-3">
+            ID: <span className="text-[#2DA8E1] font-medium">MK-2026-2910</span>
+          </p>
+
+          {/* Logout Button */}
           <button
             onClick={() => setShowLogoutModal(true)}
-            className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-2 py-1 rounded-md text-sm font-medium transition"
+            className="w-full flex items-center justify-center gap-2 text-red-600 border border-red-200 hover:bg-red-50 px-3 py-2 rounded-md text-sm font-medium transition"
           >
             <LogOut size={16} />
             Logout
           </button>
-          {showLogoutModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-              <div className="bg-white rounded-lg shadow-lg w-80 p-6">
-                <h2 className="text-lg font-semibold mb-2">Confirm Logout</h2>
-
-                <p className="text-sm text-gray-600 mb-6">
-                  Are you sure you want to logout?
-                </p>
-
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowLogoutModal(false)}
-                    className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    onClick={() => router.push("/login")}
-                    className="px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
-    </div>
+      </aside>
+
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-80 p-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">
+              Confirm Logout
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to logout from the portal?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 text-sm bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => router.push("/login")}
+                className="px-4 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
