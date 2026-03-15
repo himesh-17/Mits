@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken, requireRole } from "../../middlewares/auth.middleware.js";
+import { verifyJWT, requireRole } from "../../middlewares/auth.middleware.js";
 import {
     listVerifiedApplications,
     getApplicationDetail,
@@ -12,7 +12,7 @@ import {
 
 const router = express.Router();
 
-router.use(verifyGoogleToken, requireRole("accountOffice", "administrator"));
+router.use(verifyJWT, requireRole("accountOffice", "administrator"));
 
 router.get("/applications", listVerifiedApplications);
 router.get("/applications/:applicationId", getApplicationDetail);

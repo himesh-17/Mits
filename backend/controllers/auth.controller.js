@@ -3,6 +3,8 @@ import { sendSuccess } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
+import { generateToken } from "../utils/jwt.utils.js";
+import { cookieOptions } from "../utils/cookie.utils.js";
 
 function sanitizeUser(user) {
     return {
@@ -48,15 +50,15 @@ const googleLogin = asyncHandler(async (req, res) => {
                     role: profile.role || "student",
                 },
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: "after" }
         );
     } catch (error) {
         if (error?.code === 11000) {
             user =
                 await User.findOne({ googleSub: profile.googleSub }) ||
                 (profile.emailVerified
-                    ? await User.findOne({ email: profile.email })
-                    : null);
+                    ? await User.findOne({ email: profile.email }): null
+                );
 
             if (!user) throw error;
 
@@ -80,6 +82,9 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
 
     const safeUser = sanitizeUser(user);
+
+    const token = generateToken(user);
+    res.cookie("token", token, cookieOptions);
 
     return sendSuccess(
         res,

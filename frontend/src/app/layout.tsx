@@ -1,6 +1,6 @@
 import "./globals.css";
-import { Montserrat, DM_Sans } from "next/font/google";
-import { Poppins } from "next/font/google";
+import { Montserrat, DM_Sans, Poppins } from "next/font/google";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,6 +19,12 @@ const dmSans = DM_Sans({
   variable: "--font-dmSans",
 });
 
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+if (!googleClientId) {
+  throw new Error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is required");
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -27,8 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${montserrat.variable} ${dmSans.variable} font-sans`}>
-        
-        {children}
+        <GoogleOAuthProvider clientId={googleClientId}>
+          {children}
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { getMe, googleLogin } from "../../Controllers/auth.controller.js";
-import { verifyGoogleToken } from "../../middlewares/auth.middleware.js";
+import { verifyJWT } from "../../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.post("/google", googleLogin);
-router.get("/me", verifyGoogleToken, getMe);
+router.get("/me", verifyJWT, getMe);
 
 export default router;

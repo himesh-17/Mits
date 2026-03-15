@@ -1,27 +1,30 @@
 import User from "../Models/user.model.js";
-import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
 import { sendError } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import jwt from "jsonwebtoken";
 
-const verifyGoogleToken = asyncHandler(async (req, res, next) => {
-    const authHeader = req.headers.authorization;
+const verifyJWT = asyncHandler(async (req, res, next) => {
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return sendError(res, "Authorization token missing or invalid", 401);
+    const token = req.cookies?.token;
+
+    if (!token) {
+        return sendError(res, "Authentication token missing", 401);
     }
 
-    const idToken = authHeader.split(" ")[1];
+    let decoded;
 
-    // Verify token with Google
-    const profile = await verifyGoogleIdToken(idToken);
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+        return sendError(res, "Invalid or expired token", 401);
+    }
 
-    // Always trust Google sub as unique identity
-    const user = await User.findOne({ googleSub: profile.googleSub }).select(
+    const user = await User.findById(decoded.id).select(
         "_id name email role picture isActive"
     );
 
     if (!user) {
-        return sendError(res, "User not found. Please login first", 401);
+        return sendError(res, "User not found", 401);
     }
 
     if (!user.isActive) {
@@ -39,6 +42,10 @@ const verifyGoogleToken = asyncHandler(async (req, res, next) => {
     next();
 });
 
+export { verifyJWT };
+// Backward-compatible export used by existing route files.
+export { verifyJWT as verifyGoogleToken };
+
 const requireRole = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user?.role) {
@@ -53,4 +60,4 @@ const requireRole = (...allowedRoles) => {
     };
 };
 
-export { verifyGoogleToken, requireRole };
+export {requireRole };
