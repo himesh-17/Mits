@@ -22,10 +22,10 @@ const port = process.env.PORT || 8080;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
 app.use(cors({
-    origin: frontendUrl,
+    origin: ["http://localhost:3000", "http://127.0.0.1:3000", frontendUrl],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials : true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+    credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -55,8 +55,8 @@ async function startServer() {
         await main();
         console.log("MongoDB is connected");
 
-        app.listen(port, () => {
-            console.log(`Server is listening to the port ${port}`);
+        app.listen(port, "0.0.0.0", () => {
+            console.log(`Server is listening to the port ${port} on 0.0.0.0`);
         });
     } catch (error) {
         console.error("Startup failed:", error);

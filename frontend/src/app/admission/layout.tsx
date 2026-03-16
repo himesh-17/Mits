@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 import { AdmissionProvider } from "../../context/AdmissionContext";
 
 export default function AdmissionLayout({
@@ -21,8 +22,10 @@ export default function AdmissionLayout({
 
         async function validateSession() {
             try {
+                const token = localStorage.getItem("authToken");
                 await axios.get(`${apiBaseUrl}/api/auth/me`, {
                     withCredentials: true,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
 
                 if (isMounted) {
@@ -52,7 +55,17 @@ export default function AdmissionLayout({
 
     return (
         <AdmissionProvider>
-            {children}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={pathname}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                    {children}
+                </motion.div>
+            </AnimatePresence>
         </AdmissionProvider>
     );
 }

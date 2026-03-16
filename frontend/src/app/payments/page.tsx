@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
     UserRound,
     Search,
@@ -9,22 +10,38 @@ import {
     LayoutDashboard,
     FileText,
     CreditCard,
-    CheckCircle,
     LogOut,
     AlertTriangle,
     CheckCircle2,
     Upload,
     X,
     Activity,
+    Menu,
+    AlertCircle,
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { validateFile } from "../../lib/validationSchemas";
 
 export default function PaymentsPage() {
     const [paymentStatus, setPaymentStatus] = useState<"pending" | "submitted">("pending");
     const [showModal, setShowModal] = useState(false);
     const [transactionId, setTransactionId] = useState("");
     const [screenshot, setScreenshot] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [errors, setErrors] = useState<{ transactionId?: string; screenshot?: string }>({});
+    const [mobileSidebar, setMobileSidebar] = useState(false);
+    const [userName, setUserName] = useState("Student");
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const saved = localStorage.getItem("googleUserInfo");
+        if (saved) {
+            try {
+                const info = JSON.parse(saved);
+                if (info.name) setUserName(info.name);
+            } catch { /* ignore */ }
+        }
+    }, []);
 
     const handleSubmitClick = () => {
         setShowModal(true);
@@ -43,15 +60,25 @@ export default function PaymentsPage() {
 
         setPaymentStatus("submitted");
         setShowModal(false);
+        toast.success("Payment submitted successfully!");
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                setErrors((prev) => ({ ...prev, screenshot: "File size must be less than 5MB" }));
+            const error = validateFile(file);
+            if (error) {
+                setErrors((prev) => ({ ...prev, screenshot: error }));
                 return;
             }
+
+            // Generate preview
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                setPreviewUrl(ev.target?.result as string);
+            };
+            reader.readAsDataURL(file);
+
             setScreenshot(file);
             setErrors((prev) => ({ ...prev, screenshot: undefined }));
         }
@@ -60,9 +87,15 @@ export default function PaymentsPage() {
     return (
         <div className="min-h-screen bg-[#F3F4F6] flex flex-col">
             {/* ─── TOP NAVBAR ─── */}
-            <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB] h-16 flex items-center px-6 justify-between">
+            <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB] h-16 flex items-center px-4 md:px-6 justify-between">
                 {/* Left — Logo + Brand */}
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setMobileSidebar(!mobileSidebar)}
+                        className="lg:hidden p-1 text-[#0F172A] cursor-pointer mr-1"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
                     <Image
                         src="/mits.png"
                         alt="MITS Logo"
@@ -79,13 +112,13 @@ export default function PaymentsPage() {
                 </span>
 
                 {/* Right — Icons + User */}
-                <div className="flex items-center gap-5">
-                    <Search className="w-5 h-5 text-[#94A3B8] cursor-pointer hover:text-[#0F172A] transition" />
+                <div className="flex items-center gap-3 sm:gap-5">
+                    <Search className="w-5 h-5 text-[#94A3B8] cursor-pointer hover:text-[#0F172A] transition hidden sm:block" />
                     <Bell className="w-5 h-5 text-[#94A3B8] cursor-pointer hover:text-[#0F172A] transition" />
-                    <div className="flex items-center gap-3 ml-2">
-                        <div className="text-right leading-tight">
+                    <div className="flex items-center gap-3 ml-1 sm:ml-2">
+                        <div className="text-right leading-tight hidden sm:block">
                             <p className="text-xs font-semibold text-[#0EA5E9]">GJ-2026-8842</p>
-                            <p className="text-xs text-[#0F172A] font-medium">Gune Jain</p>
+                            <p className="text-xs text-[#0F172A] font-medium">{userName}</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 overflow-hidden">
                             <UserRound className="w-7 h-7 mt-2" />
@@ -96,42 +129,50 @@ export default function PaymentsPage() {
 
             {/* ─── BODY: SIDEBAR + MAIN ─── */}
             <div className="flex flex-1">
+                {/* Mobile sidebar overlay */}
+                {mobileSidebar && (
+                    <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setMobileSidebar(false)}>
+                        <div className="absolute inset-0 bg-black/30" />
+                    </div>
+                )}
+
                 {/* ─── LEFT SIDEBAR ─── */}
-                <aside className="w-[250px] bg-white border-r border-[#E5E7EB] flex flex-col justify-between min-h-[calc(100vh-64px)]">
+                <aside className={`${mobileSidebar ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-50 lg:z-auto w-[250px] bg-white border-r border-[#E5E7EB] flex flex-col justify-between min-h-[calc(100vh-64px)] transition-transform duration-300`}>
                     <div className="py-6">
-                        <p className="px-6 text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest mb-4">
-                            My Application
-                        </p>
+                        <div className="flex items-center justify-between px-6 mb-4">
+                            <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">
+                                My Application
+                            </p>
+                            <button onClick={() => setMobileSidebar(false)} className="lg:hidden p-1 text-[#94A3B8] cursor-pointer">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
 
                         <nav className="flex flex-col gap-1 px-3">
-                            {/* Dashboard */}
-                            <a
-                                href="#"
+                            <Link
+                                href="/student-dashboard"
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#334155] hover:bg-[#F1F5F9] transition"
                             >
                                 <LayoutDashboard className="w-[18px] h-[18px] text-[#64748B]" />
                                 Dashboard
-                            </a>
+                            </Link>
 
-                            {/* Application Form */}
-                            <a
+                            <Link
                                 href="/admission"
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#334155] hover:bg-[#F1F5F9] transition"
                             >
                                 <FileText className="w-[18px] h-[18px] text-[#64748B]" />
                                 Application Form
-                            </a>
+                            </Link>
 
-                            {/* Payments (Active) */}
-                            <a
+                            <Link
                                 href="/payments"
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#38BDF8] transition"
                             >
                                 <CreditCard className="w-[18px] h-[18px] text-white" />
                                 Payments
-                            </a>
+                            </Link>
 
-                            {/* Status Tracker */}
                             <a
                                 href="#"
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#334155] hover:bg-[#F1F5F9] transition"
@@ -149,7 +190,7 @@ export default function PaymentsPage() {
                                 <UserRound className="w-7 h-7 mt-2" />
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-[#0F172A]">Gune Jain</p>
+                                <p className="text-sm font-semibold text-[#0F172A]">{userName}</p>
                                 <p className="text-xs text-[#94A3B8]">Student Portal</p>
                             </div>
                         </div>
@@ -161,24 +202,24 @@ export default function PaymentsPage() {
                 </aside>
 
                 {/* ─── MAIN CONTENT ─── */}
-                <main className="flex-1 p-8 md:p-10 overflow-y-auto">
+                <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 overflow-y-auto">
                     {/* Page Title */}
                     <div className="mb-6">
-                        <h1 className="text-3xl font-extrabold text-[#0F172A]">Payment</h1>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A]">Payment</h1>
                         <p className="text-lg font-bold text-[#FACC15] mt-0.5">BTECH</p>
                     </div>
 
                     {/* ─── ADMISSION FEE CARD ─── */}
-                    <div className="w-full max-w-[620px] bg-gradient-to-r from-[#38BDF8] to-[#0EA5E9] rounded-2xl p-8 mb-6 shadow-md">
+                    <div className="w-full max-w-[620px] bg-gradient-to-r from-[#38BDF8] to-[#0EA5E9] rounded-2xl p-5 sm:p-8 mb-6 shadow-md">
                         <p className="text-sm text-white/80 font-medium mb-1">Admission Fee Amount</p>
-                        <p className="text-5xl font-extrabold text-white mb-2">₹ 75,000</p>
+                        <p className="text-3xl sm:text-5xl font-extrabold text-white mb-2">₹ 75,000</p>
                         <p className="text-sm text-white/80 font-medium">
                             One-time admission processing fee (non-refundable)
                         </p>
                     </div>
 
                     {/* ─── PAYMENT STATUS CARD ─── */}
-                    <div className="w-full max-w-[620px] bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-8">
+                    <div className="w-full max-w-[620px] bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-5 sm:p-8">
                         {/* Status Banner */}
                         {paymentStatus === "pending" ? (
                             <div className="flex items-start gap-3 mb-6">
@@ -221,7 +262,7 @@ export default function PaymentsPage() {
                                 {/* Submit Button */}
                                 <button
                                     onClick={handleSubmitClick}
-                                    className="w-full h-12 bg-[#38BDF8] hover:bg-[#0EA5E9] text-white font-bold text-base rounded-xl transition-colors cursor-pointer shadow-sm"
+                                    className="w-full h-12 bg-[#38BDF8] hover:bg-[#0EA5E9] text-white font-bold text-base rounded-xl transition-colors cursor-pointer shadow-sm active:scale-[0.98]"
                                 >
                                     Submit Payment Details →
                                 </button>
@@ -247,7 +288,7 @@ export default function PaymentsPage() {
             {/* ─── MODAL ─── */}
             {showModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative animate-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 sm:p-8 relative animate-in zoom-in-95 duration-200">
                         {/* Close Button */}
                         <button
                             onClick={() => setShowModal(false)}
@@ -295,28 +336,40 @@ export default function PaymentsPage() {
                                 <input
                                     ref={fileInputRef}
                                     type="file"
-                                    accept="image/png,image/jpeg,image/jpg"
+                                    accept="image/png,image/jpeg"
                                     onChange={handleFileChange}
                                     className="hidden"
                                 />
-                                <Upload className="w-8 h-8 text-[#94A3B8] mb-2" />
                                 {screenshot ? (
-                                    <p className="text-sm font-medium text-[#16A34A]">{screenshot.name}</p>
+                                    <div className="flex flex-col items-center gap-2">
+                                        {previewUrl && (
+                                            <div className="w-14 h-14 rounded-lg border border-[#E5E7EB] overflow-hidden">
+                                                <img src={previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <p className="text-sm font-medium text-[#16A34A]">{screenshot.name}</p>
+                                    </div>
                                 ) : (
-                                    <p className="text-sm text-[#94A3B8]">
-                                        Click to upload <span className="text-[#64748B]">(PNG, JPG, max 5MB)</span>
-                                    </p>
+                                    <>
+                                        <Upload className="w-8 h-8 text-[#94A3B8] mb-2" />
+                                        <p className="text-sm text-[#94A3B8]">
+                                            Click to upload <span className="text-[#64748B]">(PNG, JPG only, max 10MB)</span>
+                                        </p>
+                                    </>
                                 )}
                             </div>
                             {errors.screenshot && (
-                                <p className="text-xs text-red-500 mt-1">{errors.screenshot}</p>
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                    <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                                    <p className="text-xs text-red-500">{errors.screenshot}</p>
+                                </div>
                             )}
                         </div>
 
                         {/* Submit */}
                         <button
                             onClick={validateAndSubmit}
-                            className="w-full h-12 bg-[#38BDF8] hover:bg-[#0EA5E9] text-white font-bold text-base rounded-xl transition-colors cursor-pointer"
+                            className="w-full h-12 bg-[#38BDF8] hover:bg-[#0EA5E9] text-white font-bold text-base rounded-xl transition-colors cursor-pointer active:scale-[0.98]"
                         >
                             Confirm & Submit
                         </button>

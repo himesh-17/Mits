@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Montserrat, DM_Sans, Poppins } from "next/font/google";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import ClientProviders from "../components/layout/ClientProviders";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,23 +19,17 @@ const dmSans = DM_Sans({
   variable: "--font-dmSans",
 });
 
-const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-if (!googleClientId) {
-  throw new Error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is required");
-}
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body className={`${montserrat.variable} ${dmSans.variable} font-sans`}>
-        <GoogleOAuthProvider clientId={googleClientId}>
+        <ClientProviders>
           {children}
-        </GoogleOAuthProvider>
+        </ClientProviders>
       </body>
     </html>
   );

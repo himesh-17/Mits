@@ -7,19 +7,26 @@ import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const base64 = token.split(".")[1];
+    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 export default function LoginPage() {
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-  type GoggleCredentialResposnse = {
-    credential : string;
-  };
-
-  const handleLoginSuccess = async (credentialResponse: GoggleCredentialResposnse) => {
+  const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) return;
     try {
-      await axios.post(
+      const response = await axios.post(
         `${apiBaseUrl}/api/auth/google`,
         {
           idToken: credentialResponse.credential
@@ -28,10 +35,25 @@ export default function LoginPage() {
           withCredentials: true
         }
       );
-  
+
+      // Store token for Authorization header
+      if (response.data.data.token) {
+        localStorage.setItem("authToken", response.data.data.token);
+      }
+
+      // Decode JWT to extract user info
+      const payload = decodeJwtPayload(credentialResponse.credential);
+      if (payload) {
+        const userInfo = {
+          name: (payload.name as string) || "",
+          email: (payload.email as string) || "",
+          picture: (payload.picture as string) || "",
+        };
+        localStorage.setItem("googleUserInfo", JSON.stringify(userInfo));
+      }
 
       console.log("Login Success:");
-        router.push("/admission");
+      router.push("/student-dashboard");
 
     } catch (error) {
       console.error("Login failed:", error);
@@ -47,14 +69,14 @@ export default function LoginPage() {
     <div className="h-screen w-screen flex overflow-hidden">
 
       {/* LEFT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="w-full max-w-sm backdrop-blur-lg bg-white/70 border border-gray-200 shadow-xl rounded-2xl p-10 text-center">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="w-full max-w-sm backdrop-blur-lg bg-white/70 border border-gray-200 shadow-xl rounded-2xl p-6 sm:p-10 text-center">
 
           <div className="flex justify-center mb-6">
-            <Image src="/mits.png" alt="MITS Logo" width={140} height={140}/>
+            <Image src="/mits.png" alt="MITS Logo" width={140} height={140} />
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900">Sign In</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sign In</h1>
 
           <p className="text-gray-500 mt-2 mb-8 text-sm">
             <b>MITS Admission Portal</b> for smooth and secure access to your
@@ -64,9 +86,9 @@ export default function LoginPage() {
           {/* YOUR ORIGINAL GOOGLE BUTTON */}
           <button
             onClick={triggerGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200"
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-h-[48px] active:scale-[0.98]"
           >
-            <FcGoogle size={22}/>
+            <FcGoogle size={22} />
             <span className="font-medium text-gray-700">
               Continue with Google
             </span>
