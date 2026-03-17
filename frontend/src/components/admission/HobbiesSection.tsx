@@ -1,7 +1,8 @@
 "use client";
 
 import { Shapes } from "lucide-react";
-import { useAdmissionForm } from "../../context/AdmissionContext";
+import { useFormContext } from "react-hook-form";
+import { PersonalFormData } from "../../lib/validationSchemas";
 
 const hobbies = [
     "Sports",
@@ -13,15 +14,15 @@ const hobbies = [
 ];
 
 export default function HobbiesSection() {
-    const { formData, updateFormData } = useAdmissionForm();
+    const { watch, setValue } = useFormContext<PersonalFormData>();
+    const currentHobbies = watch("hobbies") || [];
 
     const toggle = (hobby: string) => {
-        const currentHobbies = formData.hobbies || [];
         const newHobbies = currentHobbies.includes(hobby)
             ? currentHobbies.filter((h) => h !== hobby)
             : [...currentHobbies, hobby];
 
-        updateFormData({ hobbies: newHobbies });
+        setValue("hobbies", newHobbies, { shouldValidate: true, shouldDirty: true });
     };
 
     return (
@@ -35,15 +36,15 @@ export default function HobbiesSection() {
             </div>
 
             {/* Hobby Checkboxes */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {hobbies.map((hobby) => {
-                    const isSelected = (formData.hobbies || []).includes(hobby);
+                    const isSelected = currentHobbies.includes(hobby);
                     return (
                         <button
                             key={hobby}
                             type="button"
                             onClick={() => toggle(hobby)}
-                            className={`flex items-center gap-2 h-10 px-3 rounded-md border text-sm font-medium transition-all cursor-pointer ${isSelected
+                            className={`flex items-center gap-2 h-11 md:h-10 px-3 rounded-md border text-sm font-medium transition-all cursor-pointer active:scale-[0.97] ${isSelected
                                 ? "border-[#0EA5E9] bg-[#F0F9FF] text-[#0EA5E9]"
                                 : "border-[#E5E7EB] bg-white text-[#0F172A] hover:border-[#94A3B8]"
                                 }`}

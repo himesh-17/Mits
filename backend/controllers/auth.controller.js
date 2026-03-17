@@ -57,7 +57,7 @@ const googleLogin = asyncHandler(async (req, res) => {
             user =
                 await User.findOne({ googleSub: profile.googleSub }) ||
                 (profile.emailVerified
-                    ? await User.findOne({ email: profile.email }): null
+                    ? await User.findOne({ email: profile.email }) : null
                 );
 
             if (!user) throw error;
@@ -89,7 +89,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     return sendSuccess(
         res,
         "Google authentication successful",
-        { user: safeUser },
+        { user: safeUser, token },
         200
     );
 });
