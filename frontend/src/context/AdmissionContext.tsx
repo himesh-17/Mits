@@ -80,11 +80,21 @@ function isValidDraft(value: unknown): value is Partial<AdmissionFormData> {
     return true;
 }
 
+export interface GoogleUserInfo {
+    name: string;
+    email: string;
+    picture?: string;
+}
+
 interface AdmissionContextType {
     formData: AdmissionFormData;
     updateFormData: (data: Partial<AdmissionFormData>) => void;
     saveAsDraft: () => void;
     clearDraft: () => void;
+    googleUser: GoogleUserInfo | null;
+    validationErrors: Record<string, string>;
+    setValidationErrors: (errors: Record<string, string>) => void;
+    clearValidationErrors: () => void;
 }
 
 const AdmissionContext = createContext<AdmissionContextType | undefined>(undefined);
@@ -92,15 +102,31 @@ const AdmissionContext = createContext<AdmissionContextType | undefined>(undefin
 export function AdmissionProvider({ children }: { children: React.ReactNode }) {
     const [formData, setFormData] = useState<AdmissionFormData>(defaultFormData);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [googleUser, setGoogleUser] = useState<GoogleUserInfo | null>(null);
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-    // Load from local storage on mount
+    // Load from local storage on mount + auto-fill from Google user info
     useEffect(() => {
+        // Load Google user info
+        const savedUser = localStorage.getItem("googleUserInfo");
+        let userInfo: GoogleUserInfo | null = null;
+        if (savedUser) {
+            try {
+                userInfo = JSON.parse(savedUser) as GoogleUserInfo;
+                setGoogleUser(userInfo);
+            } catch {
+                // ignore parse errors
+            }
+        }
+
+        // Load draft
         const savedDraft = localStorage.getItem("admissionFormDraft");
+        let formValues = { ...defaultFormData };
         if (savedDraft) {
             try {
                 const parsed: unknown = JSON.parse(savedDraft);
                 if (isValidDraft(parsed)) {
-                    setFormData({ ...defaultFormData, ...parsed });
+                    formValues = { ...defaultFormData, ...parsed };
                 } else {
                     localStorage.removeItem("admissionFormDraft");
                 }
@@ -109,21 +135,32 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
                 localStorage.removeItem("admissionFormDraft");
             }
         }
+
+        // Auto-fill from Google if fields are empty
+        if (userInfo) {
+            if (!formValues.fullName && userInfo.name) {
+                formValues.fullName = userInfo.name;
+            }
+            if (!formValues.email && userInfo.email) {
+                formValues.email = userInfo.email;
+            }
+        }
+
+        setFormData(formValues);
         setIsLoaded(true);
     }, []);
 
     const updateFormData = (newData: Partial<AdmissionFormData>) => {
         setFormData((prev) => {
             const updated = { ...prev, ...newData };
-            // Auto-save disabled by default, but we could add auto-save here
-            // localStorage.setItem("admissionFormDraft", JSON.stringify(updated));
+            // Auto-save to localStorage
+            localStorage.setItem("admissionFormDraft", JSON.stringify(updated));
             return updated;
         });
     };
 
     const saveAsDraft = () => {
         localStorage.setItem("admissionFormDraft", JSON.stringify(formData));
-        alert("Form saved as draft successfully. You can return later to complete it.");
     };
 
     const clearDraft = () => {
@@ -131,10 +168,21 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
         setFormData(defaultFormData);
     };
 
+    const clearValidationErrors = () => setValidationErrors({});
+
     if (!isLoaded) return null; // Wait for hydration
 
     return (
-        <AdmissionContext.Provider value={{ formData, updateFormData, saveAsDraft, clearDraft }}>
+        <AdmissionContext.Provider value={{
+            formData,
+            updateFormData,
+            saveAsDraft,
+            clearDraft,
+            googleUser,
+            validationErrors,
+            setValidationErrors,
+            clearValidationErrors,
+        }}>
             {children}
         </AdmissionContext.Provider>
     );
