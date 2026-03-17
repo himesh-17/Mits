@@ -1,22 +1,24 @@
 export default function WhyChoose() {
   return (
     <section className="relative bg-white pt-16 pb-0">
-      {/* Floating White Card */}
+      {/* Floating Card */}
       <div
         className="
         absolute -top-12
         left-6 sm:left-8 md:left-12 lg:left-24
         w-[75%] sm:w-[55%] md:w-[40%] lg:w-[28%]
-        bg-white hover:shadow-2xl transition rounded-2xl shadow-xl
-        py-4 px-6  text-center
+        bg-white rounded-2xl shadow-xl hover:shadow-2xl
+        transition-shadow duration-300
+        py-4 px-6 text-center
         "
       >
-        <h2 className="text-xl sm:text-2xl font-bold justify text-sky-600">
+        <h2 className="text-xl sm:text-2xl font-bold text-sky-600">
           Why Choose MITS?
         </h2>
       </div>
 
-      <div className="h-10"></div>
+      {/* Spacer */}
+      <div className="h-10" />
     </section>
   );
 }

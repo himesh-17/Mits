@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type ActionItemProps = {
   title: string;
@@ -15,59 +13,58 @@ function ActionItem({
   buttonText,
   route,
 }: ActionItemProps) {
-  const router = useRouter();
-
   return (
     <div className="flex justify-between items-center py-2">
-      <div className="flex items-start gap-1">
+      <div className="flex items-start gap-2">
         <div className="w-3 h-3 bg-[#2DA8E1] rounded-full mt-2"></div>
 
         <div>
           <p className="font-medium">{title}</p>
+
           {description && (
             <p className="text-sm text-gray-500">{description}</p>
           )}
         </div>
       </div>
 
-      <button
-        onClick={() => router.push(route)}
-        className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm"
+      <Link
+        href={route}
+        className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm transition"
       >
         {buttonText}
-      </button>
+      </Link>
     </div>
   );
 }
 
-export default function PendingActions() {
-  const actions = [
-    {
-      title: "Upload Government Issued ID",
-      description: "Aadhar, PAN, Passport required",
-      buttonText: "Upload",
-      route: "/admission/documents",
-    },
-    {
-      title: "Pay Admission Fee",
-      description: "Pay ₹75,000 for seat confirmation",
-      buttonText: "Pay now",
-      route: "/admission/payment",
-    },
-    {
-      title: "Submit Academic Transcripts",
-      description: "10th & 12th marksheets required",
-      buttonText: "Upload now",
-      route: "/admission/documents",
-    },
-    {
-      title: "Fill Personal Details",
-      description: "Complete personal information",
-      buttonText: "Fill Form",
-      route: "/admission/academic",
-    },
-  ];
+const actions: ActionItemProps[] = [
+  {
+    title: "Upload Government Issued ID",
+    description: "Aadhar, PAN, Passport required",
+    buttonText: "Upload",
+    route: "/admission/documents",
+  },
+  {
+    title: "Pay Admission Fee",
+    description: "Pay ₹75,000 for seat confirmation",
+    buttonText: "Pay now",
+    route: "/admission/payment",
+  },
+  {
+    title: "Submit Academic Transcripts",
+    description: "10th & 12th marksheets required",
+    buttonText: "Upload now",
+    route: "/admission/documents",
+  },
+  {
+    title: "Fill Personal Details",
+    description: "Complete personal information",
+    buttonText: "Fill Form",
+    route: "/admission/academic",
+  },
+];
 
+export default function PendingActions() {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm mt-8">
       <div className="flex justify-between items-center">
@@ -82,9 +79,9 @@ export default function PendingActions() {
 
       <div className="border-b border-gray-200 my-3"></div>
 
-      <div>
-        {actions.map((action, index) => (
-          <ActionItem key={index} {...action} />
+      <div className="space-y-2">
+        {actions.map((action) => (
+          <ActionItem key={action.title} {...action} />
         ))}
       </div>
     </div>

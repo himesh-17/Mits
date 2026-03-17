@@ -6,6 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
 export default function LoginPage() {
 
@@ -13,31 +14,41 @@ export default function LoginPage() {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-  type GoggleCredentialResposnse = {
-    credential : string;
-  };
 
-  const handleLoginSuccess = async (credentialResponse: GoggleCredentialResposnse) => {
-    try {
-      await axios.post(
-        `${apiBaseUrl}/api/auth/google`,
-        {
-          idToken: credentialResponse.credential
-        },
-        {
-          withCredentials: true
-        }
-      );
-  
-
-      console.log("Login Success:");
-        router.push("/admission");
-
-    } catch (error) {
-      console.error("Login failed:", error);
+const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+  try {
+    if (!credentialResponse.credential) {
+      console.error("No credential received");
+      return;
     }
-  };
 
+    const decoded: any = jwtDecode(credentialResponse.credential);
+
+    const googleUser = {
+      name: decoded.name,
+      email: decoded.email,
+      picture: decoded.picture,
+    };
+
+    localStorage.setItem("user", JSON.stringify(googleUser));
+
+    await axios.post(
+      `${apiBaseUrl}/api/auth/google`,
+      {
+        idToken: credentialResponse.credential,
+      },
+      {
+        withCredentials: true,
+      },
+    );
+
+    console.log("Login Success:", googleUser);
+
+    router.push("/student-dashboard");
+  } catch (error) {
+    console.error("Login failed:", error);
+  }
+};
   const triggerGoogleLogin = () => {
     const button = googleButtonRef.current?.querySelector("div[role=button]") as HTMLElement;
     button?.click();

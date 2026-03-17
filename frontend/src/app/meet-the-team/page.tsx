@@ -1,44 +1,53 @@
+"use client";
+
 import Image from "next/image";
-import { Linkedin } from "lucide-react";
+import { Linkedin, Github, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const faculty = {
   name: "Dr. Atul Chauhan",
   role: "Guiding Faculty",
   image: "/team/atulsir.png",
   linkedin: "https://linkedin.com/in/example",
+  github:"",
 };
+
 const collaborators = [
   {
     name: "Manas Kukreja",
     role: "Frontend Developer",
     image: "/team/Mk.jpg",
-    linkedin: "",
+    linkedin: "dfverv",
+    github: "dfvbderf",
   },
   {
     name: "Himesh Badlani",
     role: "Backend Developer",
     image: "/team/badlani.png",
-    linkedin: "",
+    linkedin: "vd",
+    github: "dd",
   },
   {
     name: "Varun Pahuja",
     role: "Backend Developer",
     image: "/team/member2.jpg",
     linkedin: "",
+    github: "",
   },
   {
     name: "Ojasvi Anand Sharma",
     role: "Frontend Developer",
     image: "/team/member3.jpg",
     linkedin: "",
+    github: "",
   },
   {
     name: "Gune Jain",
     role: "UI/UX Designer",
     image: "/team/member4.jpg",
     linkedin: "",
+    github: "",
   },
-
 ];
 
 type MemberCardProps = {
@@ -46,9 +55,10 @@ type MemberCardProps = {
   role: string;
   image: string;
   linkedin: string;
+  github: string;
 };
 
-function MemberCard({ name, role, image ,linkedin}: MemberCardProps) {
+function MemberCard({ name, role, image, linkedin,github }: MemberCardProps) {
   return (
     <div className="bg-white/90 backdrop-blur shadow-lg rounded-xl p-6 text-center hover:shadow-2xl hover:-translate-y-1 transition">
       <div className="flex justify-center mb-4">
@@ -63,23 +73,50 @@ function MemberCard({ name, role, image ,linkedin}: MemberCardProps) {
 
       <h3 className="text-xl font-semibold">{name}</h3>
       <p className="text-sky-600 text-sm mt-1">{role}</p>
-      <div className="w-full flex justify-center mt-4">
-        <a
-          href={linkedin}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-sky-600 text-white hover:bg-sky-700 transition"
-        >
-          <Linkedin size={18} />
-        </a>
-      </div>
+
+      <div className="flex justify-center gap-3 mt-4">
+
+  {linkedin && (
+    <a
+      href={linkedin}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center w-10 h-10 rounded-full bg-sky-600 text-white hover:bg-sky-700 transition"
+    >
+      <Linkedin size={18} />
+    </a>
+  )}
+
+  {github && (
+    <a
+      href={github}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-900 text-white hover:bg-black transition"
+    >
+      <Github size={18} />
+    </a>
+  )}
+
+</div>
     </div>
   );
 }
 
 export default function MeetTheTeam() {
+  const router = useRouter();
+
   return (
-    <section className="min-h-screen bg-gradient-to-b from-sky-50 via-blue-50 to-white py-12 px-6">
+    <section className="min-h-screen bg-linear-to-b from-sky-50 via-blue-50 to-white py-12 px-6">
+      {/* Back Button */}
+      <button
+        onClick={() => router.push("/")}
+        className="fixed top-6 left-8 z-50 flex items-center gap-2 bg-white/80 backdrop-blur border border-gray-200 px-4 py-2 rounded-full shadow-md hover:bg-sky-600 hover:text-white transition"
+      >
+        <ArrowLeft size={18} />
+        Back
+      </button>
+
       {/* Branding Header */}
       <div className="flex flex-col items-center mb-5">
         <Image src="/mits.png" alt="MITS Logo" width={90} height={90} />
@@ -112,7 +149,8 @@ export default function MeetTheTeam() {
               name={member.name}
               role={member.role}
               image={member.image}
-               linkedin={member.linkedin}
+              linkedin={member.linkedin}
+              github={member.github}
             />
           ))}
         </div>
@@ -128,7 +166,8 @@ export default function MeetTheTeam() {
           name={faculty.name}
           role={faculty.role}
           image={faculty.image}
-        linkedin={faculty.linkedin}
+          linkedin={faculty.linkedin}
+          github={faculty.github}
         />
       </div>
     </section>
