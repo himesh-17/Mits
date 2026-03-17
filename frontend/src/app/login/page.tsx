@@ -3,18 +3,14 @@
 import Image from "next/image";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin , CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
 
 export default function LoginPage() {
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
 
-  type GoggleCredentialResposnse = {
-    credential : string;
-  };
-
-  const handleLoginSuccess = async (credentialResponse: GoggleCredentialResposnse) => {
+  const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       await axios.post(
         "http://localhost:8080/api/auth/google",
