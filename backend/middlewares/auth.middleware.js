@@ -5,7 +5,12 @@ import jwt from "jsonwebtoken";
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
 
-    const token = req.cookies?.token;
+    let token = req.cookies?.token;
+
+    // Check Authorization header (Bearer token) if cookie is missing or anyway
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+        token = req.headers.authorization.split(" ")[1];
+    }
 
     if (!token) {
         return sendError(res, "Authentication token missing", 401);
@@ -60,4 +65,4 @@ const requireRole = (...allowedRoles) => {
     };
 };
 
-export {requireRole };
+export { requireRole };

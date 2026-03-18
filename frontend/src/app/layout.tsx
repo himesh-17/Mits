@@ -1,6 +1,12 @@
 import "./globals.css";
-import { Montserrat, DM_Sans } from "next/font/google";
-import ClientProviders from "./providers/ClientProviders";
+import { Montserrat, DM_Sans, Poppins } from "next/font/google";
+import ClientProviders from "../components/layout/ClientProviders";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -20,9 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${montserrat.variable} ${dmSans.variable} font-sans`}>
-        <ClientProviders>{children}</ClientProviders>
+    <html lang="en" className="scroll-smooth">
+      <body
+        className={`${poppins.variable} ${montserrat.variable} ${dmSans.variable} font-sans`}
+      >
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );
