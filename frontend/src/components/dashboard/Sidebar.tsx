@@ -9,17 +9,19 @@ type Props = {
   name: string;
   open: boolean;
   setOpen: (value: boolean) => void;
+  activeView: string;
+  setActiveView: (value: string) => void;
 };
 
-export default function Sidebar({ name, open, setOpen }: Props) {
+export default function Sidebar({ name, open, setOpen, activeView, setActiveView }: Props) {
   // const router = useRouter();
   const router = useRouter();
   const pathname = usePathname();
-  const navItem = (path: string) =>
-    `block w-full text-left px-4 py-2 rounded transition ${
-      pathname === path
-        ? "bg-[#2DA8E1] text-white"
-        : "hover:bg-gray-100 text-gray-700"
+
+  const navItem = (view: string) =>
+    `block w-full text-left px-4 py-2 rounded transition ${activeView === view
+      ? "bg-[#2DA8E1] text-white"
+      : "hover:bg-gray-100 text-gray-700"
     }`;
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -49,36 +51,36 @@ export default function Sidebar({ name, open, setOpen }: Props) {
         <div className="p-6">
           <div className="p-6 border-b flex items-center gap-3">
 
-  <Image
-    src="/mits.png"
-    alt="MITS Logo"
-    width={80}
-    height={80}
-    className="object-contain"
-  />
-          <h2 className="text-xl font-semibold text-[#2DA8E1]">
-            Admission Portal
-          </h2>
+            <Image
+              src="/mits.png"
+              alt="MITS Logo"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
+            <h2 className="text-xl font-semibold text-[#2DA8E1]">
+              Admission Portal
+            </h2>
           </div>
 
           <nav className="mt-6 space-y-3">
             <button
-              onClick={() => router.push("/student-dashboard")}
-              className={navItem("/student-dashboard")}
+              onClick={() => setActiveView("dashboard")}
+              className={navItem("dashboard")}
             >
               Dashboard
             </button>
 
             <button
               onClick={() => router.push("/admission")}
-              className={navItem("/admission")}
+              className={navItem("admission")}
             >
               Application Form
             </button>
 
             <button
-              onClick={() => router.push("/admission/payment")}
-              className={navItem("/admission/payment")}
+              onClick={() => setActiveView("payments")}
+              className={navItem("payments")}
             >
               Payments
             </button>

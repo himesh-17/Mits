@@ -26,7 +26,11 @@ export default function LoginPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
-    if (!credentialResponse.credential) return;
+    if (!credentialResponse.credential) {
+      console.error("No credential received");
+      return;
+    }
+
     try {
       const response = await axios.post(
         `${apiBaseUrl}/api/auth/google`,
@@ -39,7 +43,7 @@ export default function LoginPage() {
       );
 
       // Store token for Authorization header
-      if (response.data.data.token) {
+      if (response.data?.data?.token) {
         localStorage.setItem("authToken", response.data.data.token);
       }
 
@@ -54,7 +58,7 @@ export default function LoginPage() {
         localStorage.setItem("googleUserInfo", JSON.stringify(userInfo));
       }
 
-      console.log("Login Success:");
+      console.log("Login Success");
       toast.success("Login successful!");
       router.push("/student-dashboard");
 
