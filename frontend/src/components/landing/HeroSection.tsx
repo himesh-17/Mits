@@ -1,11 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import Navbar from "../layout/Navbar";
-import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
-  const router = useRouter();
-
   return (
     <section
       id="home"
@@ -13,9 +12,14 @@ export default function HeroSection() {
     >
       <Navbar />
 
-      <div
-        className="absolute inset-0 bg-cover bg-[center30%] md:bg-center"
-        style={{ backgroundImage: "url('/mainhall.jpeg')" }}
+      {/* Background Image */}
+      <Image
+        src="/mainhall.jpeg"
+        alt="MITS Main Hall"
+        fill
+        priority
+        quality={85}
+        className="object-cover object-[center_30%] md:object-center"
       />
 
       {/* Dark Overlay */}
@@ -37,12 +41,12 @@ export default function HeroSection() {
           NAAC A++ Accredited | Deemed University
         </p>
 
-        <button
-          onClick={() => router.push("/login")}
-          className="mt-6 rounded-lg bg-sky-500 px-6 py-3 text-sm sm:text-base md:text-lg font-semibold hover:bg-sky-600 transition shadow-lg"
+        <Link
+          href="/login"
+          className="inline-block mt-6 rounded-lg bg-sky-500 px-6 py-3 text-sm sm:text-base md:text-lg font-semibold hover:bg-sky-600 transition shadow-lg"
         >
           Start Your Application
-        </button>
+        </Link>
       </div>
     </section>
   );
