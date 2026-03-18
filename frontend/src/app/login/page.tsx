@@ -28,6 +28,7 @@ export default function LoginPage() {
       console.error("No credential received");
       return;
     }
+  };
 
     try {
       const response = await axios.post(
