@@ -5,6 +5,7 @@ import ClientProviders from "../components/layout/ClientProviders";
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
 });
 
 const montserrat = Montserrat({
@@ -26,7 +27,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${montserrat.variable} ${dmSans.variable} font-sans`}>
+      <body
+        className={`${poppins.variable} ${montserrat.variable} ${dmSans.variable} font-sans`}
+      >
         <ClientProviders>
           {children}
         </ClientProviders>

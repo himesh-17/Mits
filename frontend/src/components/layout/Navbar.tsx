@@ -3,15 +3,27 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const MenuIcon = dynamic(() => import("lucide-react").then((mod) => mod.Menu));
+
+const CloseIcon = dynamic(() => import("lucide-react").then((mod) => mod.X));
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 80);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 80);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -20,7 +32,7 @@ export default function Navbar() {
 
   return (
     <>
-      {/* LOGO (disappears on scroll) */}
+      {/* LOGO */}
       <div
         className={`fixed top-4 left-6 z-50 transition-all duration-700 ${
           scrolled
@@ -31,7 +43,7 @@ export default function Navbar() {
         <Image src="/mits.png" alt="MITS Logo" width={100} height={100} />
       </div>
 
-      {/* DESKTOP CIRCULAR NAVBAR */}
+      {/* DESKTOP NAVBAR */}
       <div className="hidden md:block fixed top-6 right-32 z-40 transition-all duration-300">
         <div
           className={`flex items-center gap-8 rounded-full px-10 py-3 text-white shadow-lg font-[var(--font-navbar)] transition-all duration-300 ${
@@ -53,17 +65,17 @@ export default function Navbar() {
             About
           </Link>
 
-          <a href="/meet-the-team" className="hover:text-sky-400 transition">
+          <Link href="/meet-the-team" className="hover:text-sky-400 transition">
             Meet the Team
-          </a>
+          </Link>
 
-          <a href="/contact" className="hover:text-sky-400 transition">
+          <Link href="/contact" className="hover:text-sky-400 transition">
             Contact
-          </a>
+          </Link>
         </div>
       </div>
 
-      {/* LOGIN BUTTON (desktop) */}
+      {/* LOGIN BUTTON */}
       <div className="hidden md:block fixed top-9 right-6 z-50">
         <Link
           href="/login"
@@ -78,16 +90,18 @@ export default function Navbar() {
         className="md:hidden fixed top-6 right-6 z-50 text-gray-400"
         onClick={() => setOpen(!open)}
       >
-        {open ? <X size={28} /> : <Menu size={28} />}
+        {open ? <CloseIcon size={28} /> : <MenuIcon size={28} />}
       </button>
 
       {/* MOBILE MENU */}
-      {/* MOBILE MENU */}
       <div
         className={`md:hidden fixed top-0 left-0 w-full h-screen bg-black/90 backdrop-blur-lg flex flex-col items-center justify-center gap-8 text-white text-lg z-40
-  transform transition-all duration-500 ease-in-out
-  ${open ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"}
-  `}
+        transform transition-all duration-500 ease-in-out
+        ${
+          open
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0 pointer-events-none"
+        }`}
       >
         <a
           href="https://web.mitsgwalior.in/"
@@ -102,13 +116,13 @@ export default function Navbar() {
           About
         </Link>
 
-        <a href="/meet-the-team" className="hover:text-sky-400 transition">
+        <Link href="/meet-the-team" className="hover:text-sky-400 transition">
           Meet the Team
-        </a>
+        </Link>
 
-        <a href="/contact" className="hover:text-sky-400 transition">
+        <Link href="/contact" className="hover:text-sky-400 transition">
           Contact
-        </a>
+        </Link>
 
         <Link
           href="/login"

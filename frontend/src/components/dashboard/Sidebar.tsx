@@ -1,27 +1,47 @@
 "use client";
 
-// import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import { getInitials } from "../../utils/getInitials";
+
+
+const LogOut = dynamic(() => import("lucide-react").then((mod) => mod.LogOut));
+
 type Props = {
   name: string;
   open: boolean;
   setOpen: (value: boolean) => void;
+  setActiveView: (view: string) => void;
+  activeView: string;
 };
 
-export default function Sidebar({ name, open, setOpen }: Props) {
-  // const router = useRouter();
+const navItems = [
+  { label: "Dashboard", view: "dashboard" },
+  { label: "Application Form", route: "/admission" },
+  { label: "Payments", view: "payments" },
+  { label: "Profile", route: "/profile" },
+];
+
+export default function Sidebar({
+  name,
+  open,
+  setOpen,
+  setActiveView,
+  activeView,
+}: Props) {
   const router = useRouter();
-  const pathname = usePathname();
-  const navItem = (path: string) =>
+  const initials = useMemo(() => getInitials(name), [name]);
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const navItemStyle = (view: string) =>
     `block w-full text-left px-4 py-2 rounded transition ${
-      pathname === path
+      activeView === view
         ? "bg-[#2DA8E1] text-white"
         : "hover:bg-gray-100 text-gray-700"
     }`;
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
     <>
@@ -34,73 +54,62 @@ export default function Sidebar({ name, open, setOpen }: Props) {
       )}
 
       <aside
-        className={`
-  fixed lg:relative
-  bg-white border-r
-  h-screen w-72
-  transform transition-transform duration-300
-  ${open ? "translate-x-0" : "-translate-x-full"}
-  lg:translate-x-0
-  flex flex-col justify-between
-  z-50
-  `}
+        className={`fixed lg:relative bg-white border-r h-screen w-72
+        transform transition-transform duration-300
+        ${open ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0 flex flex-col justify-between z-50`}
       >
-        {/* Top Section */}
+        {/* Top */}
         <div className="p-6">
           <div className="p-6 border-b flex items-center gap-3">
+            <Image
+              src="/mits.png"
+              alt="MITS Logo"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
 
-  <Image
-    src="/mits.png"
-    alt="MITS Logo"
-    width={80}
-    height={80}
-    className="object-contain"
-  />
-          <h2 className="text-xl font-semibold text-[#2DA8E1]">
-            Admission Portal
-          </h2>
+            <h2 className="text-xl font-semibold text-[#2DA8E1]">
+              Admission Portal
+            </h2>
           </div>
 
           <nav className="mt-6 space-y-3">
-            <button
-              onClick={() => router.push("/student-dashboard")}
-              className={navItem("/student-dashboard")}
-            >
-              Dashboard
-            </button>
+            {navItems.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  if (item.view) {
+                    setActiveView(item.view);
+                  }
 
-            <button
-              onClick={() => router.push("/admission")}
-              className={navItem("/admission")}
-            >
-              Application Form
-            </button>
+                  if (item.route) {
+                    router.push(item.route);
+                  }
 
-            <button
-              onClick={() => router.push("/admission/payment")}
-              className={navItem("/admission/payment")}
-            >
-              Payments
-            </button>
-
-            <button
-              onClick={() => router.push("/profile")}
-              className={navItem("/profile")}
-            >
-              Profile
-            </button>
+                  if (window.innerWidth < 1024) {
+                    setOpen(false);
+                  }
+                }}
+                className={
+                  item.view
+                    ? navItemStyle(item.view)
+                    : "block w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-gray-700"
+                }
+              >
+                {item.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        {/* Bottom Section */}
+        {/* Bottom */}
         <div className="p-4 border-t border-gray-300">
           {/* User */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-[#2DA8E1] text-white rounded-full flex items-center justify-center font-semibold">
-              {name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
+            <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-semibold">
+              {initials}
             </div>
 
             <div>
@@ -114,7 +123,7 @@ export default function Sidebar({ name, open, setOpen }: Props) {
             ID: <span className="text-[#2DA8E1] font-medium">MK-2026-2910</span>
           </p>
 
-          {/* Logout Button */}
+          {/* Logout */}
           <button
             onClick={() => setShowLogoutModal(true)}
             className="w-full flex items-center justify-center gap-2 text-red-600 border border-red-200 hover:bg-red-50 px-3 py-2 rounded-md text-sm font-medium transition"

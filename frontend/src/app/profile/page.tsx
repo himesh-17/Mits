@@ -1,9 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 export default function ProfilePage() {
   const name = "Manas Kukreja";
+  const router = useRouter();
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -12,33 +16,49 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <div className="bg-white border-b px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Image src="/mits.png" alt="MITS Logo" width={50} height={50} />
+      
 
-          <h1 className="text-2xl font-semibold text-[#2DA8E1]">
-            Admission Portal
-          </h1>
-        </div>
-      </div>
+      <div className="bg-white border-b px-4 sm:px-6 md:px-8 py-4 flex items-center gap-4">
+
+  {/* Back Button */}
+  <button
+    onClick={() => router.push("/student-dashboard")}
+    className="flex items-center gap-2 text-gray-600 hover:text-black"
+  >
+    <ArrowLeft size={20} />
+    Back
+  </button>
+
+  {/* Logo */}
+  <Image src="/mits.png" alt="MITS Logo" width={40} height={40} />
+
+  {/* Title */}
+  <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-[#2DA8E1]">
+    Admission Portal
+  </h1>
+
+</div>
+      
 
       {/* Profile Content */}
-      <div className="max-w-5xl mx-auto p-8">
-        <div className="bg-white rounded-xl shadow-sm p-8">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
+        <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8">
           {/* Avatar + Name */}
-          <div className="flex items-center gap-6 border-b pb-6">
-            <div className="w-20 h-20 bg-[#2DA8E1] text-white rounded-full flex items-center justify-center text-2xl font-semibold">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 border-b pb-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2DA8E1] text-white rounded-full flex items-center justify-center text-xl sm:text-2xl font-semibold">
               {initials}
             </div>
 
-            <div>
-              <h2 className="text-2xl font-semibold">{name}</h2>
-              <p className="text-gray-500">Student Applicant</p>
+            <div className="text-center sm:text-left">
+              <h2 className="text-xl sm:text-2xl font-semibold">{name}</h2>
+              <p className="text-gray-500 text-sm sm:text-base">
+                Student Applicant
+              </p>
             </div>
           </div>
 
           {/* Student Details */}
-          <div className="grid grid-cols-2 gap-6 mt-8 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8 text-sm">
             <div>
               <p className="text-gray-500">Application ID</p>
               <p className="font-medium">MK-2026-2910</p>
@@ -61,7 +81,9 @@ export default function ProfilePage() {
 
             <div>
               <p className="text-gray-500">Email</p>
-              <p className="font-medium">manaskukreja2910@email.com</p>
+              <p className="font-medium break-all">
+                manaskukreja2910@email.com
+              </p>
             </div>
 
             <div>
