@@ -17,11 +17,13 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+import toast from "react-hot-toast";
+
 export default function LoginPage() {
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) return;
@@ -53,10 +55,16 @@ export default function LoginPage() {
       }
 
       console.log("Login Success:");
+      toast.success("Login successful!");
       router.push("/student-dashboard");
 
     } catch (error) {
       console.error("Login failed:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(`Login failed: ${error.message}. Please check if the server is running at ${apiBaseUrl}`);
+      } else {
+        toast.error("An unexpected error occurred during login.");
+      }
     }
   };
 

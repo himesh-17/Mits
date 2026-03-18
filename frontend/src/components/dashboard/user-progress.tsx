@@ -1,18 +1,25 @@
 type UserProgressProps = {
   name: string;
   progress: number;
+  picture?: string;
 };
+
 function getProgressColor(progress: number) {
   if (progress < 50) return "bg-red-600";
   if (progress < 80) return "bg-yellow-400";
   return "bg-green-600";
 }
-export default function UserProgress({ name, progress }: UserProgressProps) {
+
+export default function UserProgress({ name, progress, picture }: UserProgressProps) {
   return (
     <div className="flex items-center gap-4 mb-6">
       {/* Avatar */}
-      <div className="w-12 h-12 rounded-full bg-[#2DA8E1] flex items-center justify-center text-white font-semibold text-lg">
-        {name.charAt(0)}
+      <div className="w-12 h-12 rounded-full bg-[#2DA8E1] flex items-center justify-center text-white font-semibold text-lg overflow-hidden flex-shrink-0">
+        {picture ? (
+          <img src={picture} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          name.charAt(0)
+        )}
       </div>
 
       {/* Name + Progress */}

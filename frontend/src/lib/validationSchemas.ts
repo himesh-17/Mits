@@ -103,6 +103,8 @@ export const paymentSchema = z.object({
     upiId: z
         .string()
         .min(1, "UPI ID is required")
+        .min(10, "UPI ID must be at least 10 characters")
+        .max(40, "UPI ID must be under 40 characters")
         .regex(/^[a-zA-Z0-9.\-_]+@[a-zA-Z]+$/, "Please enter a valid UPI ID (e.g. name@bank)"),
     transactionId: z
         .string()

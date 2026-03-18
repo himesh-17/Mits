@@ -13,20 +13,15 @@ import PendingActions from "../../components/dashboard/PendingActions";
 import ProfileSummary from "../../components/dashboard/ProfileSummary";
 import DeadlinesCard from "../../components/dashboard/DeadlinesCard";
 import UserProgress from "../../components/dashboard/user-progress";
-
-interface GoogleUserInfo {
-  name: string;
-  email: string;
-  picture?: string;
-}
+import { useAdmissionForm } from "../../context/AdmissionContext";
 
 export default function StudentDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [googleUser, setGoogleUser] = useState<GoogleUserInfo | null>(null);
+  const { googleUser, formData } = useAdmissionForm();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
   useEffect(() => {
     async function validateSession() {
@@ -37,11 +32,6 @@ export default function StudentDashboard() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         setIsAuthorized(true);
-
-        const saved = localStorage.getItem("googleUserInfo");
-        if (saved) {
-          setGoogleUser(JSON.parse(saved));
-        }
       } catch (error) {
         console.error("Session validation failed:", error);
         router.replace("/login");
@@ -57,14 +47,21 @@ export default function StudentDashboard() {
     return null;
   }
 
+  // Calculate dynamic progress
+  let progress = 0;
+  if (formData.fullName && formData.email) progress = 25;
+  if (formData.programApplied && formData.branch) progress = 50;
+  if (formData.docsUploaded && Object.keys(formData.docsUploaded).length > 0) progress = 75;
+  if (formData.transactionId) progress = 100;
+
   const user = {
     name: googleUser?.name || "Student",
     id: "MK-2026-2910",
-    progress: 90,
-    course: "Btech CSE",
+    progress: progress,
+    course: formData.programApplied ? `${formData.programApplied.toUpperCase()} ${formData.branch?.toUpperCase() || ''}` : "Not Selected",
     category: "General",
     email: googleUser?.email || "student@email.com",
-    phone: "9827437110",
+    phone: formData.mobile || "Not Provided",
   };
 
   return (
@@ -78,7 +75,7 @@ export default function StudentDashboard() {
         />
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <UserProgress name={user.name} progress={user.progress} />
+          <UserProgress name={user.name} progress={user.progress} picture={googleUser?.picture} />
 
           {/* Start Application Button */}
           <div className="mb-6">

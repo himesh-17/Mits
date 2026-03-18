@@ -143,6 +143,7 @@ export default function ContactDetails() {
                     rows={4}
                     placeholder="Flat No., Building, Street Area..."
                     {...register("address")}
+                    maxLength={200}
                     aria-invalid={!!errors.address}
                     aria-describedby={errors.address ? "address-error" : undefined}
                     className={`w-full px-3 py-2.5 rounded-md border text-sm text-[#0F172A] placeholder-[#94A3B8] resize-none focus:outline-none focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9] transition-colors ${errors.address ? 'border-red-400 bg-red-50/50' : 'border-[#E5E7EB]'}`}

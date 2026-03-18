@@ -73,7 +73,12 @@ export default function PaymentSubmission() {
                     <input
                         type="text"
                         placeholder="yourname@bank"
-                        {...register("upiId")}
+                        {...register("upiId", {
+                            onChange: (e) => {
+                                e.target.value = e.target.value.replace(/[^a-zA-Z0-9.\-_@]/g, "");
+                            }
+                        })}
+                        maxLength={40}
                         aria-invalid={!!errors.upiId}
                         aria-describedby={errors.upiId ? "upiId-error" : undefined}
                         className={`w-full h-12 px-4 rounded-lg border text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9] transition-shadow shadow-sm ${errors.upiId ? 'border-red-400 bg-red-50/50' : 'border-[#CBD5E1]'}`}
@@ -90,7 +95,12 @@ export default function PaymentSubmission() {
                     <input
                         type="text"
                         placeholder="UPI Transaction Transfer ID"
-                        {...register("transactionId")}
+                        {...register("transactionId", {
+                            onChange: (e) => {
+                                e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                            }
+                        })}
+                        maxLength={40}
                         aria-invalid={!!errors.transactionId}
                         aria-describedby={errors.transactionId ? "transactionId-error" : undefined}
                         className={`w-full h-12 px-4 rounded-lg border text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9] transition-shadow shadow-sm ${errors.transactionId ? 'border-red-400 bg-red-50/50' : 'border-[#CBD5E1]'}`}
