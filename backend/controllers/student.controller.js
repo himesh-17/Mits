@@ -48,11 +48,18 @@ const getOrCreateApplication = asyncHandler(async (req, res) => {
 // PATCH /api/student/application
 const updateApplication = asyncHandler(async (req, res) => {
     const allowed = [
+        // Step 1 – Identity
         "fullName", "fatherName", "motherName", "dateOfBirth", "gender",
-        "category", "nationality", "religion", "phone", "alternatePhone",
-        "address", "city", "state", "pincode",
-        "branch", "course", "semester", "rollNumber",
-        "previousInstitution", "previousPercentage", "admissionYear",
+        // Step 1 – Contact
+        "email", "phone", "fatherPhone", "motherPhone", "address",
+        // Step 1 – Hobbies & achievements
+        "hobbies", "otherAchievements",
+        // Step 2 – Academic
+        "programApplied", "branch",
+        "tenthMarks", "twelfthMarks",
+        "tenthBoard", "twelfthBoard",
+        "tenthPassingYear", "twelfthPassingYear",
+        "entranceExam", "entranceScoreOrRank",
     ];
     const updates = {};
     for (const f of allowed) {
@@ -76,8 +83,22 @@ const submitApplication = asyncHandler(async (req, res) => {
     });
     if (!app) throw new ApiError(400, "No draft application found to submit");
 
-    for (const f of ["fullName", "phone", "branch", "course"]) {
-        if (!app[f]) throw new ApiError(400, `Missing required field: ${f}`);
+    const requiredFields = [
+        // Identity
+        "fullName", "fatherName", "dateOfBirth", "gender",
+        // Contact
+        "email", "phone", "fatherPhone", "motherPhone", "address",
+        // Academic
+        "programApplied", "branch",
+        "tenthMarks", "twelfthMarks",
+        "tenthBoard", "twelfthBoard",
+        "tenthPassingYear", "twelfthPassingYear",
+    ];
+    for (const f of requiredFields) {
+        const val = app[f];
+        if (val === undefined || val === null || val === "") {
+            throw new ApiError(400, `Missing required field: ${f}`);
+        }
     }
 
     app.status = "submitted";
@@ -151,38 +172,32 @@ const getMyPayment = asyncHandler(async (req, res) => {
 
 // POST /api/student/payment/submit
 const submitPayment = asyncHandler(async (req, res) => {
-    const { challanFileUrl, paymentMode, transactionId, amount } = req.body;
-    if (!challanFileUrl && !transactionId) {
-        throw new ApiError(400, "Provide challanFileUrl or transactionId");
-    }
+    const { upiId, transactionId, screenshotUrl, amount } = req.body;
 
-    const normalizedMode = (paymentMode || "").toLowerCase();
-    if (normalizedMode && !["online", "offline"].includes(normalizedMode)) {
-        throw new ApiError(400, "paymentMode must be online or offline");
+    if (!upiId) throw new ApiError(400, "upiId is required");
+    if (!transactionId) throw new ApiError(400, "transactionId is required");
+    if (!screenshotUrl) throw new ApiError(400, "screenshotUrl is required");
+
+    if (!/^[a-zA-Z0-9._@-]{3,80}$/.test(upiId)) {
+        throw new ApiError(400, "upiId format is invalid (e.g. yourname@bank)");
     }
-    if (normalizedMode === "online" && !transactionId) {
-        throw new ApiError(400, "transactionId is required for online payments");
-    }
-    if (normalizedMode === "offline" && !challanFileUrl) {
-        throw new ApiError(400, "challanFileUrl is required for offline payments");
-    }
-    if (challanFileUrl && !isAllowedFileUrl(challanFileUrl)) {
-        throw new ApiError(400, "challanFileUrl must be a valid https URL and pass allowed host checks");
-    }
-    if (transactionId && !/^[a-zA-Z0-9_-]{6,64}$/.test(transactionId)) {
+    if (!/^[a-zA-Z0-9_-]{6,64}$/.test(transactionId)) {
         throw new ApiError(400, "transactionId format is invalid");
+    }
+    if (!isAllowedFileUrl(screenshotUrl)) {
+        throw new ApiError(400, "screenshotUrl must be a valid https URL");
     }
 
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
 
     if (!["documents_verified", "payment_pending"].includes(app.status)) {
-        throw new ApiError(400, `Payment not allowed at status: ${app.status}`);
+        throw new ApiError(400, `Payment not allowed at current application status: ${app.status}`);
     }
 
     const normalizedAmount = Number(amount);
     if (amount === undefined || Number.isNaN(normalizedAmount) || normalizedAmount <= 0) {
-        throw new ApiError(400, "amount is required and must be a number greater than 0");
+        throw new ApiError(400, "amount is required and must be a positive number");
     }
 
     const session = await mongoose.startSession();
@@ -195,9 +210,10 @@ const submitPayment = asyncHandler(async (req, res) => {
                     $set: {
                         student: req.user.id,
                         application: app._id,
-                        challanFileUrl: challanFileUrl || "",
-                        paymentMode: normalizedMode || "",
-                        transactionId: transactionId || "",
+                        upiId,
+                        transactionId,
+                        screenshotUrl,
+                        paymentMode: "online",
                         amount: normalizedAmount,
                         status: "submitted",
                     },
