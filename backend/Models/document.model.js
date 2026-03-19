@@ -26,7 +26,7 @@ const documentSchema = new mongoose.Schema(
                 "income_certificate",
                 "domaicile",
                 "jee_result",
-                "other",            // Signature
+                "other",            
             ],
             required: true,
         },
