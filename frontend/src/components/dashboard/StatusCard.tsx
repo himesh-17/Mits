@@ -1,6 +1,9 @@
+import Link from "next/link";
+
 interface Props {
   progress: number;
   id: string;
+  nextStepRoute?: string;
 }
 
 function getColor(progress: number) {
@@ -9,7 +12,7 @@ function getColor(progress: number) {
   return "bg-green-600";
 }
 
-export default function StatusCard({ progress, id }: Props) {
+export default function StatusCard({ progress, id, nextStepRoute }: Props) {
   const showDetails = progress > 0;
 
   return (
@@ -32,14 +35,14 @@ export default function StatusCard({ progress, id }: Props) {
 
       <div className="flex flex-wrap gap-3 mt-4">
         {showDetails && (
-          <button className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition">
+          <Link href="/admission/review" className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition text-center">
             View Details
-          </button>
+          </Link>
         )}
 
-        <button className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition">
-          Complete Your Form
-        </button>
+        <Link href={nextStepRoute || "/admission"} className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition text-center">
+          {progress === 100 ? "Review Application" : "Complete Your Form"}
+        </Link>
       </div>
     </div>
   );

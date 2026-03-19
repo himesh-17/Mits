@@ -33,7 +33,9 @@ const applicationSchema = new mongoose.Schema(
         programApplied: { type: String, trim: true, default: "" },
         branch: {
             type: String,
-            enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
+            enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI",
+                   // lowercase variants sent by the current frontend dropdown
+                   "cse", "ee", "ece", "mech", "civil", "iot", "it", "et", "ai"],
             default: "",
         },
         tenthMarks: { type: Number, default: null },

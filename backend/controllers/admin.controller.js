@@ -85,29 +85,22 @@ const setUserRole = asyncHandler(async (req, res) => {
     const validRoles = ["student", "administrator", "admissionCell", "generalOffice", "accountOffice", "hod"];
     if (!validRoles.includes(role)) throw new ApiError(400, `Invalid role`);
 
-    const session = await User.startSession();
-    let user;
-    try {
-        await session.withTransaction(async () => {
-            user = await User.findByIdAndUpdate(
-                req.params.userId,
-                { role },
-                { new: true, session }
-            ).select("-googleSub");
-            if (!user) throw new ApiError(404, "User not found");
+    let user = await User.findByIdAndUpdate(
+        req.params.userId,
+        { role },
+        { new: true }
+    ).select("-googleSub");
+    
+    if (!user) throw new ApiError(404, "User not found");
 
-            if (role === "student") {
-                await RoleAssignment.findOneAndDelete({ email: user.email }, { session });
-            } else {
-                await RoleAssignment.findOneAndUpdate(
-                    { email: user.email },
-                    { role, assignedBy: req.user.id },
-                    { upsert: true, session }
-                );
-            }
-        });
-    } finally {
-        await session.endSession();
+    if (role === "student") {
+        await RoleAssignment.findOneAndDelete({ email: user.email });
+    } else {
+        await RoleAssignment.findOneAndUpdate(
+            { email: user.email },
+            { role, assignedBy: req.user.id },
+            { upsert: true }
+        );
     }
 
     return sendSuccess(res, "User role updated", { user });
@@ -220,20 +213,12 @@ const dataMatching = asyncHandler(async (req, res) => {
 // DELETE /api/admin/applications/:applicationId
 // Hard delete an application (admin only)
 const deleteApplication = asyncHandler(async (req, res) => {
-    const session = await Application.startSession();
+    const app = await Application.findById(req.params.applicationId);
+    if (!app) throw new ApiError(404, "Application not found");
 
-    try {
-        await session.withTransaction(async () => {
-            const app = await Application.findById(req.params.applicationId).session(session);
-            if (!app) throw new ApiError(404, "Application not found");
-
-            await Application.deleteOne({ _id: app._id }, { session });
-            await Document.deleteMany({ application: app._id }, { session });
-            await Payment.deleteMany({ application: app._id }, { session });
-        });
-    } finally {
-        await session.endSession();
-    }
+    await Application.deleteOne({ _id: app._id });
+    await Document.deleteMany({ application: app._id });
+    await Payment.deleteMany({ application: app._id });
 
     return sendSuccess(res, "Application deleted");
 });

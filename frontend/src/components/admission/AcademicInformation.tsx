@@ -67,8 +67,15 @@ export default function AcademicInformation() {
                             className={selectClass(!!errors.branch)}
                         >
                             <option value="">Select Branch</option>
-                            <option value="cse">Computer Science</option>
-                            <option value="ee">Electrical</option>
+                            <option value="CSE">Computer Science (CSE)</option>
+                            <option value="EE">Electrical (EE)</option>
+                            <option value="ECE">Electronics & Communication (ECE)</option>
+                            <option value="MECH">Mechanical (MECH)</option>
+                            <option value="CIVIL">Civil (CIVIL)</option>
+                            <option value="IOT">Internet of Things (IOT)</option>
+                            <option value="IT">Information Technology (IT)</option>
+                            <option value="ET">Electronics & Telecommunication (ET)</option>
+                            <option value="AI">Artificial Intelligence (AI)</option>
                         </select>
                         <ChevronIcon />
                     </div>

@@ -14,13 +14,20 @@ export default function AcademicActions() {
     const { handleSubmit, formState: { isValid } } = useFormContext<AcademicFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const onSubmit = (data: AcademicFormData) => {
+    const onSubmit = async (data: AcademicFormData) => {
         setIsSubmitting(true);
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            // Pass validated data directly to saveAsDraft — this sidesteps any
+            // React state batching delay and guarantees the backend receives the
+            // latest branch/marks values before we navigate away.
+            await saveAsDraft(data);
             toast.success("Academic details saved!");
             router.push('/admission/documents');
-        }, 400);
+        } catch {
+            toast.error("Failed to save. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleInvalid = () => {

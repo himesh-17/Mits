@@ -72,6 +72,52 @@ export default function StudentDashboard() {
     phone: formData.mobile || "Not Provided",
   };
 
+  // Determine Pending Actions & Next Step
+  const pendingActions = [];
+
+  const hasPersonalDetails = !!(formData.fullName && formData.email && formData.mobile && formData.address);
+  if (!hasPersonalDetails) {
+    pendingActions.push({
+      title: "Fill Personal Details",
+      description: "Complete personal information",
+      buttonText: "Fill Form",
+      route: "/admission",
+    });
+  }
+
+  const hasAcademicDetails = !!(formData.programApplied && formData.branch);
+  if (!hasAcademicDetails) {
+    pendingActions.push({
+      title: "Submit Academic Records",
+      description: "10th & 12th details, program selection",
+      buttonText: "Fill Form",
+      route: "/admission/academic",
+    });
+  }
+
+  const hasDocs = !!(formData.docsUploaded && Object.keys(formData.docsUploaded).length > 0);
+  if (!hasDocs) {
+    pendingActions.push({
+      title: "Upload Required Documents",
+      description: "Aadhar, Photo, Marksheets required",
+      buttonText: "Upload",
+      route: "/admission/documents",
+    });
+  }
+
+  const hasPaid = !!formData.transactionId;
+  if (!hasPaid) {
+    pendingActions.push({
+      title: "Pay Admission Fee",
+      description: "Pay fee for seat confirmation",
+      buttonText: "Pay now",
+      route: "/admission/payment",
+    });
+  }
+
+  const nextStepRoute = pendingActions.length > 0 ? pendingActions[0].route : "/admission/review";
+
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       <Sidebar
@@ -97,7 +143,7 @@ export default function StudentDashboard() {
 
               {/* Start Application Button */}
               <div className="mb-6">
-                <Link href="/admission">
+                <Link href={nextStepRoute}>
                   <div className="bg-gradient-to-r from-[#0EA5E9] to-[#38BDF8] rounded-xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer group active:scale-[0.99]">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
@@ -120,8 +166,8 @@ export default function StudentDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <StatusCard progress={user.progress} id={user.id} />
-                  <PendingActions />
+                  <StatusCard progress={user.progress} id={user.id} nextStepRoute={nextStepRoute} />
+                  <PendingActions actions={pendingActions} />
                 </div>
 
                 <div className="space-y-6">

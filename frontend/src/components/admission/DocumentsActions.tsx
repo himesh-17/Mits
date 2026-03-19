@@ -72,11 +72,23 @@ export default function DocumentsActions() {
             toast.success("Documents saved! Proceeding to payment.");
             router.push("/admission/payment");
         } catch (error: unknown) {
-            const msg =
-                (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message ||
-                "Failed to save documents. Please try again.";
-            toast.error(msg);
+            // Extract the most specific message available from the backend response.
+            // The ApiError class returns { message: "..." } in response.data.message.
+            const axiosErr = error as {
+                response?: { data?: { message?: string }; status?: number };
+                message?: string;
+            };
+            const backendMsg = axiosErr?.response?.data?.message;
+            const httpStatus = axiosErr?.response?.status;
+
+            if (backendMsg) {
+                // Show the clear backend message (e.g. "Missing fields: phone, tenthMarks")
+                toast.error(backendMsg);
+            } else if (httpStatus === 500) {
+                toast.error("Server error — please try again or contact support.");
+            } else {
+                toast.error(axiosErr?.message || "Failed to save documents. Please try again.");
+            }
         } finally {
             setIsSubmitting(false);
         }
