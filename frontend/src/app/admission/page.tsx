@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { UserRound, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAdmissionForm } from "../../context/AdmissionContext";
 import { personalSchema, PersonalFormData } from "../../lib/validationSchemas";
+import { api } from "../../utils/api";
 
 import AdmissionHeader from "../../components/admission/AdmissionHeader";
 import ProgressBar from "../../components/admission/ProgressBar";
@@ -23,6 +25,24 @@ import AdmissionNavbar from "../../components/admission/AdmissionNavbar";
 
 export default function AdmissionPage() {
     const { formData, updateFormData } = useAdmissionForm();
+    const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+
+    // Auth guard — redirect to login if session is invalid
+    useEffect(() => {
+        async function validateSession() {
+            try {
+                await api.get("/api/auth/me");
+                setIsAuthorized(true);
+            } catch {
+                router.replace("/login");
+            } finally {
+                setIsChecking(false);
+            }
+        }
+        validateSession();
+    }, [router]);
 
     const methods = useForm<PersonalFormData>({
         resolver: zodResolver(personalSchema),
@@ -53,6 +73,8 @@ export default function AdmissionPage() {
         });
         return () => subscription.unsubscribe();
     }, [methods, updateFormData]);
+
+    if (isChecking || !isAuthorized) return null;
 
     return (
         <FormProvider {...methods}>

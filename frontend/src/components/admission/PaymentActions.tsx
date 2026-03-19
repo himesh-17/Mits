@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,28 +8,23 @@ import { PaymentFormData } from "../../lib/validationSchemas";
 
 interface PaymentActionsProps {
     onSubmit: () => void;
+    isSubmitting?: boolean;
 }
 
-export default function PaymentActions({ onSubmit }: PaymentActionsProps) {
+export default function PaymentActions({ onSubmit, isSubmitting = false }: PaymentActionsProps) {
     const router = useRouter();
-    const { formData, saveAsDraft } = useAdmissionForm();
+    const { formData } = useAdmissionForm();
     const { handleSubmit, formState: { isValid } } = useFormContext<PaymentFormData>();
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isScreenshotUploaded = !!formData.docsUploaded?.["payment"];
     const canSubmit = isValid && isScreenshotUploaded;
 
-    const onFormSubmit = (data: PaymentFormData) => {
+    const onFormSubmit = (_data: PaymentFormData) => {
         if (!isScreenshotUploaded) {
             toast.error("Please upload a payment screenshot");
             return;
         }
-
-        setIsSubmitting(true);
-        setTimeout(() => {
-            setIsSubmitting(false);
-            onSubmit();
-        }, 600);
+        onSubmit();
     };
 
     const handleInvalid = () => {

@@ -26,8 +26,10 @@ function isAllowedFileUrl(fileUrl) {
             .map((v) => v.trim().toLowerCase())
             .filter(Boolean);
 
+        // Fail closed: if no hosts are configured, deny all URLs.
+        // Set ALLOWED_UPLOAD_HOSTS in .env to enable uploads.
         if (allowedHosts.length === 0) {
-            return true;
+            return false;
         }
 
         return allowedHosts.includes(parsed.hostname.toLowerCase());

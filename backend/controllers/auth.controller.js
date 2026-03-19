@@ -47,7 +47,7 @@ const googleLogin = asyncHandler(async (req, res) => {
                     ...(profile.emailVerified ? { email: profile.email } : {}),
                 },
                 $setOnInsert: {
-                    role: profile.role || "student",
+                    role: "student",
                 },
             },
             { upsert: true, returnDocument: "after" }

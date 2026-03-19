@@ -10,16 +10,17 @@ export default function DocumentsUploadForm() {
     const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
     const [filePreviews, setFilePreviews] = useState<Record<string, string>>({});
 
+    // NOTE: ids must match the backend Document model's docType enum
     const documents = [
-        { id: "identity", label: "Identity Proof (Aadhaar/Pan)", required: true },
-        { id: "10th", label: "10th Marksheet", required: true },
-        { id: "12th", label: "12th Marksheet", required: true },
-        { id: "entrance", label: "Entrance Exam Scorecard (Optional)", required: false },
-        { id: "category", label: "Category Certificate (if applicable)", required: false },
-        { id: "domicile", label: "Domicile Certificate", required: true },
-        { id: "abc", label: "ABC ID", required: false },
-        { id: "photo", label: "Passport size photo", required: true },
-        { id: "signature", label: "Signature", required: true },
+        { id: "aadhar",       label: "Identity Proof (Aadhaar/Pan)",   required: true },
+        { id: "marksheet_10", label: "10th Marksheet",                  required: true },
+        { id: "marksheet_12", label: "12th Marksheet",                  required: true },
+        { id: "jee_result",   label: "Entrance Exam Scorecard (Optional)", required: false },
+        { id: "caste_certificate", label: "Category Certificate (if applicable)", required: false },
+        { id: "domaicile",    label: "Domicile Certificate",            required: true },
+        { id: "other",        label: "ABC ID",                          required: false },
+        { id: "photo",        label: "Passport size photo",             required: true },
+        { id: "signature",    label: "Signature",                       required: true },
     ];
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, docId: string) => {

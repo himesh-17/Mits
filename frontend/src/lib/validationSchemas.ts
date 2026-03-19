@@ -4,13 +4,11 @@ import { z } from "zod";
 export const personalSchema = z.object({
     fullName: z
         .string()
-        .min(1, "Full Name is required")
         .min(3, "Name must be between 3 and 50 characters")
         .max(50, "Name must be between 3 and 50 characters")
         .regex(/^[A-Za-z ]+$/, "Name must contain only letters"),
     fatherName: z
         .string()
-        .min(1, "Father's Name is required")
         .min(3, "Name must be between 3 and 50 characters")
         .max(50, "Name must be between 3 and 50 characters")
         .regex(/^[A-Za-z ]+$/, "Name must contain only letters"),
@@ -42,7 +40,6 @@ export const personalSchema = z.object({
         .regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits"),
     address: z
         .string()
-        .min(1, "Permanent address is required")
         .min(10, "Address must be at least 10 characters")
         .max(200, "Address must be under 200 characters"),
     hobbies: z.array(z.string()).optional(),
@@ -58,11 +55,13 @@ export const academicSchema = z.object({
     marks10th: z
         .string()
         .min(1, "10th marks are required")
-        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100"),
+        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100")
+        .refine((v) => parseFloat(v) >= 33, { message: "Minimum qualifying mark is 33%" }),
     marks12th: z
         .string()
         .min(1, "12th marks are required")
-        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100"),
+        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100")
+        .refine((v) => parseFloat(v) >= 33, { message: "Minimum qualifying mark is 33%" }),
     board10th: z.string().min(1, "10th board is required"),
     board12th: z.string().min(1, "12th board is required"),
     year10th: z
@@ -86,7 +85,8 @@ export const academicSchema = z.object({
 export type AcademicFormData = z.infer<typeof academicSchema>;
 
 // ─── Documents Validation ───
-export const REQUIRED_DOCS = ["identity", "10th", "12th", "domicile", "photo", "signature"] as const;
+// Keys must match the backend Document model's docType enum
+export const REQUIRED_DOCS = ["aadhar", "marksheet_10", "marksheet_12", "domaicile", "photo", "signature"] as const;
 
 export function validateDocuments(docsUploaded: Record<string, { name: string; size?: number; type?: string }>) {
     const errors: Record<string, string> = {};
@@ -102,10 +102,10 @@ export function validateDocuments(docsUploaded: Record<string, { name: string; s
 export const paymentSchema = z.object({
     upiId: z
         .string()
-        .min(1, "UPI ID is required")
         .min(10, "UPI ID must be at least 10 characters")
         .max(40, "UPI ID must be under 40 characters")
-        .regex(/^[a-zA-Z0-9.\-_]+@[a-zA-Z]+$/, "Please enter a valid UPI ID (e.g. name@bank)"),
+        // Fix #8: accepts sub-handles like user.name@okaxis or john-doe@paytm
+        .regex(/^[\w.\-]+@[a-zA-Z0-9]+$/, "Please enter a valid UPI ID (e.g. name@bank)"),
     transactionId: z
         .string()
         .min(1, "Transaction ID is required")

@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { UserRound, CheckCircle2, Menu, X } from "lucide-react";
+import { CheckCircle2, UserRound } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useForm, FormProvider } from "react-hook-form";
@@ -16,6 +14,7 @@ import StepTabs from "../../../components/admission/StepTabs";
 import PaymentSubmission from "../../../components/admission/PaymentSubmission";
 import PaymentActions from "../../../components/admission/PaymentActions";
 import { useAdmissionForm } from "../../../context/AdmissionContext";
+import { api } from "../../../utils/api";
 
 import AdmissionNavbar from "../../../components/admission/AdmissionNavbar";
 
@@ -23,6 +22,7 @@ export default function PaymentPage() {
     const { formData, updateFormData } = useAdmissionForm();
     const [progress, setProgress] = useState(75);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const methods = useForm<PaymentFormData>({
         resolver: zodResolver(paymentSchema),
@@ -48,13 +48,46 @@ export default function PaymentPage() {
         return () => subscription.unsubscribe();
     }, [methods, updateFormData]);
 
-    const handleSubmit = () => {
-        setProgress(100);
-        toast.success("Payment submitted successfully!");
+    const handleSubmit = async () => {
+        const values = methods.getValues();
+        if (!values.upiId || !values.transactionId) {
+            toast.error("Please fill in your UPI ID and Transaction ID.");
+            return;
+        }
 
-        setTimeout(() => {
-            setIsSubmitted(true);
-        }, 600);
+        setIsSubmitting(true);
+        try {
+            // Get the screenshot URL from the uploaded payment document
+            // TODO: wire up file upload — store the CDN URL in state after upload completes
+            const screenshotUrl = formData.docsUploaded?.["payment"]
+                ? (formData.docsUploaded["payment"] as unknown as { url?: string }).url
+                : undefined;
+
+            if (!screenshotUrl) {
+                toast.error("Please upload your payment screenshot before submitting.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Submit payment details (application is already "submitted" from the documents step)
+            await api.post("/api/student/payment/submit", {
+                upiId: values.upiId,
+                transactionId: values.transactionId,
+                screenshotUrl,
+                amount: 1000,
+            });
+
+            setProgress(100);
+            toast.success("Payment submitted successfully!");
+            setTimeout(() => setIsSubmitted(true), 600);
+        } catch (error: unknown) {
+            const msg =
+                (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+                || "Submission failed. Please try again.";
+            toast.error(msg);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -69,7 +102,7 @@ export default function PaymentPage() {
                         <ProgressBar percent={progress} />
                     </div>
 
-                    {/* Step 9: Payment Status Card */}
+                    {/* Payment Status Card */}
                     <div className={`mb-6 p-4 rounded-xl border flex items-center gap-4 transition-all duration-500 ${isSubmitted
                         ? 'bg-[#F0FDF4] border-[#BBF7D0] text-[#166534]'
                         : 'bg-[#FFFBEB] border-[#FEF3C7] text-[#92400E]'}`}>
@@ -99,11 +132,11 @@ export default function PaymentPage() {
                     <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-4 sm:p-6 md:p-8 pb-8 md:pb-10">
                         <div className="space-y-8">
                             <PaymentSubmission />
-                            <PaymentActions onSubmit={handleSubmit} />
+                            <PaymentActions onSubmit={handleSubmit} isSubmitting={isSubmitting} />
                         </div>
                     </div>
 
-                    {/* Success Modal Overlay */}
+                    {/* Success Modal */}
                     {isSubmitted && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
                             <div className="bg-white rounded-2xl p-8 sm:p-10 max-w-md w-full mx-4 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
