@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { getInitials } from "../../utils/getInitials";
 
-
 const LogOut = dynamic(() => import("lucide-react").then((mod) => mod.LogOut));
 
 type Props = {
@@ -33,14 +32,12 @@ export default function Sidebar({
 }: Props) {
   const router = useRouter();
   const initials = useMemo(() => getInitials(name), [name]);
-
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const navItemStyle = (view: string) =>
-    `block w-full text-left px-4 py-2 rounded transition ${
-      activeView === view
-        ? "bg-[#2DA8E1] text-white"
-        : "hover:bg-gray-100 text-gray-700"
+  const navItemStyle = (viewOrRoute: string) =>
+    `block w-full text-left px-4 py-2 rounded transition ${activeView === viewOrRoute || (viewOrRoute === "dashboard" && activeView === "dashboard")
+      ? "bg-[#2DA8E1] text-white"
+      : "hover:bg-gray-100 text-gray-700"
     }`;
 
   return (
@@ -69,7 +66,6 @@ export default function Sidebar({
               height={80}
               className="object-contain"
             />
-
             <h2 className="text-xl font-semibold text-[#2DA8E1]">
               Admission Portal
             </h2>
@@ -83,20 +79,14 @@ export default function Sidebar({
                   if (item.view) {
                     setActiveView(item.view);
                   }
-
                   if (item.route) {
                     router.push(item.route);
                   }
-
                   if (window.innerWidth < 1024) {
                     setOpen(false);
                   }
                 }}
-                className={
-                  item.view
-                    ? navItemStyle(item.view)
-                    : "block w-full text-left px-4 py-2 rounded hover:bg-gray-100 text-gray-700"
-                }
+                className={navItemStyle(item.view || item.route || "")}
               >
                 {item.label}
               </button>

@@ -1,0 +1,82 @@
+﻿
+> frontend@0.1.0 build
+> next build
+
+node.exe : ΓÜá Warning: 
+Next.js inferred your 
+workspace root, but it 
+may not be correct.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" "C
+:\Users\ojasw\AppData\Roa
+ming\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpeci    
+fied: (ΓÜá Warnin    g: 
+Ne...not be co    
+rrect.:String) []    , 
+RemoteException
+    + FullyQualifiedE    
+rrorId : NativeCo    
+mmandError
+ 
+ We detected multiple 
+lockfiles and selected 
+the directory of C:\Users
+\ojasw\OneDrive\Desktop\p
+ackage-lock.json as the 
+root directory.
+ To silence this 
+warning, set 
+`turbopack.root` in your 
+Next.js config, or 
+consider removing one of 
+the lockfiles if it's 
+not needed.
+   See https://nextjs.org
+/docs/app/api-reference/c
+onfig/next-config-js/turb
+opack#root-directory for 
+more information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\ojasw\OneDr
+ive\Desktop\Mits\frontend
+\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 6.1s
+  Running TypeScript ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/15) ...
+  Generating static pages using 15 workers (3/15) 
+  Generating static pages using 15 workers (7/15) 
+  Generating static pages using 15 workers (11/15) 
+Γ£ô Generating static pages using 15 workers (15/15) in 706.5ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /about
+Γö£ Γùï /admission
+Γö£ Γùï /admission/academic
+Γö£ Γùï /admission/documents
+Γö£ Γùï /admission/payment
+Γö£ Γùï /contact
+Γö£ Γùï /login
+Γö£ Γùï /meet-the-team
+Γö£ Γùï /payments
+Γö£ Γùï /profile
+Γöö Γùï /student-dashboard
+
+
+Γùï  (Static)  prerendered as static content
+

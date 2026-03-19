@@ -6,47 +6,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { FileText, ArrowRight } from "lucide-react";
-import PaymentView from "../../components/views/PaymentView";
 
-// Dynamic imports
+import PaymentView from "../../components/views/PaymentView";
+import { useAdmissionForm } from "../../context/AdmissionContext";
+
+// Dynamic imports for improved performance
 const Sidebar = dynamic(() => import("../../components/dashboard/Sidebar"));
-const DashboardHeader = dynamic(
-  () => import("../../components/dashboard/DashboardHeader"),
-);
-const StatusCard = dynamic(
-  () => import("../../components/dashboard/StatusCard"),
-);
+const DashboardHeader = dynamic(() => import("../../components/dashboard/DashboardHeader"));
+const StatusCard = dynamic(() => import("../../components/dashboard/StatusCard"));
 const PendingActions = dynamic(
   () => import("../../components/dashboard/PendingActions"),
-  { loading: () => <p>Loading actions...</p> },
+  { loading: () => <p className="animate-pulse text-gray-400">Loading actions...</p> }
 );
-const ProfileSummary = dynamic(
-  () => import("../../components/dashboard/ProfileSummary"),
-);
-const DeadlinesCard = dynamic(
-  () => import("../../components/dashboard/DeadlinesCard"),
-);
-const UserProgress = dynamic(
-  () => import("../../components/dashboard/user-progress"),
-);
-
-interface GoogleUserInfo {
-  name: string;
-  email: string;
-  picture?: string;
-}
+const ProfileSummary = dynamic(() => import("../../components/dashboard/ProfileSummary"));
+const DeadlinesCard = dynamic(() => import("../../components/dashboard/DeadlinesCard"));
+const UserProgress = dynamic(() => import("../../components/dashboard/user-progress"));
 
 export default function StudentDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
-
-  const [googleUser, setGoogleUser] = useState<GoogleUserInfo | null>(null);
+  const { googleUser, formData } = useAdmissionForm();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-
   const router = useRouter();
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
   useEffect(() => {
     async function validateSession() {
@@ -59,11 +42,6 @@ export default function StudentDashboard() {
         });
 
         setIsAuthorized(true);
-
-        const saved = localStorage.getItem("googleUserInfo");
-        if (saved) {
-          setGoogleUser(JSON.parse(saved));
-        }
       } catch (error) {
         console.error("Session validation failed:", error);
         router.replace("/login");
@@ -77,14 +55,21 @@ export default function StudentDashboard() {
 
   if (isChecking || !isAuthorized) return null;
 
+  // Calculate dynamic progress
+  let progress = 0;
+  if (formData.fullName && formData.email) progress = 25;
+  if (formData.programApplied && formData.branch) progress = 50;
+  if (formData.docsUploaded && Object.keys(formData.docsUploaded).length > 0) progress = 75;
+  if (formData.transactionId) progress = 100;
+
   const user = {
     name: googleUser?.name || "Student",
     id: "MK-2026-2910",
-    progress: 90,
-    course: "Btech CSE",
+    progress: progress,
+    course: formData.programApplied ? `${formData.programApplied.toUpperCase()} ${formData.branch?.toUpperCase() || ''}` : "Not Selected",
     category: "General",
     email: googleUser?.email || "student@email.com",
-    phone: "9827437110",
+    phone: formData.mobile || "Not Provided",
   };
 
   return (
@@ -98,7 +83,7 @@ export default function StudentDashboard() {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Suspense fallback={<div className="p-4">Loading header...</div>}>
+        <Suspense fallback={<div className="p-4 border-b bg-white animate-pulse h-16" />}>
           <DashboardHeader
             name={user.name}
             toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -106,32 +91,27 @@ export default function StudentDashboard() {
         </Suspense>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {/* Dashboard View */}
           {activeView === "dashboard" && (
             <>
-              <UserProgress name={user.name} progress={user.progress} />
+              <UserProgress name={user.name} progress={user.progress} picture={googleUser?.picture} />
 
-              {/* Start Application */}
+              {/* Start Application Button */}
               <div className="mb-6">
                 <Link href="/admission">
                   <div className="bg-gradient-to-r from-[#0EA5E9] to-[#38BDF8] rounded-xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer group active:scale-[0.99]">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
                           <FileText className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-white">
-                            Start Application Form
-                          </h3>
-                          <p className="text-white/80 text-sm">
-                            Begin or continue your admission
-                          </p>
+                          <h3 className="text-lg sm:text-xl font-bold text-white">Start Application Form</h3>
+                          <p className="text-white/80 text-sm mt-0.5">Begin or continue your admission application</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg text-white text-sm">
+                      <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2.5 rounded-lg text-white font-semibold text-sm group-hover:bg-white/30 transition-colors w-full sm:w-auto justify-center">
                         Open Form
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
                   </div>
@@ -152,7 +132,6 @@ export default function StudentDashboard() {
             </>
           )}
 
-          {/* Payments View */}
           {activeView === "payments" && <PaymentView />}
         </div>
       </div>

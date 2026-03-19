@@ -54,18 +54,16 @@ export default function AdmissionLayout({
     }
 
     return (
-        <AdmissionProvider>
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
-                    {children}
-                </motion.div>
-            </AnimatePresence>
-        </AdmissionProvider>
+        <AnimatePresence mode="wait">
+            <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
+                {children}
+            </motion.div>
+        </AnimatePresence>
     );
 }

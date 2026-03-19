@@ -92,6 +92,7 @@ interface AdmissionContextType {
     saveAsDraft: () => void;
     clearDraft: () => void;
     googleUser: GoogleUserInfo | null;
+    setGoogleUser: (user: GoogleUserInfo | null) => void;
     validationErrors: Record<string, string>;
     setValidationErrors: (errors: Record<string, string>) => void;
     clearValidationErrors: () => void;
@@ -179,6 +180,7 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
             saveAsDraft,
             clearDraft,
             googleUser,
+            setGoogleUser,
             validationErrors,
             setValidationErrors,
             clearValidationErrors,

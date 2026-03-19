@@ -1,6 +1,7 @@
 type UserProgressProps = {
   name: string;
   progress: number;
+  picture?: string;
 };
 
 function getProgressColor(progress: number) {
@@ -9,18 +10,18 @@ function getProgressColor(progress: number) {
   return "bg-green-600";
 }
 
-function getInitial(name: string) {
-  return name?.charAt(0).toUpperCase() || "?";
-}
-
-export default function UserProgress({ name, progress }: UserProgressProps) {
-  const safeProgress = Math.min(Math.max(progress, 0), 100);
+export default function UserProgress({ name, progress, picture }: UserProgressProps) {
+  const safeProgress = Math.min(100, Math.max(0, isNaN(progress) ? 0 : progress));
 
   return (
     <div className="flex items-center gap-4 mb-6">
       {/* Avatar */}
-      <div className="w-12 h-12 rounded-full bg-[#2DA8E1] flex items-center justify-center text-white font-semibold text-lg">
-        {getInitial(name)}
+      <div className="w-12 h-12 rounded-full bg-[#2DA8E1] flex items-center justify-center text-white font-semibold text-lg overflow-hidden flex-shrink-0">
+        {picture ? (
+          <img src={picture} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          name.charAt(0).toUpperCase()
+        )}
       </div>
 
       {/* Name + Progress */}
