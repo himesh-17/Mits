@@ -73,7 +73,7 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen border-l bg-gray-50 overflow-hidden">
       <Sidebar
         name={user.name}
         open={sidebarOpen}
@@ -95,28 +95,8 @@ export default function StudentDashboard() {
             <>
               <UserProgress name={user.name} progress={user.progress} picture={googleUser?.picture} />
 
-              {/* Start Application Button */}
-              <div className="mb-6">
-                <Link href="/admission">
-                  <div className="bg-gradient-to-r from-[#0EA5E9] to-[#38BDF8] rounded-xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer group active:scale-[0.99]">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-                          <FileText className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg sm:text-xl font-bold text-white">Start Application Form</h3>
-                          <p className="text-white/80 text-sm mt-0.5">Begin or continue your admission application</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2.5 rounded-lg text-white font-semibold text-sm group-hover:bg-white/30 transition-colors w-full sm:w-auto justify-center">
-                        Open Form
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+             
+              
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">

@@ -19,7 +19,11 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700"],
   variable: "--font-dmSans",
 });
-
+export const metadata = {
+  icons: {
+    icon: "/mits.png",
+  },
+};
 export default function RootLayout({
   children,
 }: {
