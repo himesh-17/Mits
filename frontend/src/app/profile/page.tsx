@@ -1,13 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-
 export default function ProfilePage() {
-  const name = "Manas Kukreja";
   const router = useRouter();
+
+  const [name, setName] = useState("Student");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("googleUserInfo");
+
+    if (saved) {
+      const user = JSON.parse(saved);
+      setName(user.name || "Student");
+    }
+  }, []);
+
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -16,29 +27,25 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      
 
       <div className="bg-white border-b px-4 sm:px-6 md:px-8 py-4 flex items-center gap-4">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/student-dashboard")}
+          className="flex items-center gap-2 text-gray-600 hover:text-black"
+        >
+          <ArrowLeft size={20} />
+          Back
+        </button>
 
-  {/* Back Button */}
-  <button
-    onClick={() => router.push("/student-dashboard")}
-    className="flex items-center gap-2 text-gray-600 hover:text-black"
-  >
-    <ArrowLeft size={20} />
-    Back
-  </button>
+        {/* Logo */}
+        <Image src="/mits.png" alt="MITS Logo" width={40} height={40} />
 
-  {/* Logo */}
-  <Image src="/mits.png" alt="MITS Logo" width={40} height={40} />
-
-  {/* Title */}
-  <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-[#2DA8E1]">
-    Admission Portal
-  </h1>
-
-</div>
-      
+        {/* Title */}
+        <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-[#2DA8E1]">
+          Admission Portal
+        </h1>
+      </div>
 
       {/* Profile Content */}
       <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
