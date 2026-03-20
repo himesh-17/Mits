@@ -52,34 +52,29 @@ export type PersonalFormData = z.infer<typeof personalSchema>;
 export const academicSchema = z.object({
     programApplied: z.string().min(1, "Program is required"),
     branch: z.string().min(1, "Branch is required"),
-    marks10th: z
-        .string()
-        .min(1, "10th marks are required")
-        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100")
-        .refine((v) => parseFloat(v) >= 33, { message: "Minimum qualifying mark is 33%" }),
-    marks12th: z
-        .string()
-        .min(1, "12th marks are required")
-        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100")
-        .refine((v) => parseFloat(v) >= 33, { message: "Minimum qualifying mark is 33%" }),
+    // Marks come from <input type="number"> so react-hook-form gives a number value.
+    // z.coerce.number() accepts both strings and numbers.
+    marks10th: z.coerce
+        .number()
+        .min(33, "Minimum qualifying mark is 33%")
+        .max(100, "Marks cannot exceed 100%"),
+    marks12th: z.coerce
+        .number()
+        .min(33, "Minimum qualifying mark is 33%")
+        .max(100, "Marks cannot exceed 100%"),
     board10th: z.string().min(1, "10th board is required"),
     board12th: z.string().min(1, "12th board is required"),
-    year10th: z
-        .string()
-        .min(1, "10th passing year is required")
-        .regex(/^[0-9]+$/, "Only numbers allowed")
-        .refine((year) => parseInt(year) >= 2000 && parseInt(year) <= new Date().getFullYear(), {
-            message: `Year must be between 2000 and ${new Date().getFullYear()}`,
-        }),
-    year12th: z
-        .string()
-        .min(1, "12th passing year is required")
-        .regex(/^[0-9]+$/, "Only numbers allowed")
-        .refine((year) => parseInt(year) >= 2000 && parseInt(year) <= new Date().getFullYear(), {
-            message: `Year must be between 2000 and ${new Date().getFullYear()}`,
-        }),
+    // Year comes from a <select> whose option values are numbers (e.g. 2023).
+    year10th: z.coerce
+        .number()
+        .min(2000, "Year must be 2000 or later")
+        .max(new Date().getFullYear(), `Year cannot be after ${new Date().getFullYear()}`),
+    year12th: z.coerce
+        .number()
+        .min(2000, "Year must be 2000 or later")
+        .max(new Date().getFullYear(), `Year cannot be after ${new Date().getFullYear()}`),
     entranceExam: z.string().optional(),
-    entranceScore: z.string().optional(),
+    entranceScore: z.coerce.number().optional(),
 });
 
 export type AcademicFormData = z.infer<typeof academicSchema>;

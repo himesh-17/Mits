@@ -16,14 +16,10 @@ export default function PaymentActions({ onSubmit, isSubmitting = false }: Payme
     const { formData } = useAdmissionForm();
     const { handleSubmit, formState: { isValid } } = useFormContext<PaymentFormData>();
 
-    const isScreenshotUploaded = !!formData.docsUploaded?.["payment"];
-    const canSubmit = isValid && isScreenshotUploaded;
+    // Screenshot is optional until CDN upload is integrated.
+    const canSubmit = isValid;
 
     const onFormSubmit = (_data: PaymentFormData) => {
-        if (!isScreenshotUploaded) {
-            toast.error("Please upload a payment screenshot");
-            return;
-        }
         onSubmit();
     };
 

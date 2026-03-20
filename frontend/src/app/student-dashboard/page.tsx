@@ -72,6 +72,52 @@ export default function StudentDashboard() {
     phone: formData.mobile || "Not Provided",
   };
 
+  // Determine Pending Actions & Next Step
+  const pendingActions = [];
+
+  const hasPersonalDetails = !!(formData.fullName && formData.email && formData.mobile && formData.address);
+  if (!hasPersonalDetails) {
+    pendingActions.push({
+      title: "Fill Personal Details",
+      description: "Complete personal information",
+      buttonText: "Fill Form",
+      route: "/admission",
+    });
+  }
+
+  const hasAcademicDetails = !!(formData.programApplied && formData.branch);
+  if (!hasAcademicDetails) {
+    pendingActions.push({
+      title: "Submit Academic Records",
+      description: "10th & 12th details, program selection",
+      buttonText: "Fill Form",
+      route: "/admission/academic",
+    });
+  }
+
+  const hasDocs = !!(formData.docsUploaded && Object.keys(formData.docsUploaded).length > 0);
+  if (!hasDocs) {
+    pendingActions.push({
+      title: "Upload Required Documents",
+      description: "Aadhar, Photo, Marksheets required",
+      buttonText: "Upload",
+      route: "/admission/documents",
+    });
+  }
+
+  const hasPaid = !!formData.transactionId;
+  if (!hasPaid) {
+    pendingActions.push({
+      title: "Pay Admission Fee",
+      description: "Pay fee for seat confirmation",
+      buttonText: "Pay now",
+      route: "/admission/payment",
+    });
+  }
+
+  const nextStepRoute = pendingActions.length > 0 ? pendingActions[0].route : "/admission/review";
+
+
   return (
     <div className="flex h-screen border-l bg-gray-50 overflow-hidden">
       <Sidebar
@@ -95,13 +141,33 @@ export default function StudentDashboard() {
             <>
               <UserProgress name={user.name} progress={user.progress} picture={googleUser?.picture} />
 
-             
-              
+              {/* Start Application Button */}
+              <div className="mb-6">
+                <Link href={nextStepRoute}>
+                  <div className="bg-gradient-to-r from-[#0EA5E9] to-[#38BDF8] rounded-xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer group active:scale-[0.99]">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg sm:text-xl font-bold text-white">Start Application Form</h3>
+                          <p className="text-white/80 text-sm mt-0.5">Begin or continue your admission application</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2.5 rounded-lg text-white font-semibold text-sm group-hover:bg-white/30 transition-colors w-full sm:w-auto justify-center">
+                        Open Form
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <StatusCard progress={user.progress} id={user.id} />
-                  <PendingActions />
+                  <StatusCard progress={user.progress} id={user.id} nextStepRoute={nextStepRoute} />
+                  <PendingActions actions={pendingActions} />
                 </div>
 
                 <div className="space-y-6">

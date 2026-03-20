@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, UserRound } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -33,20 +33,41 @@ export default function PaymentPage() {
         mode: "onChange",
     });
 
+    // Guard: true while a programmatic reset() is in flight so the
+    // watch callback doesn't echo changes back → infinite loop.
+    const isSyncingFromContext = useRef(false);
+    const lastContextSnapshot = useRef<string>("");
+
     useEffect(() => {
+        const snapshot = JSON.stringify({
+            upiId: formData.upiId,
+            transactionId: formData.transactionId,
+        });
+        if (snapshot === lastContextSnapshot.current) return;
+        lastContextSnapshot.current = snapshot;
+
+        isSyncingFromContext.current = true;
         methods.reset({
             upiId: formData.upiId,
             transactionId: formData.transactionId,
         });
+        // setTimeout(0) ensures the guard is cleared AFTER watch callbacks
+        // that fire synchronously during reset() have all completed.
+        const timer = setTimeout(() => { isSyncingFromContext.current = false; }, 0);
+        return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData]);
 
     useEffect(() => {
         const subscription = methods.watch((value) => {
+            if (isSyncingFromContext.current) return;
+            const incoming = JSON.stringify(value);
+            if (incoming === lastContextSnapshot.current) return;
             updateFormData(value as Partial<PaymentFormData>);
         });
         return () => subscription.unsubscribe();
-    }, [methods, updateFormData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [updateFormData]);
 
     const handleSubmit = async () => {
         const values = methods.getValues();
@@ -57,24 +78,18 @@ export default function PaymentPage() {
 
         setIsSubmitting(true);
         try {
-            // Get the screenshot URL from the uploaded payment document
-            // TODO: wire up file upload — store the CDN URL in state after upload completes
+            // TODO: Wire up CDN upload (Cloudinary / S3) and store the file URL in state.
+            // screenshotUrl is optional on the backend until CDN integration is complete.
             const screenshotUrl = formData.docsUploaded?.["payment"]
                 ? (formData.docsUploaded["payment"] as unknown as { url?: string }).url
                 : undefined;
-
-            if (!screenshotUrl) {
-                toast.error("Please upload your payment screenshot before submitting.");
-                setIsSubmitting(false);
-                return;
-            }
 
             // Submit payment details (application is already "submitted" from the documents step)
             await api.post("/api/student/payment/submit", {
                 upiId: values.upiId,
                 transactionId: values.transactionId,
-                screenshotUrl,
-                amount: 1000,
+                ...(screenshotUrl ? { screenshotUrl } : {}),
+                amount: 75000,
             });
 
             setProgress(100);

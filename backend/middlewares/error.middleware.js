@@ -10,9 +10,16 @@ function errorHandler(err, req, res, next) {
 
     console.error(err);
 
+    // Always forward the message for intentional ApiErrors (4xx).
+    // For unexpected 500s, hide the internals in production.
+    const isClientError = statusCode >= 400 && statusCode < 500;
+    const message = (isClientError || isDevelopment)
+        ? (err.message || "Internal Server Error")
+        : "Internal Server Error";
+
     const response = {
         success: false,
-        message: isDevelopment ? (err.message || "Internal Server Error") : "Internal Server Error",
+        message,
     };
 
     if (isDevelopment && err.stack) {

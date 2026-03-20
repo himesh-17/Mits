@@ -21,14 +21,14 @@ export interface AdmissionFormData {
     // Step 2: Academic
     programApplied: string;
     branch: string;
-    marks10th: string;
-    marks12th: string;
+    marks10th: number | string;
+    marks12th: number | string;
     board10th: string;
     board12th: string;
-    year10th: string;
-    year12th: string;
+    year10th: number | string;
+    year12th: number | string;
     entranceExam: string;
-    entranceScore: string;
+    entranceScore: number | string;
 
     // Step 3: Documents
     docsUploaded: { [key: string]: { name: string; size?: number; type?: string } };
@@ -140,7 +140,7 @@ export interface GoogleUserInfo {
 interface AdmissionContextType {
     formData: AdmissionFormData;
     updateFormData: (data: Partial<AdmissionFormData>) => void;
-    saveAsDraft: () => void;
+    saveAsDraft: (data?: Partial<AdmissionFormData>) => Promise<void>;
     clearDraft: () => void;
     googleUser: GoogleUserInfo | null;
     setGoogleUser: (user: GoogleUserInfo | null) => void;
@@ -245,9 +245,11 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
         });
     }, [syncToBackend]);
 
-    const saveAsDraft = () => {
-        localStorage.setItem("admissionFormDraft", JSON.stringify(formData));
-        syncToBackend(formData);
+    const saveAsDraft = async (data?: Partial<AdmissionFormData>) => {
+        const merged = data ? { ...formData, ...data } : formData;
+        localStorage.setItem("admissionFormDraft", JSON.stringify(merged));
+        if (data) setFormData(merged);
+        await syncToBackend(merged);
     };
 
     const clearDraft = () => {
