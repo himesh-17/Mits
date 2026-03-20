@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { useRouter } from "next/navigation";
 interface Props {
   progress: number;
   id: string;
@@ -14,6 +15,7 @@ function getColor(progress: number) {
 
 export default function StatusCard({ progress, id, nextStepRoute }: Props) {
   const showDetails = progress > 0;
+  const router = useRouter();
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -26,7 +28,11 @@ export default function StatusCard({ progress, id, nextStepRoute }: Props) {
           CURRENT STATUS
         </span>
 
-        <span className="text-sm text-[#2594c7]">ID: {id}</span>
+        <p className="text-sm text-gray-500 mb-3">
+          <b>
+            ID: <span className="text-[#2DA8E1] font-medium">MK-2026-2910</span>
+          </b>
+        </p>
       </div>
 
       <h2 className="text-2xl font-semibold mt-4">
@@ -40,8 +46,11 @@ export default function StatusCard({ progress, id, nextStepRoute }: Props) {
           </Link>
         )}
 
-        <Link href={nextStepRoute || "/admission"} className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition text-center">
-          {progress === 100 ? "Review Application" : "Complete Your Form"}
+        <Link href={nextStepRoute || "/admission"}
+          onClick={() => router.push("/admission")}
+          className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition text-center"
+        >
+          {progress === 100 ? "Review Application" : "Complete Your Application"}
         </Link>
       </div>
     </div>
