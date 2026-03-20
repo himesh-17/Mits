@@ -85,10 +85,14 @@ export default function AcademicInformation() {
                     <input
                         type="number"
                         step="0.01"
-                        min="0"
-                        max="100"
                         placeholder="e.g. 86.4"
-                        {...register("marks10th")}
+                        {...register("marks10th", {
+                            onChange: (e) => {
+                                const val = parseFloat(e.target.value);
+                                if (val > 100) e.target.value = "100";
+                                if (val < 0) e.target.value = "0";
+                            }
+                        })}
                         aria-invalid={!!errors.marks10th}
                         aria-describedby={errors.marks10th ? "marks10th-error" : undefined}
                         className={inputClass(!!errors.marks10th)}
@@ -102,10 +106,14 @@ export default function AcademicInformation() {
                     <input
                         type="number"
                         step="0.01"
-                        min="0"
-                        max="100"
                         placeholder="e.g. 92.3"
-                        {...register("marks12th")}
+                        {...register("marks12th", {
+                            onChange: (e) => {
+                                const val = parseFloat(e.target.value);
+                                if (val > 100) e.target.value = "100";
+                                if (val < 0) e.target.value = "0";
+                            }
+                        })}
                         aria-invalid={!!errors.marks12th}
                         aria-describedby={errors.marks12th ? "marks12th-error" : undefined}
                         className={inputClass(!!errors.marks12th)}
@@ -148,8 +156,9 @@ export default function AcademicInformation() {
                             className={selectClass(!!errors.year10th)}
                         >
                             <option value="">Select year</option>
-                            <option value="2022">2022</option>
-                            <option value="2023">2023</option>
+                            {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).reverse().map(year => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
                         </select>
                         <ChevronIcon />
                     </div>
@@ -191,8 +200,9 @@ export default function AcademicInformation() {
                             className={selectClass(!!errors.year12th)}
                         >
                             <option value="">Select year</option>
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
+                            {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).reverse().map(year => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
                         </select>
                         <ChevronIcon />
                     </div>
@@ -229,7 +239,11 @@ export default function AcademicInformation() {
                     <input
                         type="number"
                         placeholder="e.g. 50000"
-                        {...register("entranceScore")}
+                        {...register("entranceScore", {
+                            onChange: (e) => {
+                                e.target.value = e.target.value.replace(/\D/g, "");
+                            }
+                        })}
                         aria-invalid={!!errors.entranceScore}
                         aria-describedby={errors.entranceScore ? "entranceScore-error" : undefined}
                         className={inputClass(!!errors.entranceScore)}

@@ -15,15 +15,18 @@ const documentSchema = new mongoose.Schema(
         docType: {
             type: String,
             enum: [
-                "identity_proof",       // Aadhaar / PAN
-                "marksheet_10",         // 10th Marksheet
-                "marksheet_12",         // 12th Marksheet
-                "entrance_scorecard",   // Entrance Exam Scorecard (Optional)
-                "category_certificate", // Category Certificate (if applicable)
-                "domicile_certificate", // Domicile Certificate
-                "abc_id",              // ABC ID
-                "passport_photo",       // Passport-size photo
-                "signature",            // Signature
+                 "photo",
+                "signature",
+                "aadhar",
+                "marksheet_10",
+                "marksheet_12",
+                "transfer_certificate",
+                "migration_certificate",
+                "caste_certificate",
+                "income_certificate",
+                "domaicile",
+                "jee_result",
+                "other",            
             ],
             required: true,
         },

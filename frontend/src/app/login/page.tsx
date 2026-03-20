@@ -6,6 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -17,14 +18,19 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-export default function LoginPage() {
+// Module-level constant: evaluated once, not on every render (#15)
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
+export default function LoginPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
-    if (!credentialResponse.credential) return;
+    if (!credentialResponse.credential) {
+      console.error("No credential received");
+      return;
+    }
+
     try {
       const response = await axios.post(
         `${apiBaseUrl}/api/auth/google`,
@@ -37,7 +43,7 @@ export default function LoginPage() {
       );
 
       // Store token for Authorization header
-      if (response.data.data.token) {
+      if (response.data?.data?.token) {
         localStorage.setItem("authToken", response.data.data.token);
       }
 
@@ -52,11 +58,17 @@ export default function LoginPage() {
         localStorage.setItem("googleUserInfo", JSON.stringify(userInfo));
       }
 
-      console.log("Login Success:");
+      console.log("Login Success");
+      toast.success("Login successful!");
       router.push("/student-dashboard");
 
     } catch (error) {
       console.error("Login failed:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(`Login failed: ${error.message}. Please check if the server is running at ${apiBaseUrl}`);
+      } else {
+        toast.error("An unexpected error occurred during login.");
+      }
     }
   };
 
@@ -83,7 +95,6 @@ export default function LoginPage() {
             application status, updates, and personalized information.
           </p>
 
-          {/* YOUR ORIGINAL GOOGLE BUTTON */}
           <button
             onClick={triggerGoogleLogin}
             className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-h-[48px] active:scale-[0.98]"
@@ -94,7 +105,6 @@ export default function LoginPage() {
             </span>
           </button>
 
-          {/* Hidden Google Button */}
           <div className="hidden" ref={googleButtonRef}>
             <GoogleLogin
               onSuccess={handleLoginSuccess}

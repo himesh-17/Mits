@@ -51,6 +51,7 @@ export default function FormFooter() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button
                         type="button"
+                        onClick={() => router.push('/student-dashboard')}
                         className="px-5 h-11 md:h-10 rounded-md border border-[#0F172A] text-sm font-semibold text-[#0F172A] uppercase tracking-wide hover:bg-gray-50 transition cursor-pointer active:scale-[0.97]"
                     >
                         Previous
