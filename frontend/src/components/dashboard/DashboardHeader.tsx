@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { getInitials } from "../../utils/getInitials";
-
+import { useRouter } from "next/navigation";
 const Menu = dynamic(() => import("lucide-react").then((m) => m.Menu));
 const Search = dynamic(() => import("lucide-react").then((m) => m.Search));
 const Bell = dynamic(() => import("lucide-react").then((m) => m.Bell));
@@ -17,6 +17,7 @@ export default function DashboardHeader({ name, toggleSidebar }: Props) {
   const [search, setSearch] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const initials = getInitials(name);
 
@@ -39,30 +40,17 @@ export default function DashboardHeader({ name, toggleSidebar }: Props) {
   }, []);
 
   return (
-    <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+    <div className="bg-white border-b border-gray-300 px-6 py-4 flex items-center justify-between">
       {/* LEFT */}
       <div className="flex items-center gap-4">
         <button onClick={toggleSidebar} className="lg:hidden">
           <Menu size={24} />
         </button>
-
-        <span className="text-gray-500 text-sm">Admission 2026–27</span>
       </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-5">
         {/* Search */}
-        <div className="hidden md:flex items-center border rounded-md px-3 py-1 gap-2 bg-gray-50">
-          <Search className="w-4 h-4 text-gray-500" />
-
-          <input
-            type="text"
-            placeholder="Search candidate..."
-            value={search}
-            onChange={handleSearch}
-            className="bg-transparent outline-none text-sm w-40"
-          />
-        </div>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
@@ -97,7 +85,10 @@ export default function DashboardHeader({ name, toggleSidebar }: Props) {
         </div>
 
         {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-semibold">
+        <div
+          onClick={() => router.push("/profile")}
+          className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-semibold cursor-pointer hover:opacity-80 transition"
+        >
           {initials}
         </div>
       </div>

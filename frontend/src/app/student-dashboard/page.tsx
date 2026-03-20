@@ -119,7 +119,7 @@ export default function StudentDashboard() {
 
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen border-l bg-gray-50 overflow-hidden">
       <Sidebar
         name={user.name}
         open={sidebarOpen}
