@@ -15,7 +15,7 @@ export default function NotFound() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="/landing"
+            href="/dashboard"
             className="bg-sky-500 text-white px-5 py-2 rounded-lg hover:bg-sky-600 transition font-medium"
       >
             Go to Home

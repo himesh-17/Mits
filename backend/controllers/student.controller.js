@@ -16,7 +16,15 @@ const ALLOWED_MIME_TYPES = new Set([
 function isAllowedFileUrl(fileUrl) {
     try {
         const parsed = new URL(fileUrl);
-        if (parsed.protocol !== "https:") {
+        const protocol = parsed.protocol;
+        const hostname = parsed.hostname.toLowerCase();
+        const isDevLocalHost = (hostname === "localhost" || hostname === "127.0.0.1") && process.env.NODE_ENV !== "production";
+
+        if (protocol === "http:" && isDevLocalHost) {
+            return true;
+        }
+
+        if (protocol !== "https:") {
             return false;
         }
 
@@ -37,6 +45,19 @@ function isAllowedFileUrl(fileUrl) {
         return false;
     }
 }
+
+const uploadDocumentFile = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        throw new ApiError(400, "file is required");
+    }
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/documents/${encodeURIComponent(req.file.filename)}`;
+    return sendSuccess(res, "File uploaded", {
+        fileUrl,
+        fileName: req.file.originalname || "",
+        mimeType: req.file.mimetype || "",
+    }, 201);
+});
 
 // GET /api/student/application
 const getOrCreateApplication = asyncHandler(async (req, res) => {
@@ -268,6 +289,7 @@ export {
     getOrCreateApplication,
     updateApplication,
     submitApplication,
+    uploadDocumentFile,
     uploadDocument,
     getMyDocuments,
     getMyPayment,

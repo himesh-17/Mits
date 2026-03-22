@@ -6,7 +6,7 @@ import { useAdmissionForm } from "../../context/AdmissionContext";
 import { validateFile } from "../../lib/validationSchemas";
 
 export default function DocumentsUploadForm() {
-    const { formData, updateFormData, validationErrors } = useAdmissionForm();
+    const { formData, updateFormData, validationErrors, setSelectedFile, removeSelectedFile } = useAdmissionForm();
     const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
     const [filePreviews, setFilePreviews] = useState<Record<string, string>>({});
 
@@ -54,12 +54,14 @@ export default function DocumentsUploadForm() {
             [docId]: { name: file.name, size: file.size, type: file.type }
         };
         updateFormData({ docsUploaded: newDocs });
+        setSelectedFile(docId, file);
     };
 
     const removeDoc = (docId: string) => {
         const newDocs = { ...formData.docsUploaded };
         delete newDocs[docId];
         updateFormData({ docsUploaded: newDocs });
+        removeSelectedFile(docId);
         setFilePreviews((prev) => {
             const next = { ...prev };
             delete next[docId];
