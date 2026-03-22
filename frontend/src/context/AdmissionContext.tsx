@@ -148,6 +148,9 @@ interface AdmissionContextType {
     setValidationErrors: (errors: Record<string, string>) => void;
     clearValidationErrors: () => void;
     submitApplication: () => Promise<void>;
+    selectedFiles: Record<string, File>;
+    setSelectedFile: (docId: string, file: File) => void;
+    removeSelectedFile: (docId: string) => void;
     isSyncing: boolean;
 }
 
@@ -158,6 +161,7 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [googleUser, setGoogleUser] = useState<GoogleUserInfo | null>(null);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
     const [isSyncing, setIsSyncing] = useState(false);
     // Fix #6: debounce ref — 1200ms after last keystroke fires the PATCH
     const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -263,6 +267,18 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
 
     const clearValidationErrors = () => setValidationErrors({});
 
+    const setSelectedFile = (docId: string, file: File) => {
+        setSelectedFiles((prev) => ({ ...prev, [docId]: file }));
+    };
+
+    const removeSelectedFile = (docId: string) => {
+        setSelectedFiles((prev) => {
+            const next = { ...prev };
+            delete next[docId];
+            return next;
+        });
+    };
+
     // Fix #13: show a centered spinner instead of a blank page during initial load
     if (!isLoaded) return (
         <div className="fixed inset-0 flex items-center justify-center bg-[#F8FAFC] z-50">
@@ -282,6 +298,9 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
             setValidationErrors,
             clearValidationErrors,
             submitApplication,
+            selectedFiles,
+            setSelectedFile,
+            removeSelectedFile,
             isSyncing,
         }}>
             {children}

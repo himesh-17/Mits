@@ -1,24 +1,3 @@
-// ⚠️  DOCUMENT UPLOAD ARCHITECTURE NOTE
-//
-// The backend POST /api/student/documents expects:
-//   { docType, fileUrl, fileName, mimeType }
-// where `fileUrl` must be a valid https:// URL on an allowlisted CDN host
-// (configured via ALLOWED_UPLOAD_HOSTS in the backend .env).
-//
-// CURRENT STATE: files are selected locally by the student but NOT yet
-// uploaded to any CDN because no storage service (Cloudinary, S3, etc.)
-// is integrated.
-//
-// WHAT THIS COMPONENT DOES RIGHT NOW:
-//   1. Validates that all required docs are selected locally (validateDocuments).
-//   2. Calls submitApplication() so the backend Application flips to "submitted".
-//   3. Navigates to the payment page.
-//
-// TODO: before step 2, upload each File to your CDN and call
-//   api.post("/api/student/documents", { docType, fileUrl, fileName, mimeType })
-//   for each document. Track the returned Document IDs and update the local
-//   formData.docsUploaded accordingly.
-
 "use client";
 
 import { useState } from "react";
@@ -27,6 +6,16 @@ import { Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAdmissionForm } from "../../context/AdmissionContext";
 import { validateDocuments } from "../../lib/validationSchemas";
+import { api } from "../../utils/api";
+
+const requiredDocTypes = [
+    "aadhar",
+    "marksheet_10",
+    "marksheet_12",
+    "domaicile",
+    "photo",
+    "signature",
+];
 
 export default function DocumentsActions() {
     const router = useRouter();
@@ -36,6 +25,7 @@ export default function DocumentsActions() {
         submitApplication,
         setValidationErrors,
         clearValidationErrors,
+        selectedFiles,
     } = useAdmissionForm();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,26 +44,46 @@ export default function DocumentsActions() {
 
         setIsSubmitting(true);
         try {
-            // ─── TODO: CDN Upload ────────────────────────────────────────────────
-            // For each doc in formData.docsUploaded, upload the raw File to your
-            // storage service and call:
-            //   await api.post("/api/student/documents", {
-            //     docType  : doc.id,       // e.g. "aadhar", "marksheet_10"
-            //     fileUrl  : cdnUrl,       // the https:// URL returned by the CDN
-            //     fileName : doc.name,
-            //     mimeType : doc.type,
-            //   });
-            // ────────────────────────────────────────────────────────────────────
-
-            // Step 2: Mark the application as submitted so the backend status
-            //         transitions to "submitted" (required before uploading docs).
             await submitApplication();
+
+            const selectedEntries = Object.entries(selectedFiles || {});
+            for (const [docType, file] of selectedEntries) {
+                const form = new FormData();
+                form.append("file", file);
+
+                const uploadRes = await api.post("/api/student/documents/upload", form, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+
+                const uploaded = uploadRes?.data?.data;
+                await api.post("/api/student/documents", {
+                    docType,
+                    fileUrl: uploaded?.fileUrl,
+                    fileName: uploaded?.fileName || file.name,
+                    mimeType: uploaded?.mimeType || file.type,
+                });
+            }
+
+            const docsRes = await api.get("/api/student/documents");
+            const existingDocs = Array.isArray(docsRes?.data?.data?.documents)
+                ? docsRes.data.data.documents
+                : [];
+
+            const existingDocTypes = new Set(
+                existingDocs
+                    .map((doc: { docType?: string }) => doc?.docType)
+                    .filter(Boolean)
+            );
+
+            const missingRequired = requiredDocTypes.filter((docType) => !existingDocTypes.has(docType));
+            if (missingRequired.length > 0) {
+                toast.error("Please upload all required documents before continuing.");
+                return;
+            }
 
             toast.success("Documents saved! Proceeding to payment.");
             router.push("/admission/payment");
         } catch (error: unknown) {
-            // Extract the most specific message available from the backend response.
-            // The ApiError class returns { message: "..." } in response.data.message.
             const axiosErr = error as {
                 response?: { data?: { message?: string }; status?: number };
                 message?: string;
@@ -82,7 +92,6 @@ export default function DocumentsActions() {
             const httpStatus = axiosErr?.response?.status;
 
             if (backendMsg) {
-                // Show the clear backend message (e.g. "Missing fields: phone, tenthMarks")
                 toast.error(backendMsg);
             } else if (httpStatus === 500) {
                 toast.error("Server error — please try again or contact support.");

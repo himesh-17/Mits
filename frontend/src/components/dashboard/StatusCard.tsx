@@ -46,8 +46,11 @@ export default function StatusCard({ progress, id, nextStepRoute }: Props) {
           </Link>
         )}
 
-        <Link href={nextStepRoute || "/admission"} className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition text-center">
-          {progress === 100 ? "Review Application" : "Complete Your Form"}
+        <Link href={nextStepRoute || "/admission"}
+          onClick={() => router.push("/admission")}
+          className="bg-[#2DA8E1] text-white px-4 py-2 rounded hover:bg-[#2594c7] transition text-center"
+        >
+          {progress === 100 ? "Review Application" : "Complete Your Application"}
         </Link>
       </div>
     </div>
