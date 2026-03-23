@@ -257,7 +257,7 @@ const submitPayment = asyncHandler(async (req, res) => {
 
     // We avoid starting a transaction here because most local MongoDB databases 
     // are standalone and do not support replica set transactions, which throws a 500 error.
-    payment = await Payment.findOneAndUpdate(
+    const payment = await Payment.findOneAndUpdate(
         { application: app._id },
         {
             $set: {
