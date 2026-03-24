@@ -1,5 +1,5 @@
 "use client";
-
+import { LayoutDashboard, FileText, CreditCard, User } from "lucide-react";
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -17,10 +17,10 @@ type Props = {
 };
 
 const navItems = [
-  { label: "Dashboard", view: "dashboard" },
-  { label: "Application Form", route: "/admission" },
-  { label: "Payments", view: "payments" },
-  { label: "Profile", route: "/profile" },
+  { label: "Dashboard", view: "dashboard", icon: LayoutDashboard },
+  { label: "Application Form", route: "/admission", icon: FileText },
+  { label: "Payments", view: "payments", icon: CreditCard },
+  { label: "Profile", route: "/profile", icon: User },
 ];
 
 export default function Sidebar({
@@ -75,25 +75,30 @@ export default function Sidebar({
           </div>
 
           <nav className="mt-6 p-4 space-y-3">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  if (item.view) {
-                    setActiveView(item.view);
-                  }
-                  if (item.route) {
-                    router.push(item.route);
-                  }
-                  if (window.innerWidth < 1024) {
-                    setOpen(false);
-                  }
-                }}
-                className={navItemStyle(item.view || item.route || "")}
-              >
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    if (item.view) {
+                      setActiveView(item.view);
+                    }
+                    if (item.route) {
+                      router.push(item.route);
+                    }
+                    if (window.innerWidth < 1024) {
+                      setOpen(false);
+                    }
+                  }}
+                  className={`${navItemStyle(item.view || item.route || "")} flex items-center gap-3`}
+                >
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -110,9 +115,6 @@ export default function Sidebar({
               <p className="text-xs text-gray-500">Student Portal</p>
             </div>
           </div>
-
-        
-          
 
           {/* Logout */}
           <button
