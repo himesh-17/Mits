@@ -35,6 +35,9 @@ export interface AdmissionFormData {
     // Step 4: Payment
     upiId: string;
     transactionId: string;
+
+    // Progression
+    highestStep: number;
 }
 
 const defaultFormData: AdmissionFormData = {
@@ -65,6 +68,8 @@ const defaultFormData: AdmissionFormData = {
 
     upiId: "",
     transactionId: "",
+
+    highestStep: 1,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -21,14 +21,13 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 export default function LoginPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
       console.error("No credential received");
       return;
     }
-  };
 
     try {
       const response = await axios.post(
@@ -59,7 +58,8 @@ export default function LoginPage() {
 
       console.log("Login Success");
       toast.success("Login successful!");
-      router.push("/student-dashboard");
+      const nextRoute = new URLSearchParams(window.location.search).get("next") || "/student-dashboard";
+      router.push(nextRoute);
 
     } catch (error) {
       console.error("Login failed:", error);

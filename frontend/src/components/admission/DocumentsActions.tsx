@@ -9,7 +9,7 @@ import { validateDocuments } from "../../lib/validationSchemas";
 
 export default function DocumentsActions() {
     const router = useRouter();
-    const { formData, saveAsDraft, setValidationErrors, clearValidationErrors } = useAdmissionForm();
+    const { formData, saveAsDraft, updateFormData, setValidationErrors, clearValidationErrors } = useAdmissionForm();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isValid = Object.keys(validateDocuments(formData.docsUploaded || {})).length === 0;
@@ -20,6 +20,7 @@ export default function DocumentsActions() {
         setIsSubmitting(true);
         setTimeout(() => {
             setIsSubmitting(false);
+            updateFormData({ highestStep: Math.max(formData.highestStep, 4) });
             toast.success("Documents saved!");
             router.push('/admission/payment');
         }, 400);

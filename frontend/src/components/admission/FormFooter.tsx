@@ -10,7 +10,7 @@ import { PersonalFormData } from "../../lib/validationSchemas";
 
 export default function FormFooter() {
     const router = useRouter();
-    const { saveAsDraft } = useAdmissionForm();
+    const { saveAsDraft, updateFormData, formData } = useAdmissionForm();
     const { handleSubmit, formState: { isValid } } = useFormContext<PersonalFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -19,6 +19,7 @@ export default function FormFooter() {
         // Simulate brief save (actual save to context happens via watch in parent)
         setTimeout(() => {
             setIsSubmitting(false);
+            updateFormData({ highestStep: Math.max(formData.highestStep, 2) });
             toast.success("Personal details saved!");
             router.push('/admission/academic');
         }, 400);

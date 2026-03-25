@@ -19,7 +19,7 @@ type Props = {
 const navItems = [
   { label: "Dashboard", view: "dashboard" },
   { label: "Application Form", route: "/admission" },
-  { label: "Payments", view: "payments" },
+  { label: "Payments", route: "/admission/payment" },
   { label: "Profile", route: "/profile" },
 ];
 

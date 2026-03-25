@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { UserRound, CheckCircle2, Menu, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +22,16 @@ import AdmissionNavbar from "../../../components/admission/AdmissionNavbar";
 
 export default function PaymentPage() {
     const { formData, updateFormData } = useAdmissionForm();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (formData.highestStep < 4) {
+            router.replace(
+                formData.highestStep === 3 ? '/admission/documents' :
+                    formData.highestStep === 2 ? '/admission/academic' : '/admission'
+            );
+        }
+    }, [formData.highestStep, router]);
     const [progress, setProgress] = useState(75);
     const [isSubmitted, setIsSubmitted] = useState(false);
 

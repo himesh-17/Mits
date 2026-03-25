@@ -10,7 +10,7 @@ import { AcademicFormData } from "../../lib/validationSchemas";
 
 export default function AcademicActions() {
     const router = useRouter();
-    const { saveAsDraft } = useAdmissionForm();
+    const { saveAsDraft, updateFormData, formData } = useAdmissionForm();
     const { handleSubmit, formState: { isValid } } = useFormContext<AcademicFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,6 +18,7 @@ export default function AcademicActions() {
         setIsSubmitting(true);
         setTimeout(() => {
             setIsSubmitting(false);
+            updateFormData({ highestStep: Math.max(formData.highestStep, 3) });
             toast.success("Academic details saved!");
             router.push('/admission/documents');
         }, 400);
