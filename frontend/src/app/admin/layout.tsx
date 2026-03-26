@@ -5,21 +5,33 @@ import { useEffect, useState } from "react";
 import Sidebar from "../../components/admin/Sidebar";
 import Header from "../../components/admin/Header";
 
+const ALLOWED_DOMAIN = "@mitsgwl.ac.in";
+
 export default function AdminLayout({ children }: any) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem("googleUserInfo");
+    const authToken = localStorage.getItem("authToken");
 
-    if (!storedUser) {
+    if (!storedUser || !authToken) {
       router.push("/login");
       return;
     }
 
-    const user = JSON.parse(storedUser);
+    let user: { email?: string } | null = null;
 
-    if (!["admin", "super_admin", "administrator"].includes(user.role)) {
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      router.push("/login");
+      return;
+    }
+
+    const email = String(user?.email || "").toLowerCase();
+
+    if (!email.endsWith(ALLOWED_DOMAIN)) {
       router.push("/login");
       return;
     }
