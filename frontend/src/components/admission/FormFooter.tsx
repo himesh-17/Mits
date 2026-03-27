@@ -14,15 +14,18 @@ export default function FormFooter() {
     const { handleSubmit, formState: { isValid } } = useFormContext<PersonalFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const onSubmit = (data: PersonalFormData) => {
+    const onSubmit = async (data: PersonalFormData) => {
         setIsSubmitting(true);
-        // Simulate brief save (actual save to context happens via watch in parent)
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            await saveAsDraft(data);
             updateFormData({ highestStep: Math.max(formData.highestStep, 2) });
             toast.success("Personal details saved!");
             router.push('/admission/academic');
-        }, 400);
+        } catch {
+            toast.error("Failed to save personal details. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleInvalid = () => {
