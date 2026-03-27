@@ -4,13 +4,11 @@ import { z } from "zod";
 export const personalSchema = z.object({
     fullName: z
         .string()
-        .min(1, "Full Name is required")
         .min(3, "Name must be between 3 and 50 characters")
         .max(50, "Name must be between 3 and 50 characters")
         .regex(/^[A-Za-z ]+$/, "Name must contain only letters"),
     fatherName: z
         .string()
-        .min(1, "Father's Name is required")
         .min(3, "Name must be between 3 and 50 characters")
         .max(50, "Name must be between 3 and 50 characters")
         .regex(/^[A-Za-z ]+$/, "Name must contain only letters"),
@@ -42,7 +40,6 @@ export const personalSchema = z.object({
         .regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits"),
     address: z
         .string()
-        .min(1, "Permanent address is required")
         .min(10, "Address must be at least 10 characters")
         .max(200, "Address must be under 200 characters"),
     hobbies: z.array(z.string()).optional(),
@@ -55,38 +52,36 @@ export type PersonalFormData = z.infer<typeof personalSchema>;
 export const academicSchema = z.object({
     programApplied: z.string().min(1, "Program is required"),
     branch: z.string().min(1, "Branch is required"),
-    marks10th: z
-        .string()
-        .min(1, "10th marks are required")
-        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100"),
-    marks12th: z
-        .string()
-        .min(1, "12th marks are required")
-        .regex(/^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$/, "Percentage must be between 0 and 100"),
+    // Marks come from <input type="number"> so react-hook-form gives a number value.
+    // z.coerce.number() accepts both strings and numbers.
+    marks10th: z.coerce
+        .number()
+        .min(33, "Minimum qualifying mark is 33%")
+        .max(100, "Marks cannot exceed 100%"),
+    marks12th: z.coerce
+        .number()
+        .min(33, "Minimum qualifying mark is 33%")
+        .max(100, "Marks cannot exceed 100%"),
     board10th: z.string().min(1, "10th board is required"),
     board12th: z.string().min(1, "12th board is required"),
-    year10th: z
-        .string()
-        .min(1, "10th passing year is required")
-        .regex(/^[0-9]+$/, "Only numbers allowed")
-        .refine((year) => parseInt(year) >= 2000 && parseInt(year) <= new Date().getFullYear(), {
-            message: `Year must be between 2000 and ${new Date().getFullYear()}`,
-        }),
-    year12th: z
-        .string()
-        .min(1, "12th passing year is required")
-        .regex(/^[0-9]+$/, "Only numbers allowed")
-        .refine((year) => parseInt(year) >= 2000 && parseInt(year) <= new Date().getFullYear(), {
-            message: `Year must be between 2000 and ${new Date().getFullYear()}`,
-        }),
+    // Year comes from a <select> whose option values are numbers (e.g. 2023).
+    year10th: z.coerce
+        .number()
+        .min(2000, "Year must be 2000 or later")
+        .max(new Date().getFullYear(), `Year cannot be after ${new Date().getFullYear()}`),
+    year12th: z.coerce
+        .number()
+        .min(2000, "Year must be 2000 or later")
+        .max(new Date().getFullYear(), `Year cannot be after ${new Date().getFullYear()}`),
     entranceExam: z.string().optional(),
-    entranceScore: z.string().optional(),
+    entranceScore: z.coerce.number().optional(),
 });
 
 export type AcademicFormData = z.infer<typeof academicSchema>;
 
 // ─── Documents Validation ───
-export const REQUIRED_DOCS = ["identity", "10th", "12th", "domicile", "photo", "signature"] as const;
+// Keys must match the backend Document model's docType enum
+export const REQUIRED_DOCS = ["aadhar", "marksheet_10", "marksheet_12", "domaicile", "photo", "signature"] as const;
 
 export function validateDocuments(docsUploaded: Record<string, { name: string; size?: number; type?: string }>) {
     const errors: Record<string, string> = {};
@@ -102,10 +97,10 @@ export function validateDocuments(docsUploaded: Record<string, { name: string; s
 export const paymentSchema = z.object({
     upiId: z
         .string()
-        .min(1, "UPI ID is required")
         .min(10, "UPI ID must be at least 10 characters")
         .max(40, "UPI ID must be under 40 characters")
-        .regex(/^[a-zA-Z0-9.\-_]+@[a-zA-Z]+$/, "Please enter a valid UPI ID (e.g. name@bank)"),
+        // Fix #8: accepts sub-handles like user.name@okaxis or john-doe@paytm
+        .regex(/^[\w.\-]+@[a-zA-Z0-9]+$/, "Please enter a valid UPI ID (e.g. name@bank)"),
     transactionId: z
         .string()
         .min(1, "Transaction ID is required")

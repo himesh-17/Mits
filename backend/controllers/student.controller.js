@@ -16,7 +16,15 @@ const ALLOWED_MIME_TYPES = new Set([
 function isAllowedFileUrl(fileUrl) {
     try {
         const parsed = new URL(fileUrl);
-        if (parsed.protocol !== "https:") {
+        const protocol = parsed.protocol;
+        const hostname = parsed.hostname.toLowerCase();
+        const isDevLocalHost = (hostname === "localhost" || hostname === "127.0.0.1") && process.env.NODE_ENV !== "production";
+
+        if (protocol === "http:" && isDevLocalHost) {
+            return true;
+        }
+
+        if (protocol !== "https:") {
             return false;
         }
 
@@ -26,8 +34,10 @@ function isAllowedFileUrl(fileUrl) {
             .map((v) => v.trim().toLowerCase())
             .filter(Boolean);
 
+        // Fail closed: if no hosts are configured, deny all URLs.
+        // Set ALLOWED_UPLOAD_HOSTS in .env to enable uploads.
         if (allowedHosts.length === 0) {
-            return true;
+            return false;
         }
 
         return allowedHosts.includes(parsed.hostname.toLowerCase());
@@ -35,6 +45,19 @@ function isAllowedFileUrl(fileUrl) {
         return false;
     }
 }
+
+const uploadDocumentFile = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        throw new ApiError(400, "file is required");
+    }
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/documents/${encodeURIComponent(req.file.filename)}`;
+    return sendSuccess(res, "File uploaded", {
+        fileUrl,
+        fileName: req.file.originalname || "",
+        mimeType: req.file.mimetype || "",
+    }, 201);
+});
 
 // GET /api/student/application
 const getOrCreateApplication = asyncHandler(async (req, res) => {
@@ -61,13 +84,27 @@ const updateApplication = asyncHandler(async (req, res) => {
         "tenthPassingYear", "twelfthPassingYear",
         "entranceExam", "entranceScoreOrRank",
     ];
+
+    // Number fields: coerce strings → numbers so they are stored correctly
+    // in MongoDB (schema types these as Number). Without coercion they
+    // arrive as strings and Mongoose stores null, which breaks submitApplication's
+    // required-field check.
+    const numberFields = new Set(["tenthMarks", "twelfthMarks", "tenthPassingYear", "twelfthPassingYear"]);
+
     const updates = {};
     for (const f of allowed) {
-        if (req.body[f] !== undefined) updates[f] = req.body[f];
+        if (req.body[f] === undefined) continue;
+        const raw = req.body[f];
+        if (numberFields.has(f)) {
+            const n = Number(raw);
+            updates[f] = (raw === "" || raw === null || Number.isNaN(n)) ? null : n;
+        } else {
+            updates[f] = raw;
+        }
     }
 
     const app = await Application.findOneAndUpdate(
-        { student: req.user.id, status: { $in: ["draft", "re_upload"] } },
+        { student: req.user.id, status: { $in: ["draft", "re_upload", "submitted", "under_review"] } },
         { $set: updates },
         { new: true }
     );
@@ -77,11 +114,13 @@ const updateApplication = asyncHandler(async (req, res) => {
 
 // POST /api/student/application/submit
 const submitApplication = asyncHandler(async (req, res) => {
+    // Accept applications in any pre-payment status — the student may be
+    // re-submitting after editing academic data on a previously-submitted app.
     const app = await Application.findOne({
         student: req.user.id,
-        status: { $in: ["draft", "re_upload"] },
+        status: { $in: ["draft", "re_upload", "submitted", "under_review"] },
     });
-    if (!app) throw new ApiError(400, "No draft application found to submit");
+    if (!app) throw new ApiError(400, "No active application found to submit");
 
     const requiredFields = [
         // Identity
@@ -94,17 +133,27 @@ const submitApplication = asyncHandler(async (req, res) => {
         "tenthBoard", "twelfthBoard",
         "tenthPassingYear", "twelfthPassingYear",
     ];
+    const missing = [];
     for (const f of requiredFields) {
         const val = app[f];
         if (val === undefined || val === null || val === "") {
-            throw new ApiError(400, `Missing required field: ${f}`);
+            missing.push(f);
         }
     }
+    if (missing.length > 0) {
+        // Return a clear, human-readable message listing all missing fields.
+        const readable = missing.join(", ");
+        throw new ApiError(400, `Please complete your form before submitting. Missing fields: ${readable}`);
+    }
 
-    app.status = "submitted";
-    app.progressBar.formFilled = true;
-    app.submittedAt = new Date();
-    await app.save();
+    // Only transition to "submitted" if the app is still in a form-editable state.
+    if (["draft", "re_upload"].includes(app.status)) {
+        app.status = "submitted";
+        app.progressBar.formFilled = true;
+        app.submittedAt = new Date();
+        await app.save();
+    }
+
     return sendSuccess(res, "Application submitted", { application: app });
 });
 
@@ -176,7 +225,6 @@ const submitPayment = asyncHandler(async (req, res) => {
 
     if (!upiId) throw new ApiError(400, "upiId is required");
     if (!transactionId) throw new ApiError(400, "transactionId is required");
-    if (!screenshotUrl) throw new ApiError(400, "screenshotUrl is required");
 
     if (!/^[a-zA-Z0-9._@-]{3,80}$/.test(upiId)) {
         throw new ApiError(400, "upiId format is invalid (e.g. yourname@bank)");
@@ -184,14 +232,21 @@ const submitPayment = asyncHandler(async (req, res) => {
     if (!/^[a-zA-Z0-9_-]{6,64}$/.test(transactionId)) {
         throw new ApiError(400, "transactionId format is invalid");
     }
-    if (!isAllowedFileUrl(screenshotUrl)) {
-        throw new ApiError(400, "screenshotUrl must be a valid https URL");
+    // screenshotUrl is optional until CDN integration is complete.
+    // If provided, validate that it's an allowed https URL.
+    if (screenshotUrl && !isAllowedFileUrl(screenshotUrl)) {
+        throw new ApiError(400, "screenshotUrl must be a valid https URL from an allowed host");
     }
 
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
 
-    if (!["documents_verified", "payment_pending"].includes(app.status)) {
+    // Allow payment from any post-submission status so students can submit
+    // payment after documents are uploaded, without waiting for admin review.
+    const PAYMENT_ALLOWED_STATUSES = [
+        "submitted", "under_review", "documents_verified", "payment_pending",
+    ];
+    if (!PAYMENT_ALLOWED_STATUSES.includes(app.status)) {
         throw new ApiError(400, `Payment not allowed at current application status: ${app.status}`);
     }
 
@@ -200,39 +255,32 @@ const submitPayment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "amount is required and must be a positive number");
     }
 
-    const session = await mongoose.startSession();
-    let payment;
-    try {
-        await session.withTransaction(async () => {
-            payment = await Payment.findOneAndUpdate(
-                { application: app._id },
-                {
-                    $set: {
-                        student: req.user.id,
-                        application: app._id,
-                        upiId,
-                        transactionId,
-                        screenshotUrl,
-                        paymentMode: "online",
-                        amount: normalizedAmount,
-                        status: "submitted",
-                    },
-                },
-                { upsert: true, new: true, session }
-            );
+    // We avoid starting a transaction here because most local MongoDB databases 
+    // are standalone and do not support replica set transactions, which throws a 500 error.
+    const payment = await Payment.findOneAndUpdate(
+        { application: app._id },
+        {
+            $set: {
+                student: req.user.id,
+                application: app._id,
+                upiId,
+                transactionId,
+                screenshotUrl,
+                paymentMode: "online",
+                amount: normalizedAmount,
+                status: "submitted",
+            },
+        },
+        { upsert: true, new: true }
+    );
 
-            await Application.findByIdAndUpdate(
-                app._id,
-                {
-                    status: "payment_submitted",
-                    "progressBar.paymentDone": true,
-                },
-                { session }
-            );
-        });
-    } finally {
-        await session.endSession();
-    }
+    await Application.findByIdAndUpdate(
+        app._id,
+        {
+            status: "payment_submitted",
+            "progressBar.paymentDone": true,
+        }
+    );
 
     return sendSuccess(res, "Payment submitted", { payment });
 });
@@ -241,6 +289,7 @@ export {
     getOrCreateApplication,
     updateApplication,
     submitApplication,
+    uploadDocumentFile,
     uploadDocument,
     getMyDocuments,
     getMyPayment,

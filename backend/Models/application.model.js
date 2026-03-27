@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-import User from "../Models/user.model.js";
-import Document from "../Models/document.model.js"; 
+
 const applicationSchema = new mongoose.Schema(
     {
         student: {
@@ -33,18 +32,20 @@ const applicationSchema = new mongoose.Schema(
         // ── Academic Info ──────────────────────────────────────────
         programApplied: { type: String, trim: true, default: "" },
         branch: {
-        type: String,
-        enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
-        default: "",
-    },
-    tenthMarks: { type: Number, default: null },
-    twelfthMarks: { type: Number, default: null },
-    tenthBoard: { type: String, trim: true, default: "" },
-    twelfthBoard: { type: String, trim: true, default: "" },
-    tenthPassingYear: { type: Number, default: null },
-    twelfthPassingYear: { type: Number, default: null },
-    entranceExam: { type: String, trim: true, default: "" },
-    entranceScoreOrRank: { type: String, trim: true, default: "" },
+            type: String,
+            enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI",
+                   // lowercase variants sent by the current frontend dropdown
+                   "cse", "ee", "ece", "mech", "civil", "iot", "it", "et", "ai"],
+            default: "",
+        },
+        tenthMarks: { type: Number, default: null },
+        twelfthMarks: { type: Number, default: null },
+        tenthBoard: { type: String, trim: true, default: "" },
+        twelfthBoard: { type: String, trim: true, default: "" },
+        tenthPassingYear: { type: Number, default: null },
+        twelfthPassingYear: { type: Number, default: null },
+        entranceExam: { type: String, trim: true, default: "" },
+        entranceScoreOrRank: { type: String, trim: true, default: "" },
     
  // Step 3: Documents
     documents: {

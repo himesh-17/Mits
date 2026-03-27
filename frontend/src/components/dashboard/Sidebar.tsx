@@ -1,5 +1,5 @@
 "use client";
-
+import { LayoutDashboard, FileText, CreditCard, User } from "lucide-react";
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -17,10 +17,10 @@ type Props = {
 };
 
 const navItems = [
-  { label: "Dashboard", view: "dashboard" },
-  { label: "Application Form", route: "/admission" },
-  { label: "Payments", route: "/admission/payment" },
-  { label: "Profile", route: "/profile" },
+  { label: "Dashboard", view: "dashboard", icon: LayoutDashboard },
+  { label: "Application Form", route: "/admission", icon: FileText },
+  { label: "Payments", route: "/admission/payment", icon: CreditCard },
+  { label: "Profile", route: "/profile", icon: User },
 ];
 
 export default function Sidebar({
@@ -51,46 +51,54 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed lg:relative bg-white border-r h-screen w-72
+        className={`fixed lg:relative bg-white h-screen w-72
         transform transition-transform duration-300
         ${open ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 flex flex-col justify-between z-50`}
       >
         {/* Top */}
-        <div className="p-6">
-          <div className="p-6 border-b flex items-center gap-3">
-            <Image
-              src="/mits.png"
-              alt="MITS Logo"
-              width={80}
-              height={80}
-              className="object-contain"
-            />
-            <h2 className="text-xl font-semibold text-[#2DA8E1]">
-              Admission Portal
-            </h2>
+        <div className="">
+          <div className="border-b border-gray-300 h-[73px] flex items-center px-4">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/mits.png"
+                alt="MITS Logo"
+                width={49}
+                height={49}
+                className="object-contain"
+              />
+
+              <h2 className="text-xl font-semibold text-[#2DA8E1] leading-none">
+                Admission Portal
+              </h2>
+            </div>
           </div>
 
-          <nav className="mt-6 space-y-3">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  if (item.view) {
-                    setActiveView(item.view);
-                  }
-                  if (item.route) {
-                    router.push(item.route);
-                  }
-                  if (window.innerWidth < 1024) {
-                    setOpen(false);
-                  }
-                }}
-                className={navItemStyle(item.view || item.route || "")}
-              >
-                {item.label}
-              </button>
-            ))}
+          <nav className="mt-6 p-4 space-y-3">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    if (item.view) {
+                      setActiveView(item.view);
+                    }
+                    if (item.route) {
+                      router.push(item.route);
+                    }
+                    if (window.innerWidth < 1024) {
+                      setOpen(false);
+                    }
+                  }}
+                  className={`${navItemStyle(item.view || item.route || "")} flex items-center gap-3`}
+                >
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -107,11 +115,6 @@ export default function Sidebar({
               <p className="text-xs text-gray-500">Student Portal</p>
             </div>
           </div>
-
-          {/* Student ID */}
-          <p className="text-xs text-gray-500 mb-3">
-            ID: <span className="text-[#2DA8E1] font-medium">MK-2026-2910</span>
-          </p>
 
           {/* Logout */}
           <button

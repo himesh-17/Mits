@@ -14,14 +14,18 @@ export default function AcademicActions() {
     const { handleSubmit, formState: { isValid } } = useFormContext<AcademicFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const onSubmit = (data: AcademicFormData) => {
+    const onSubmit = async (data: AcademicFormData) => {
         setIsSubmitting(true);
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            await saveAsDraft(data);
             updateFormData({ highestStep: Math.max(formData.highestStep, 3) });
             toast.success("Academic details saved!");
             router.push('/admission/documents');
-        }, 400);
+        } catch {
+            toast.error("Failed to save. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleInvalid = () => {

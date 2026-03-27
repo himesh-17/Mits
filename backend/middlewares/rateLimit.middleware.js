@@ -5,8 +5,23 @@ const MAX_REQUESTS_PER_WINDOW = 120;
 
 const hits = new Map();
 
+// Periodic cleanup: remove expired entries every minute to prevent memory leak
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, data] of hits) {
+        if (data.expiresAt <= now) {
+            hits.delete(ip);
+        }
+    }
+}, 60_000);
+
 export function simpleRateLimit(req, res, next) {
-    const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    // Fix #11: x-forwarded-for can be a comma-separated list — take only the first IP
+    const rawIp = req.headers["x-forwarded-for"];
+    const ip = rawIp
+        ? rawIp.split(",")[0].trim()
+        : (req.ip || "unknown");
+
     const now = Date.now();
 
     const existing = hits.get(ip);

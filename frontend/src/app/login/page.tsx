@@ -18,16 +18,20 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+// Module-level constant: evaluated once, not on every render (#15)
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+
 export default function LoginPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
 
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
       console.error("No credential received");
       return;
     }
+    const payload = decodeJwtPayload(credentialResponse.credential);
 
     try {
       const response = await axios.post(
@@ -46,7 +50,6 @@ export default function LoginPage() {
       }
 
       // Decode JWT to extract user info
-      const payload = decodeJwtPayload(credentialResponse.credential);
       if (payload) {
         const userInfo = {
           name: (payload.name as string) || "",
