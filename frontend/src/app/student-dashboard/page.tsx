@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { FileText, ArrowRight } from "lucide-react";
 
-import PaymentView from "../../components/views/PaymentView";
 import { useAdmissionForm } from "../../context/AdmissionContext";
 
 // Dynamic imports for improved performance
@@ -29,7 +28,7 @@ export default function StudentDashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
   useEffect(() => {
     async function validateSession() {
@@ -178,7 +177,6 @@ export default function StudentDashboard() {
             </>
           )}
 
-          {activeView === "payments" && <PaymentView />}
         </div>
       </div>
     </div>

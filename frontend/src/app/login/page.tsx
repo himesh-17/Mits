@@ -25,12 +25,12 @@ export default function LoginPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
       console.error("No credential received");
       return;
     }
-
     const payload = decodeJwtPayload(credentialResponse.credential);
 
     try {
@@ -61,7 +61,8 @@ export default function LoginPage() {
 
       console.log("Login Success");
       toast.success("Login successful!");
-      router.push("/student-dashboard");
+      const nextRoute = new URLSearchParams(window.location.search).get("next") || "/student-dashboard";
+      router.push(nextRoute);
 
     } catch (error) {
       console.error("Login failed:", error);

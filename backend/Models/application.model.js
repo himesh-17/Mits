@@ -33,9 +33,9 @@ const applicationSchema = new mongoose.Schema(
         programApplied: { type: String, trim: true, default: "" },
         branch: {
             type: String,
-            enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI",
-                   // lowercase variants sent by the current frontend dropdown
-                   "cse", "ee", "ece", "mech", "civil", "iot", "it", "et", "ai"],
+            enum: ["", "CSE", "EE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI",
+                // lowercase variants sent by the current frontend dropdown
+                "cse", "ee", "ece", "mech", "civil", "iot", "it", "et", "ai"],
             default: "",
         },
         tenthMarks: { type: Number, default: null },
@@ -46,19 +46,19 @@ const applicationSchema = new mongoose.Schema(
         twelfthPassingYear: { type: Number, default: null },
         entranceExam: { type: String, trim: true, default: "" },
         entranceScoreOrRank: { type: String, trim: true, default: "" },
-    
- // Step 3: Documents
-    documents: {
-      identityProof: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      tenthMarksheet: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      twelfthMarksheet: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      entranceScorecard: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      categoryCertificate: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      domicileCertificate: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      abcId: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      passportPhoto: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      signature: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-    },
+
+        // Step 3: Documents
+        documents: {
+            identityProof: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            tenthMarksheet: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            twelfthMarksheet: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            entranceScorecard: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            categoryCertificate: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            domicileCertificate: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            abcId: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            passportPhoto: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            signature: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+        },
 
         // ── Application Status ─────────────────────────────────────
         status: {

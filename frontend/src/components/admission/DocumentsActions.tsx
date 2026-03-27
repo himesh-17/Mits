@@ -22,6 +22,7 @@ export default function DocumentsActions() {
     const {
         formData,
         saveAsDraft,
+        updateFormData,
         submitApplication,
         setValidationErrors,
         clearValidationErrors,
@@ -81,6 +82,7 @@ export default function DocumentsActions() {
                 return;
             }
 
+            updateFormData({ highestStep: Math.max(formData.highestStep, 4) });
             toast.success("Documents saved! Proceeding to payment.");
             router.push("/admission/payment");
         } catch (error: unknown) {

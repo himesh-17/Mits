@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { UserRound, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAdmissionForm } from "../../../context/AdmissionContext";
 
 import AdmissionHeader from "../../../components/admission/AdmissionHeader";
 import ProgressBar from "../../../components/admission/ProgressBar";
@@ -14,6 +16,15 @@ import DocumentsActions from "../../../components/admission/DocumentsActions";
 import AdmissionNavbar from "../../../components/admission/AdmissionNavbar";
 
 export default function DocumentsPage() {
+    const { formData } = useAdmissionForm();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (formData.highestStep < 3) {
+            router.replace(formData.highestStep === 2 ? '/admission/academic' : '/admission');
+        }
+    }, [formData.highestStep, router]);
+
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
             <AdmissionNavbar />

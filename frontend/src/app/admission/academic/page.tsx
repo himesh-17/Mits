@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { UserRound, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +22,13 @@ import AdmissionNavbar from "../../../components/admission/AdmissionNavbar";
 export default function AcademicPage() {
     const [mobileNav, setMobileNav] = useState(false);
     const { formData, updateFormData } = useAdmissionForm();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (formData.highestStep < 2) {
+            router.replace('/admission');
+        }
+    }, [formData.highestStep, router]);
 
     const methods = useForm<AcademicFormData>({
         resolver: zodResolver(academicSchema) as any,

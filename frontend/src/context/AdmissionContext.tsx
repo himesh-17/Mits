@@ -36,6 +36,9 @@ export interface AdmissionFormData {
     // Step 4: Payment
     upiId: string;
     transactionId: string;
+
+    // Progression
+    highestStep: number;
 }
 
 const defaultFormData: AdmissionFormData = {
@@ -63,6 +66,8 @@ const defaultFormData: AdmissionFormData = {
     docsUploaded: {},
     upiId: "",
     transactionId: "",
+
+    highestStep: 1,
 };
 
 /** Map frontend field names → backend Application model field names */

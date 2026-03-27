@@ -10,17 +10,15 @@ import { AcademicFormData } from "../../lib/validationSchemas";
 
 export default function AcademicActions() {
     const router = useRouter();
-    const { saveAsDraft } = useAdmissionForm();
+    const { saveAsDraft, updateFormData, formData } = useAdmissionForm();
     const { handleSubmit, formState: { isValid } } = useFormContext<AcademicFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const onSubmit = async (data: AcademicFormData) => {
         setIsSubmitting(true);
         try {
-            // Pass validated data directly to saveAsDraft — this sidesteps any
-            // React state batching delay and guarantees the backend receives the
-            // latest branch/marks values before we navigate away.
             await saveAsDraft(data);
+            updateFormData({ highestStep: Math.max(formData.highestStep, 3) });
             toast.success("Academic details saved!");
             router.push('/admission/documents');
         } catch {
