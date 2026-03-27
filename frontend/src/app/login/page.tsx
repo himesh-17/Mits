@@ -31,6 +31,8 @@ export default function LoginPage() {
       return;
     }
 
+    const payload = decodeJwtPayload(credentialResponse.credential);
+
     try {
       const response = await axios.post(
         `${apiBaseUrl}/api/auth/google`,
@@ -48,7 +50,6 @@ export default function LoginPage() {
       }
 
       // Decode JWT to extract user info
-      const payload = decodeJwtPayload(credentialResponse.credential);
       if (payload) {
         const userInfo = {
           name: (payload.name as string) || "",
