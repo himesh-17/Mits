@@ -20,6 +20,12 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 
 // Module-level constant: evaluated once, not on every render (#15)
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+const ADMIN_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
+
+function isAllowedAdminDomain(email: string): boolean {
+  const normalizedEmail = String(email || "").toLowerCase();
+  return ADMIN_ALLOWED_DOMAINS.some((domain) => normalizedEmail.endsWith(domain));
+}
 
 export default function LoginPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -61,8 +67,17 @@ export default function LoginPage() {
 
       console.log("Login Success");
       toast.success("Login successful!");
-      const nextRoute = new URLSearchParams(window.location.search).get("next") || "/student-dashboard";
-      router.push(nextRoute);
+
+      const loggedInEmail = String(payload?.email || "").toLowerCase();
+      const requestedNext = new URLSearchParams(window.location.search).get("next");
+
+      if (requestedNext) {
+        router.push(requestedNext);
+      } else if (isAllowedAdminDomain(loggedInEmail)) {
+        router.push("/admin");
+      } else {
+        router.push("/student-dashboard");
+      }
 
     } catch (error) {
       console.error("Login failed:", error);
@@ -83,7 +98,7 @@ export default function LoginPage() {
     <div className="h-screen w-screen flex overflow-hidden">
 
       {/* LEFT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-linear-to-br from-gray-50 to-gray-100">
         <div className="w-full max-w-sm backdrop-blur-lg bg-white/70 border border-gray-200 shadow-xl rounded-2xl p-6 sm:p-10 text-center">
 
           <div className="flex justify-center mb-6">
@@ -99,7 +114,7 @@ export default function LoginPage() {
 
           <button
             onClick={triggerGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-h-[48px] active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-h-12 active:scale-[0.98]"
           >
             <FcGoogle size={22} />
             <span className="font-medium text-gray-700">
@@ -129,7 +144,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-sky-500 to-sky-600 items-center justify-center overflow-hidden">
+      <div className="hidden lg:flex w-1/2 relative bg-linear-to-br from-sky-500 to-sky-600 items-center justify-center overflow-hidden">
 
         <div className="absolute top-15 left-16 text-white z-10">
           <h2 className="text-7xl ml-12 font-bold leading-none">

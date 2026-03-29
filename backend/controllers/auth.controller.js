@@ -6,6 +6,13 @@ import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.servi
 import { generateToken } from "../utils/jwt.utils.js";
 import { cookieOptions } from "../utils/cookie.utils.js";
 
+const ADMIN_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
+
+function isAllowedAdminDomain(email = "") {
+    const normalizedEmail = String(email).toLowerCase();
+    return ADMIN_ALLOWED_DOMAINS.some((domain) => normalizedEmail.endsWith(domain));
+}
+
 function sanitizeUser(user) {
     return {
         id: user._id,
@@ -78,6 +85,12 @@ const googleLogin = asyncHandler(async (req, res) => {
 
     if (!user.role) {
         user.role = profile.role || "student";
+        await user.save();
+    }
+
+    // Domain-based admin access for MITS institutional emails.
+    if (profile.emailVerified && isAllowedAdminDomain(profile.email) && user.role === "student") {
+        user.role = "administrator";
         await user.save();
     }
 

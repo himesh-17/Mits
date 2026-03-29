@@ -4,7 +4,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
 const STUDENT_ALLOWED_DOMAIN = "@gmail.com";
-const STAFF_ALLOWED_DOMAIN = "@mitsgwl.ac.in";
+const STAFF_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
+
+function isAllowedStaffEmail(email = "") {
+    return STAFF_ALLOWED_DOMAINS.some((domain) => email.endsWith(domain));
+}
 
 // Important fix #4: In-memory user cache to avoid hitting MongoDB on every request.
 // TTL of 60s — short enough to pick up deactivations quickly.
@@ -106,10 +110,10 @@ const requireRole = (...allowedRoles) => {
                     403
                 );
             }
-        } else if (!email.endsWith(STAFF_ALLOWED_DOMAIN)) {
+        } else if (!isAllowedStaffEmail(email)) {
             return sendError(
                 res,
-                "Staff/admin access is allowed only for @mitsgwl.ac.in accounts",
+                "Staff/admin access is allowed only for @mitsgwl.ac.in or @mitsgwalior.ac.in accounts",
                 403
             );
         }

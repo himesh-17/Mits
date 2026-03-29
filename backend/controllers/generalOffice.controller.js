@@ -4,6 +4,7 @@ import RoleAssignment from "../Models/roleAssignment.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { writeAuditLog } from "../utils/auditLog.js";
 
 function escapeRegex(value = "") {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -72,6 +73,8 @@ const reviewApplication = asyncHandler(async (req, res) => {
     const app = await Application.findById(req.params.applicationId);
     if (!app) throw new ApiError(404, "Application not found");
 
+    const previousStatus = app.status;
+
     if (remarks) app.remarksGeneralOffice = remarks;
     app.reviewedBy = req.user.id;
 
@@ -97,6 +100,25 @@ const reviewApplication = asyncHandler(async (req, res) => {
     };
     const actionMessage = actionMessageMap[action] || `${action}d`;
 
+    const auditActionLabelMap = {
+        approve: "APPLICATION_APPROVED",
+        reject: "APPLICATION_REJECTED",
+        re_upload: "APPLICATION_REQUEST_REUPLOAD",
+    };
+
+    await writeAuditLog({
+        req,
+        actionLabel: auditActionLabelMap[action] || "APPLICATION_REVIEW_UPDATED",
+        actionTone: action === "approve" ? "green" : "slate",
+        module: "general-office",
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousStatus,
+        toStatus: app.status,
+        notes: remarks || "",
+    });
+
     return sendSuccess(res, `Application ${actionMessage}`, { application: app });
 });
 
@@ -120,6 +142,9 @@ const assignRole = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Invalid role. Valid: ${validRoles.join(", ")}`);
     }
 
+    const existingUser = await User.findOne({ email: email.toLowerCase() }).select("role email");
+    const previousRole = existingUser?.role || "student";
+
     const assignment = await RoleAssignment.findOneAndUpdate(
         { email: email.toLowerCase() },
         { email: email.toLowerCase(), role, branch: branch || "", assignedBy: req.user.id },
@@ -131,6 +156,17 @@ const assignRole = asyncHandler(async (req, res) => {
         { email: email.toLowerCase() },
         { role },
     );
+
+    await writeAuditLog({
+        req,
+        actionLabel: "ROLE_ASSIGNED",
+        module: "general-office",
+        entityType: "user",
+        entityRef: `User ${email.toLowerCase()}`,
+        fromStatus: previousRole,
+        toStatus: role,
+        notes: branch ? `Branch: ${branch}` : "",
+    });
 
     return sendSuccess(res, "Role assigned", { assignment }, 201);
 });
@@ -146,6 +182,18 @@ const removeRoleAssignment = asyncHandler(async (req, res) => {
     }
 
     await User.findOneAndUpdate({ email }, { role: "student" });
+
+    await writeAuditLog({
+        req,
+        actionLabel: "ROLE_REMOVED",
+        module: "general-office",
+        entityType: "user",
+        entityRef: `User ${email}`,
+        fromStatus: deletedAssignment.role,
+        toStatus: "student",
+        actionTone: "slate",
+    });
+
     return sendSuccess(res, "Role assignment removed");
 });
 

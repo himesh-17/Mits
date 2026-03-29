@@ -4,6 +4,7 @@ import Payment from "../Models/payment.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { writeAuditLog } from "../utils/auditLog.js";
 
 // GET /api/account-office/applications
 // List all doc-verified applications (awaiting payment verification)
@@ -60,6 +61,8 @@ const verifyDocument = asyncHandler(async (req, res) => {
     const existingDocument = await Document.findById(req.params.documentId);
     if (!existingDocument) throw new ApiError(404, "Document not found");
 
+    const previousDocumentStatus = existingDocument.status;
+
     const doc = await Document.findByIdAndUpdate(
         req.params.documentId,
         {
@@ -82,6 +85,19 @@ const verifyDocument = asyncHandler(async (req, res) => {
             "progressBar.documentsVerified": true,
         });
     }
+
+    await writeAuditLog({
+        req,
+        actionLabel: action === "verified" ? "DOCUMENT_VERIFIED" : "DOCUMENT_REJECTED",
+        actionTone: action === "verified" ? "green" : "slate",
+        module: "account-office",
+        entityType: "document",
+        entityId: doc._id,
+        entityRef: `Document #${String(doc._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousDocumentStatus,
+        toStatus: doc.status,
+        notes: reason || "",
+    });
 
     return sendSuccess(res, `Document ${action}`, { document: doc });
 });
@@ -112,6 +128,8 @@ const setPaymentDetails = asyncHandler(async (req, res) => {
         throw new ApiError(400, "minLimit must be less than or equal to maxLimit");
     }
 
+    const previousStatus = app.status;
+
     const payment = await Payment.findOneAndUpdate(
         { application: app._id },
         {
@@ -131,6 +149,17 @@ const setPaymentDetails = asyncHandler(async (req, res) => {
 
     await Application.findByIdAndUpdate(app._id, { status: "payment_pending" });
 
+    await writeAuditLog({
+        req,
+        actionLabel: "PAYMENT_DETAILS_SET",
+        module: "account-office",
+        entityType: "payment",
+        entityId: payment._id,
+        entityRef: `Payment #${String(payment._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousStatus,
+        toStatus: "payment_pending",
+    });
+
     return sendSuccess(res, "Payment details set", { payment });
 });
 
@@ -147,6 +176,10 @@ const verifyPayment = asyncHandler(async (req, res) => {
     if (existingPayment.status !== "submitted") {
         throw new ApiError(400, `Payment can only be processed from submitted status. Current status: ${existingPayment.status}`);
     }
+
+    const previousPaymentStatus = existingPayment.status;
+    const applicationBeforeUpdate = await Application.findById(existingPayment.application).select("status");
+    const previousApplicationStatus = applicationBeforeUpdate?.status || "";
 
     const payment = await Payment.findByIdAndUpdate(
         req.params.paymentId,
@@ -171,6 +204,23 @@ const verifyPayment = asyncHandler(async (req, res) => {
             status: "payment_pending",
         });
     }
+
+    await writeAuditLog({
+        req,
+        actionLabel: action === "verified" ? "PAYMENT_APPROVED" : "PAYMENT_REJECTED",
+        actionTone: action === "verified" ? "green" : "slate",
+        module: "account-office",
+        entityType: "payment",
+        entityId: payment._id,
+        entityRef: `Payment #${String(payment._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousPaymentStatus,
+        toStatus: payment.status,
+        notes: reason || "",
+        metadata: {
+            applicationStatusFrom: previousApplicationStatus,
+            applicationStatusTo: action === "verified" ? "payment_verified" : "payment_pending",
+        },
+    });
 
     return sendSuccess(res, `Payment ${action}`, { payment });
 });
@@ -197,12 +247,26 @@ const confirmAdmission = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Cannot confirm admission at status: ${app.status}`);
     }
 
+    const previousStatus = app.status;
+
     app.status = "admitted";
     app.progressBar.admissionConfirmed = true;
     app.admittedBy = req.user.id;
     app.admittedAt = new Date();
     if (remarks) app.remarksAccountOffice = remarks;
     await app.save();
+
+    await writeAuditLog({
+        req,
+        actionLabel: "ADMISSION_CONFIRMED",
+        module: "account-office",
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousStatus,
+        toStatus: app.status,
+        notes: remarks || "",
+    });
 
     return sendSuccess(res, "Admission confirmed", { application: app });
 });

@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "seed:admin": "node scripts/seed-admin-test-data.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",
