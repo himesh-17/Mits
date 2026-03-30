@@ -1,72 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { getAdminData } from "../../lib/AdminStore";
 
-export default function RecentActivity({ refresh }: any) {
-  const [data, setData] = useState<any[]>([]);
+type Application = {
+  id: string;
+  rollNo?: string;
+  name: string;
+  program?: string;
+  course?: string;
+  status: string;
+  date: string;
+};
 
-  // 🔥 Always fetch latest data from store
-  useEffect(() => {
-    const fetchedData = getAdminData();
-    setData(fetchedData);
-  }, [refresh]);
+type RecentActivityProps = {
+  refresh: boolean;
+  rows?: Application[] | null;
+};
 
-  return (
-    <div className="bg-white rounded-xl border p-4">
-      <div className="flex justify-between mb-4">
-        <h2 className="font-semibold">Recent Activity</h2>
-        <span className="text-blue-500 text-sm cursor-pointer">View All</span>
-      </div>
+export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
+  const data = useMemo(() => {
+    if (Array.isArray(rows)) {
+      return rows.slice(0, 6);
+    }
 
-      <table className="w-full text-sm">
-        <thead className="text-gray-400 text-xs uppercase">
-          <tr>
-            <th className="text-left py-2">App ID</th>
-            <th className="text-left">Student Name</th>
-            <th className="text-left">Program</th>
-            <th className="text-left">Status</th>
-            <th className="text-left">Date</th>
-            <th className="text-left">Action</th>
-          </tr>
-        </thead>
+    return (getAdminData() as Application[]).slice(0, 6);
+  }, [refresh, rows]);
 
-        <tbody>
-          {data.map((item, i) => (
-            <tr key={i} className="border-t hover:bg-gray-50">
-              <td className="py-3">{item.id}</td>
-              <td className="font-medium">{item.name}</td>
-              <td>{item.course}</td>
-              <td>
-                <StatusBadge status={item.status} />
-              </td>
-              <td className="text-gray-500">{item.date}</td>
-              <td>...</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+  const statusClass = (status: string): string => {
+    if (status === "Finalized" || status === "Payment Verified" || status === "Documents Verified") {
+      return "bg-[#DCFCE7] text-[#15803D]";
+    }
 
-function StatusBadge({ status }: any) {
-  const styles: any = {
-    pending: "bg-yellow-100 text-yellow-700",
-    approved: "bg-green-100 text-green-700",
-    rejected: "bg-red-100 text-red-700",
-    draft: "bg-gray-200 text-gray-700",
+    if (status === "Payment Pending" || status === "Approval Pending" || status === "Under Review") {
+      return "bg-[#FFEDD5] text-[#C2410C]";
+    }
+
+    if (status === "Rejected" || status === "Document Rejected" || status === "Payment Rejected") {
+      return "bg-[#FEE2E2] text-[#B91C1C]";
+    }
+
+    return "bg-[#F1F5F9] text-[#475569]";
   };
 
   return (
-    <span className={`px-2 py-1 rounded text-xs ${styles[status]}`}>
-      {status === "pending"
-        ? "Payment Pending"
-        : status === "approved"
-          ? "Finalized"
-          : status === "rejected"
-            ? "Rejected"
-            : "Draft"}
-    </span>
+    <section className="bg-white rounded-lg border border-black/10 overflow-hidden">
+      <div className="h-11 px-4 border-b border-black/10 flex items-center">
+        <h2 className="font-['Times_New_Roman',Times,serif] text-[16px] leading-6 font-bold text-[#0F1724]">Recent Activity</h2>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-180">
+          <thead>
+            <tr className="h-9 bg-[#EEF2F6] text-[12px] font-semibold text-[#334155]">
+              <th className="px-4">Roll No</th>
+              <th className="px-4">Name</th>
+              <th className="px-4">Program</th>
+              <th className="px-4">Status</th>
+              <th className="px-4">Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.map((item) => {
+              const normalizedStatus = String(item.status || "Draft");
+              const program = String(item.program || item.course || "-");
+
+              return (
+                <tr
+                  key={item.id}
+                  className="h-12.5 border-t border-[#E2E8F0] text-[13px] text-[#0F1724]"
+                >
+                  <td className="px-4 font-semibold">{item.rollNo || "-"}</td>
+                  <td className="px-4">{item.name}</td>
+                  <td className="px-4">{program}</td>
+                  <td className="px-4">
+                    <span
+                      className={`inline-flex h-5.5 items-center px-2 rounded-md text-[11px] font-semibold ${statusClass(normalizedStatus)}`}
+                    >
+                      {normalizedStatus}
+                    </span>
+                  </td>
+                  <td className="px-4 text-[#334155]">{item.date}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

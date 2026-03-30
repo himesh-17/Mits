@@ -81,7 +81,7 @@ export type AcademicFormData = z.infer<typeof academicSchema>;
 
 // ─── Documents Validation ───
 // Keys must match the backend Document model's docType enum
-export const REQUIRED_DOCS = ["aadhar", "marksheet_10", "marksheet_12", "domaicile", "photo", "signature"] as const;
+export const REQUIRED_DOCS = ["aadhar", "marksheet_10", "marksheet_12", "domicile", "photo", "signature"] as const;
 
 export function validateDocuments(docsUploaded: Record<string, { name: string; size?: number; type?: string }>) {
     const errors: Record<string, string> = {};

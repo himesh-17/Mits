@@ -33,9 +33,11 @@ const applicationSchema = new mongoose.Schema(
         programApplied: { type: String, trim: true, default: "" },
         branch: {
             type: String,
-            enum: ["", "CSE", "EE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI",
-                // lowercase variants sent by the current frontend dropdown
-                "cse", "ee", "ece", "mech", "civil", "iot", "it", "et", "ai"],
+            enum: ["", "CSE", "EE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
+            set: (value) => {
+                const normalized = String(value || "").trim();
+                return normalized ? normalized.toUpperCase() : "";
+            },
             default: "",
         },
         tenthMarks: { type: Number, default: null },
@@ -46,6 +48,15 @@ const applicationSchema = new mongoose.Schema(
         twelfthPassingYear: { type: Number, default: null },
         entranceExam: { type: String, trim: true, default: "" },
         entranceScoreOrRank: { type: String, trim: true, default: "" },
+        rollNumber: { type: String, trim: true, default: "" },
+        meritRank: { type: String, trim: true, default: "" },
+        meritMarks: { type: String, trim: true, default: "" },
+        eligibleCategory: { type: String, trim: true, default: "" },
+        allottedCategory: { type: String, trim: true, default: "" },
+        allottedRound: { type: String, trim: true, default: "" },
+        domicileStatus: { type: String, trim: true, default: "" },
+        ewsStatus: { type: String, trim: true, default: "" },
+        genderRaw: { type: String, trim: true, default: "" },
 
         // Step 3: Documents
         documents: {
@@ -78,6 +89,18 @@ const applicationSchema = new mongoose.Schema(
             ],
             default: "draft",
         },
+        finalStatus: { type: String, trim: true, default: "" },
+        verifiedRound: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AdmissionRound",
+            default: null,
+        },
+        verifiedRoundCandidate: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "RoundCandidate",
+            default: null,
+        },
+        roundEligibilityVerifiedAt: { type: Date, default: null },
 
         // ── Progress Tracking ──────────────────────────────────────
         progressBar: {

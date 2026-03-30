@@ -21,6 +21,11 @@ import adminRoutes from "./Routes/Admin/admin.routes.js";
 const app = express();
 const port = process.env.PORT || 8080;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const trustProxy = process.env.TRUST_PROXY === "1";
+
+if (trustProxy) {
+    app.set("trust proxy", 1);
+}
 
 // Deduplicate origins so that if FRONTEND_URL === "http://localhost:3000"
 // we don't send two identical entries in the CORS allow-list.
@@ -36,7 +41,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     credentials: true,
 }));
-app.use(express.json({ limit: "1mb" })); // guard against oversized payloads
+app.use(express.json({ limit: "15mb" })); // support uploaded Excel row payloads from admin round creation
 app.use(cookieParser());
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use("/api", simpleRateLimit);

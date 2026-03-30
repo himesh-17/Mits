@@ -4,34 +4,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
 const STUDENT_ALLOWED_DOMAIN = "@gmail.com";
-const STAFF_ALLOWED_DOMAIN = "@mitsgwl.ac.in";
+const STAFF_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
 
-// Important fix #4: In-memory user cache to avoid hitting MongoDB on every request.
-// TTL of 60s — short enough to pick up deactivations quickly.
-const USER_CACHE_TTL_MS = 60_000;
-const userCache = new Map();
-
-function getCachedUser(userId) {
-    const entry = userCache.get(userId);
-    if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-        userCache.delete(userId);
-        return null;
-    }
-    return entry.user;
+function isAllowedStaffEmail(email = "") {
+    return STAFF_ALLOWED_DOMAINS.some((domain) => email.endsWith(domain));
 }
-
-function setCachedUser(userId, user) {
-    userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
-}
-
-// Prune stale cache entries every 5 minutes
-setInterval(() => {
-    const now = Date.now();
-    for (const [id, entry] of userCache) {
-        if (entry.expiresAt <= now) userCache.delete(id);
-    }
-}, 5 * 60_000);
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
 
@@ -54,14 +31,9 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
         return sendError(res, "Invalid or expired token", 401);
     }
 
-    // Try cache first, fall back to DB
-    let user = getCachedUser(String(decoded.id));
-    if (!user) {
-        user = await User.findById(decoded.id).select(
-            "_id name email role picture isActive"
-        );
-        if (user) setCachedUser(String(decoded.id), user);
-    }
+    const user = await User.findById(decoded.id).select(
+        "_id name email role picture isActive"
+    );
 
     if (!user) {
         return sendError(res, "User not found", 401);
@@ -106,10 +78,10 @@ const requireRole = (...allowedRoles) => {
                     403
                 );
             }
-        } else if (!email.endsWith(STAFF_ALLOWED_DOMAIN)) {
+        } else if (!isAllowedStaffEmail(email)) {
             return sendError(
                 res,
-                "Staff/admin access is allowed only for @mitsgwl.ac.in accounts",
+                "Staff/admin access is allowed only for @mitsgwl.ac.in or @mitsgwalior.ac.in accounts",
                 403
             );
         }

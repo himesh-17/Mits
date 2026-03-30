@@ -16,6 +16,7 @@ const paymentSchema = new mongoose.Schema(
 
         upiId: { type: String, trim: true, default: "" },
         transactionId: { type: String, trim: true, default: "" },
+    utsId: { type: String, trim: true, default: "" },
         screenshotUrl: { type: String, trim: true, default: "" },
 
         amount: { type: Number, default: 0 },

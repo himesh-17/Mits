@@ -12,7 +12,7 @@ const requiredDocTypes = [
     "aadhar",
     "marksheet_10",
     "marksheet_12",
-    "domaicile",
+    "domicile",
     "photo",
     "signature",
 ];

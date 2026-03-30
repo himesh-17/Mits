@@ -17,7 +17,7 @@ export default function DocumentsUploadForm() {
         { id: "marksheet_12", label: "12th Marksheet",                  required: true },
         { id: "jee_result",   label: "Entrance Exam Scorecard (Optional)", required: false },
         { id: "caste_certificate", label: "Category Certificate (if applicable)", required: false },
-        { id: "domaicile",    label: "Domicile Certificate",            required: true },
+        { id: "domicile",     label: "Domicile Certificate",            required: true },
         { id: "other",        label: "ABC ID",                          required: false },
         { id: "photo",        label: "Passport size photo",             required: true },
         { id: "signature",    label: "Signature",                       required: true },

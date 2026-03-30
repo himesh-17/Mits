@@ -24,7 +24,7 @@ const documentSchema = new mongoose.Schema(
                 "migration_certificate",
                 "caste_certificate",
                 "income_certificate",
-                "domaicile",
+                "domicile",
                 "jee_result",
                 "other",            
             ],

@@ -21,14 +21,17 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { validateFile } from "../../lib/validationSchemas";
+import { api } from "../../utils/api";
 
 export default function PaymentsPage() {
     const [paymentStatus, setPaymentStatus] = useState<"pending" | "submitted">("pending");
     const [showModal, setShowModal] = useState(false);
+    const [upiId, setUpiId] = useState("");
     const [transactionId, setTransactionId] = useState("");
     const [screenshot, setScreenshot] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [errors, setErrors] = useState<{ transactionId?: string; screenshot?: string }>({});
+    const [errors, setErrors] = useState<{ upiId?: string; transactionId?: string; screenshot?: string }>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [mobileSidebar, setMobileSidebar] = useState(false);
     const [userName, setUserName] = useState("Student");
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,8 +51,9 @@ export default function PaymentsPage() {
         setErrors({});
     };
 
-    const validateAndSubmit = () => {
-        const newErrors: { transactionId?: string; screenshot?: string } = {};
+    const validateAndSubmit = async () => {
+        const newErrors: { upiId?: string; transactionId?: string; screenshot?: string } = {};
+        if (!upiId.trim()) newErrors.upiId = "UPI ID is required";
         if (!transactionId.trim()) newErrors.transactionId = "Transaction ID is required";
         if (!screenshot) newErrors.screenshot = "Payment screenshot is required";
 
@@ -58,9 +62,24 @@ export default function PaymentsPage() {
             return;
         }
 
-        setPaymentStatus("submitted");
-        setShowModal(false);
-        toast.success("Payment submitted successfully!");
+        setIsSubmitting(true);
+        try {
+            await api.post("/api/student/payment/submit", {
+                upiId: upiId.trim(),
+                transactionId: transactionId.trim(),
+                amount: 75000,
+            });
+            setPaymentStatus("submitted");
+            setShowModal(false);
+            toast.success("Payment submitted successfully!");
+        } catch (error) {
+            const message =
+                (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+                "Payment submission failed. Please try again.";
+            toast.error(message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,6 +321,27 @@ export default function PaymentsPage() {
                             Enter your UPI transaction details below.
                         </p>
 
+                        {/* UPI ID */}
+                        <div className="mb-5">
+                            <label className="block text-sm font-semibold text-[#334155] mb-1.5">
+                                Your UPI ID <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={upiId}
+                                onChange={(e) => {
+                                    setUpiId(e.target.value);
+                                    setErrors((prev) => ({ ...prev, upiId: undefined }));
+                                }}
+                                placeholder="e.g. yourname@bank"
+                                className={`w-full h-11 px-4 rounded-lg border text-sm text-[#0F172A] placeholder:text-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] transition ${errors.upiId ? "border-red-400" : "border-[#E2E8F0]"
+                                    }`}
+                            />
+                            {errors.upiId && (
+                                <p className="text-xs text-red-500 mt-1">{errors.upiId}</p>
+                            )}
+                        </div>
+
                         {/* Transaction ID */}
                         <div className="mb-5">
                             <label className="block text-sm font-semibold text-[#334155] mb-1.5">
@@ -369,9 +409,10 @@ export default function PaymentsPage() {
                         {/* Submit */}
                         <button
                             onClick={validateAndSubmit}
+                            disabled={isSubmitting}
                             className="w-full h-12 bg-[#38BDF8] hover:bg-[#0EA5E9] text-white font-bold text-base rounded-xl transition-colors cursor-pointer active:scale-[0.98]"
                         >
-                            Confirm & Submit
+                            {isSubmitting ? "Submitting..." : "Confirm & Submit"}
                         </button>
                     </div>
                 </div>

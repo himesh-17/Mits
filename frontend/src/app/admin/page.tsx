@@ -1,11 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
-import * as XLSX from "xlsx";
-import { setAdminData, refreshAdminData } from "../../lib/AdminStore";
-import { FiRefreshCw, FiPlus, FiUpload } from "react-icons/fi";
-import { span } from "framer-motion/client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FiRefreshCw, FiPlus } from "react-icons/fi";
+import { api } from "../../utils/api";
 
 const StatCards = dynamic(() => import("../../components/admin/StatCards"), {
   ssr: false,
@@ -19,108 +18,120 @@ const Charts = dynamic(() => import("../../components/admin/Charts"), {
 });
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [refresh, setRefresh] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<{
+    cards: {
+      totalApplications: number;
+      uploadedToday: number;
+      pendingVerifications: number;
+      finalized: number;
+      totalEligibleStudents: number;
+      matchedStudents: number;
+      awaitingApplications: number;
+    };
+    breakdown: {
+      finalized: number;
+      pending: number;
+      rejected: number;
+      draft: number;
+      total: number;
+    };
+    recentActivity: Array<{
+      id: string;
+      rollNo?: string;
+      name: string;
+      program?: string;
+      status: string;
+      date: string;
+    }>;
+  } | null>(null);
+  const [fetchError, setFetchError] = useState("");
+
+  const fetchDashboard = async () => {
+    try {
+      setFetchError("");
+      const response = await api.get("/api/admin/dashboard", {
+        params: { recentLimit: 6 },
+      });
+
+      const payload = response?.data?.data || null;
+      if (payload?.cards && payload?.breakdown && Array.isArray(payload?.recentActivity)) {
+        setDashboardData(payload);
+        return;
+      }
+
+      setDashboardData(null);
+      setFetchError("Could not load live dashboard data; no live data available.");
+    } catch {
+      setFetchError("Could not load live dashboard data; no live data available.");
+      setDashboardData(null);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchDashboard();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // 🔁 Refresh
   const handleRefresh = () => {
     setLoading(true);
 
-    setTimeout(() => {
-      refreshAdminData();
+    setTimeout(async () => {
+      await fetchDashboard();
       setRefresh((prev) => !prev);
       setLoading(false);
-    }, 500);
-  };
-
-  // 📂 Excel Upload
-  const handleFileUpload = (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = (evt: any) => {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
-
-      const formatted = jsonData.map((row, index) => ({
-        id: row["App ID"] || `#EX${index}`,
-        name: row["Student Name"],
-        course: row["Program"],
-        status: row["Status"]?.toLowerCase(),
-        date: new Date(row["Date"]).toISOString(),
-      }));
-
-      setAdminData(formatted);
-      setRefresh((prev) => !prev);
-    };
-
-    reader.readAsArrayBuffer(file);
+    }, 350);
   };
 
   return (
-    <span>
-      {/* ✅ Main Content */}
-      <div className="w-[110%]  p-6 space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">Admission Dashboard</h2>
-            <p className="text-sm text-gray-500">
-              Review your daily metrics and student data uploads.
-            </p>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-2">
-            {/* Refresh */}
-            <button
-              onClick={handleRefresh}
-              className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-100"
-            >
-              <FiRefreshCw size={14} />
-              {loading ? "Refreshing..." : "Refresh"}
-            </button>
-
-            {/* New Round */}
-            <button
-              onClick={() => {
-                refreshAdminData();
-                setRefresh((prev) => !prev);
-              }}
-              className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-100"
-            >
-              <FiPlus size={14} />
-              New Round
-            </button>
-
-            {/* Excel Upload */}
-            <label className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-600">
-              <FiUpload size={14} />
-              Excel Upload
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                hidden
-                onChange={handleFileUpload}
-              />
-            </label>
-          </div>
+    <section className="admin-section-enter w-full space-y-5 [font-family:var(--font-inter)]">
+      <div className="flex flex-col gap-3 lg:h-17.5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="font-['Times_New_Roman',Times,serif] text-[34px] md:text-[38px] leading-10.5 font-bold text-[#0F172A]">
+            Admission Dashboard
+          </h1>
+          <p className="text-[15px] leading-5.5 text-[#94A3B8]">
+            Review your daily metrics and student data uploads.
+          </p>
         </div>
 
-        {/* Stats */}
-        <StatCards refresh={refresh} />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            className="admin-btn h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
+            type="button"
+          >
+            <FiRefreshCw size={14} />
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
 
-        {/* Table */}
-        <RecentActivity refresh={refresh} />
+          <button
+            onClick={() => {
+              router.push("/admin/rounds");
+            }}
+            className="admin-btn h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
+            type="button"
+          >
+            <FiPlus size={14} />
+            New Round
+          </button>
 
-        {/* Charts */}
-        <Charts refresh={refresh} />
+        </div>
       </div>
-    </span>
+
+      {fetchError ? (
+        <p className="text-[13px] text-[#B45309]">{fetchError}</p>
+      ) : null}
+
+      <StatCards refresh={refresh} metrics={dashboardData?.cards || null} />
+      <RecentActivity refresh={refresh} rows={dashboardData?.recentActivity || null} />
+      <Charts refresh={refresh} breakdown={dashboardData?.breakdown || null} />
+    </section>
   );
 }
