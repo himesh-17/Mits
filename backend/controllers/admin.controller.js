@@ -5,6 +5,8 @@ import Payment from "../Models/payment.model.js";
 import StudentList from "../Models/studentList.model.js";
 import RoleAssignment from "../Models/roleAssignment.model.js";
 import AuditLog from "../Models/auditLog.model.js";
+import AdmissionRound from "../Models/admissionRound.model.js";
+import RoundCandidate from "../Models/roundCandidate.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -279,6 +281,104 @@ function normalizeIdentifier(value = "") {
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")
         .slice(0, 64);
+}
+
+function normalizeNameKey(value = "") {
+    return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .trim();
+}
+
+function normalizePhoneKey(value = "") {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+function parseRoundCandidateRows(rows = []) {
+    const candidates = [];
+    let skipped = 0;
+
+    for (const row of rows) {
+        if (!row || typeof row !== "object") {
+            skipped += 1;
+            continue;
+        }
+
+        const studentName = cleanImportText(getFieldValue(row, [
+            "Student Name",
+            "Name",
+            "Full Name",
+            "Candidate Name",
+            "Applicant Name",
+            "Student",
+        ]));
+        const fatherName = cleanImportText(getFieldValue(row, [
+            "Father",
+            "Father Name",
+            "Father's Name",
+            "Fathers Name",
+            "Guardian Name",
+        ]));
+        const motherName = cleanImportText(getFieldValue(row, [
+            "Mother",
+            "Mother Name",
+            "Mother's Name",
+            "Mothers Name",
+        ]));
+
+        if (!studentName || !fatherName || !motherName) {
+            skipped += 1;
+            continue;
+        }
+
+        const rawProgram = getFieldValue(row, ["Program", "Program Name", "Program Applied", "Programme"]);
+        const rawBranch = getFieldValue(row, ["Branch", "Alloted Branch", "Allotted Branch", "Department", "Specialization", "Stream"]);
+        const rawCourse = getFieldValue(row, ["Course", "Course Name", "Course Applied"]);
+        const { programApplied, branch } = detectProgramAndBranch(rawProgram, rawBranch, rawCourse);
+
+        const rawStudentPhone = getFieldValue(row, ["PhoneNo", "Phone No", "Phone Number", "Mobile", "Mobile No", "Student Phone", "Student Contact"]);
+        const rawFatherPhone = getFieldValue(row, ["Father Phone", "Father Mobile", "Guardian Phone", "Father Contact", "Father Phone No"]);
+        const rawMotherPhone = getFieldValue(row, ["Mother Phone", "Mother Mobile", "Mother Contact", "Mother Phone No"]);
+
+        candidates.push({
+            studentName,
+            fatherName,
+            motherName,
+            studentPhone: cleanImportText(rawStudentPhone),
+            fatherPhone: cleanImportText(rawFatherPhone),
+            motherPhone: cleanImportText(rawMotherPhone),
+            email: String(getFieldValue(row, ["Email", "Email Id", "Student Email", "Mail", "E-mail"]) || "").trim().toLowerCase(),
+            rollNumber: cleanImportText(getFieldValue(row, ["Roll Number", "Roll No", "RollNo", "Enrollment No", "Registration Number", "Student ID"])),
+            program: programApplied,
+            branch,
+            sourceFile: cleanImportText(row.__sourceFile),
+            studentNameKey: normalizeNameKey(studentName),
+            fatherNameKey: normalizeNameKey(fatherName),
+            motherNameKey: normalizeNameKey(motherName),
+            studentPhoneKey: normalizePhoneKey(rawStudentPhone),
+            fatherPhoneKey: normalizePhoneKey(rawFatherPhone),
+            motherPhoneKey: normalizePhoneKey(rawMotherPhone),
+        });
+    }
+
+    const dedupedMap = new Map();
+    for (const item of candidates) {
+        const dedupeKey = [
+            item.studentNameKey,
+            item.fatherNameKey,
+            item.motherNameKey,
+            item.studentPhoneKey,
+            item.fatherPhoneKey,
+            item.motherPhoneKey,
+        ].join("|");
+        dedupedMap.set(dedupeKey, item);
+    }
+
+    return {
+        candidates: Array.from(dedupedMap.values()),
+        skipped,
+    };
 }
 
 function monthKey(date) {
@@ -610,6 +710,282 @@ const getReports = asyncHandler(async (req, res) => {
     });
 });
 
+// GET /api/admin/rounds
+const listRounds = asyncHandler(async (_req, res) => {
+    const rounds = await AdmissionRound.find({})
+        .sort({ startDate: -1, createdAt: -1 })
+        .lean();
+
+    const roundIds = rounds.map((round) => round._id);
+    let statsByRound = new Map();
+
+    if (roundIds.length > 0) {
+        const aggregate = await RoundCandidate.aggregate([
+            { $match: { round: { $in: roundIds } } },
+            {
+                $group: {
+                    _id: "$round",
+                    totalStudents: { $sum: 1 },
+                    matchedStudents: {
+                        $sum: {
+                            $cond: [{ $ifNull: ["$matchedApplication", false] }, 1, 0],
+                        },
+                    },
+                },
+            },
+        ]);
+        statsByRound = new Map(aggregate.map((row) => [String(row._id), row]));
+    }
+
+    const payload = rounds.map((round) => {
+        const stats = statsByRound.get(String(round._id));
+        const totalStudents = Number(stats?.totalStudents || round.totalStudents || 0);
+        const matchedStudents = Number(stats?.matchedStudents || round.matchedStudents || 0);
+        return {
+            id: String(round._id),
+            title: round.title,
+            description: round.description || "",
+            startDate: round.startDate,
+            deadline: round.deadline,
+            status: round.status,
+            totalStudents,
+            matchedStudents,
+        };
+    });
+
+    return sendSuccess(res, "Rounds fetched", { rounds: payload });
+});
+
+// POST /api/admin/rounds
+const createRound = asyncHandler(async (req, res) => {
+    const title = cleanImportText(req.body?.title);
+    const description = cleanImportText(req.body?.description);
+    const startDate = parsePossibleDate(req.body?.startDate);
+    const deadline = parsePossibleDate(req.body?.deadline);
+    const directRows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    const fileBatches = Array.isArray(req.body?.files) ? req.body.files : [];
+
+    if (!title) throw new ApiError(400, "Round title is required");
+    if (!startDate || !deadline) throw new ApiError(400, "Valid startDate and deadline are required");
+    if (deadline.getTime() <= startDate.getTime()) {
+        throw new ApiError(400, "deadline must be after startDate");
+    }
+
+    let rows = [...directRows];
+    if (fileBatches.length) {
+        for (const fileBatch of fileBatches) {
+            const batchRows = Array.isArray(fileBatch?.rows) ? fileBatch.rows : [];
+            const sourceFile = cleanImportText(fileBatch?.fileName);
+            for (const row of batchRows) {
+                if (row && typeof row === "object") {
+                    rows.push({
+                        ...row,
+                        __sourceFile: sourceFile,
+                    });
+                }
+            }
+        }
+    }
+
+    if (rows.length === 0) {
+        throw new ApiError(400, "At least one Excel/CSV row is required while creating a round");
+    }
+
+    const parsed = parseRoundCandidateRows(rows);
+    if (parsed.candidates.length === 0) {
+        throw new ApiError(400, "No valid student rows found. Ensure Student Name, Father Name and Mother Name exist");
+    }
+
+    const round = await AdmissionRound.create({
+        title,
+        description,
+        startDate,
+        deadline,
+        status: "active",
+        createdBy: req.user?.id || null,
+        updatedBy: req.user?.id || null,
+        totalStudents: parsed.candidates.length,
+        matchedStudents: 0,
+    });
+
+    const candidateDocs = parsed.candidates.map((candidate) => ({
+        round: round._id,
+        studentName: candidate.studentName,
+        fatherName: candidate.fatherName,
+        motherName: candidate.motherName,
+        studentPhone: candidate.studentPhone,
+        fatherPhone: candidate.fatherPhone,
+        motherPhone: candidate.motherPhone,
+        email: candidate.email,
+        rollNumber: candidate.rollNumber,
+        program: candidate.program,
+        branch: candidate.branch,
+        sourceFile: candidate.sourceFile,
+        studentNameKey: candidate.studentNameKey,
+        fatherNameKey: candidate.fatherNameKey,
+        motherNameKey: candidate.motherNameKey,
+        studentPhoneKey: candidate.studentPhoneKey,
+        fatherPhoneKey: candidate.fatherPhoneKey,
+        motherPhoneKey: candidate.motherPhoneKey,
+    }));
+
+    await RoundCandidate.insertMany(candidateDocs, { ordered: false });
+
+    await writeAuditLog({
+        req,
+        actionLabel: "ROUND_CREATED",
+        module: "admin",
+        entityType: "round",
+        entityId: round._id,
+        entityRef: `Round ${round.title}`,
+        toStatus: String(round.status || "ACTIVE").toUpperCase(),
+        metadata: {
+            importedRows: parsed.candidates.length,
+            skippedRows: parsed.skipped,
+        },
+    });
+
+    return sendSuccess(res, "Round created successfully", {
+        round: {
+            id: String(round._id),
+            title: round.title,
+            description: round.description,
+            startDate: round.startDate,
+            deadline: round.deadline,
+            status: round.status,
+            totalStudents: parsed.candidates.length,
+            matchedStudents: 0,
+        },
+        importSummary: {
+            importedRows: parsed.candidates.length,
+            skippedRows: parsed.skipped,
+        },
+    }, 201);
+});
+
+// PATCH /api/admin/rounds/:roundId/status
+const updateRoundStatus = asyncHandler(async (req, res) => {
+    const roundId = req.params.roundId;
+    const status = cleanImportText(req.body?.status).toLowerCase();
+    const validStatuses = ["active", "frozen", "closed"];
+
+    if (!validStatuses.includes(status)) {
+        throw new ApiError(400, "status must be one of active, frozen, closed");
+    }
+
+    const round = await AdmissionRound.findByIdAndUpdate(
+        roundId,
+        { status, updatedBy: req.user?.id || null },
+        { returnDocument: "after" }
+    ).lean();
+
+    if (!round) throw new ApiError(404, "Round not found");
+
+    await writeAuditLog({
+        req,
+        actionLabel: "ROUND_STATUS_UPDATED",
+        module: "admin",
+        entityType: "round",
+        entityId: round._id,
+        entityRef: `Round ${round.title}`,
+        toStatus: String(status || "").toUpperCase(),
+    });
+
+    return sendSuccess(res, "Round status updated", {
+        round: {
+            id: String(round._id),
+            title: round.title,
+            description: round.description,
+            startDate: round.startDate,
+            deadline: round.deadline,
+            status: round.status,
+        },
+    });
+});
+
+// GET /api/admin/rounds/:roundId/students
+const listRoundStudents = asyncHandler(async (req, res) => {
+    const roundId = req.params.roundId;
+    const page = parsePage(req.query.page, 1);
+    const limit = parseLimit(req.query.limit, 20, 100);
+    const search = cleanImportText(req.query.search);
+    const skip = (page - 1) * limit;
+
+    const round = await AdmissionRound.findById(roundId).lean();
+    if (!round) throw new ApiError(404, "Round not found");
+
+    const filter = { round: round._id };
+    if (search) {
+        const safe = escapeRegex(search);
+        filter.$or = [
+            { studentName: { $regex: safe, $options: "i" } },
+            { fatherName: { $regex: safe, $options: "i" } },
+            { motherName: { $regex: safe, $options: "i" } },
+            { rollNumber: { $regex: safe, $options: "i" } },
+            { studentPhone: { $regex: safe, $options: "i" } },
+            { fatherPhone: { $regex: safe, $options: "i" } },
+        ];
+    }
+
+    const [rows, total] = await Promise.all([
+        RoundCandidate.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate("matchedApplication", "status submittedAt fullName phone fatherPhone")
+            .lean(),
+        RoundCandidate.countDocuments(filter),
+    ]);
+
+    const items = rows.map((row) => ({
+        id: String(row._id),
+        studentName: cleanImportText(row.studentName) || "-",
+        fatherName: cleanImportText(row.fatherName) || "-",
+        motherName: cleanImportText(row.motherName) || "-",
+        studentPhone: cleanImportText(row.studentPhone) || "-",
+        fatherPhone: cleanImportText(row.fatherPhone) || "-",
+        motherPhone: cleanImportText(row.motherPhone) || "-",
+        rollNumber: cleanImportText(row.rollNumber) || "-",
+        program: cleanImportText(row.program) || "-",
+        branch: cleanImportText(row.branch) || "-",
+        sourceFile: cleanImportText(row.sourceFile) || "Sheet-Unspecified",
+        matched: Boolean(row.matchedApplication),
+        matchedStatus: row.matchedApplication ? mapRawStatusToUi(row.matchedApplication.status) : "Not Matched",
+    }));
+
+    const groupedMap = new Map();
+    for (const item of items) {
+        const key = item.sourceFile;
+        if (!groupedMap.has(key)) {
+            groupedMap.set(key, {
+                sheetName: key,
+                count: 0,
+                items: [],
+            });
+        }
+        const group = groupedMap.get(key);
+        group.count += 1;
+        group.items.push(item);
+    }
+
+    const groups = Array.from(groupedMap.values());
+
+    return sendSuccess(res, "Round student list fetched", {
+        round: {
+            id: String(round._id),
+            title: round.title,
+            status: round.status,
+            startDate: round.startDate,
+            deadline: round.deadline,
+        },
+        items,
+        groups,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+    });
+});
+
 // GET /api/admin/student-data
 // Paginated student data table for admin UI with secure allow-list filtering
 const listStudentData = asyncHandler(async (req, res) => {
@@ -617,9 +993,123 @@ const listStudentData = asyncHandler(async (req, res) => {
     const limit = parseLimit(req.query.limit, 20, 100);
     const skip = (page - 1) * limit;
 
+    const roundId = cleanImportText(req.query.roundId);
     const statusFilter = String(req.query.status || "All Statuses").trim();
     const programFilter = normalizeProgram(String(req.query.program || "All Programs"));
     const search = String(req.query.search || "").trim();
+
+    if (roundId) {
+        const round = await AdmissionRound.findById(roundId).lean();
+        if (!round) throw new ApiError(404, "Round not found");
+
+        const candidateFilter = { round: round._id };
+
+        if (programFilter && programFilter !== "ALL PROGRAMS") {
+            const safeProgram = escapeRegex(programFilter);
+            candidateFilter.$or = [
+                { program: { $regex: `^${safeProgram}$`, $options: "i" } },
+                { branch: { $regex: `^${safeProgram}$`, $options: "i" } },
+            ];
+        }
+
+        if (search) {
+            const safeSearch = escapeRegex(search);
+            candidateFilter.$and = [
+                ...(candidateFilter.$and || []),
+                {
+                    $or: [
+                        { studentName: { $regex: safeSearch, $options: "i" } },
+                        { fatherName: { $regex: safeSearch, $options: "i" } },
+                        { motherName: { $regex: safeSearch, $options: "i" } },
+                        { rollNumber: { $regex: safeSearch, $options: "i" } },
+                        { studentPhone: { $regex: safeSearch, $options: "i" } },
+                        { fatherPhone: { $regex: safeSearch, $options: "i" } },
+                    ],
+                },
+            ];
+        }
+
+        const [candidates, total] = await Promise.all([
+            RoundCandidate.find(candidateFilter)
+                .sort({ sourceFile: 1, createdAt: 1 })
+                .skip(skip)
+                .limit(limit)
+                .populate("matchedApplication")
+                .lean(),
+            RoundCandidate.countDocuments(candidateFilter),
+        ]);
+
+        const items = candidates
+            .map((candidate) => {
+                const application = candidate.matchedApplication || null;
+                const mappedStatus = application ? mapRawStatusToUi(application.status) : "Not Matched";
+
+                if (statusFilter && statusFilter !== "All Statuses" && mappedStatus !== statusFilter) {
+                    return null;
+                }
+
+                return {
+                    id: String(candidate._id),
+                    name: cleanImportText(candidate.studentName) || "-",
+                    email: cleanImportText(candidate.email) || "-",
+                    rank: application ? cleanImportText(application.meritRank) || "-" : "-",
+                    marks: application ? cleanImportText(application.meritMarks) || "-" : "-",
+                    rollNo: cleanImportText(candidate.rollNumber) || (application ? cleanImportText(application.rollNumber) || "-" : "-"),
+                    father: cleanImportText(candidate.fatherName) || "-",
+                    mother: cleanImportText(candidate.motherName) || "-",
+                    eligibleCategory: application ? cleanImportText(application.eligibleCategory) || "-" : "-",
+                    allotedCategory: application ? cleanImportText(application.allottedCategory) || "-" : "-",
+                    domicile: application ? cleanImportText(application.domicileStatus) || "-" : "-",
+                    gender: application ? toUiGender(application.genderRaw, application.gender) : "-",
+                    phoneNo: cleanImportText(candidate.studentPhone) || (application ? cleanImportText(application.phone) || "-" : "-"),
+                    ews: application ? cleanImportText(application.ewsStatus) || "-" : "-",
+                    program: cleanImportText(candidate.program) || (application ? buildProgram(application) : "-"),
+                    branch: cleanImportText(candidate.branch) || (application ? normalizeProgram(application.branch || "-") : "-"),
+                    status: mappedStatus,
+                    finalStatus: application ? cleanImportText(application.finalStatus) || mappedStatus : mappedStatus,
+                    date: application
+                        ? new Date(application.submittedAt || application.updatedAt || application.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                        })
+                        : "-",
+                    allotedRound: application ? cleanImportText(application.allottedRound) || "-" : "-",
+                    sourceFile: cleanImportText(candidate.sourceFile) || "Sheet-Unspecified",
+                    roundId: String(round._id),
+                    roundTitle: cleanImportText(round.title) || "-",
+                };
+            })
+            .filter(Boolean);
+
+        const groupedMap = new Map();
+        for (const item of items) {
+            const key = item.sourceFile;
+            if (!groupedMap.has(key)) {
+                groupedMap.set(key, {
+                    sheetName: key,
+                    count: 0,
+                    items: [],
+                });
+            }
+            const group = groupedMap.get(key);
+            group.count += 1;
+            group.items.push(item);
+        }
+
+        return sendSuccess(res, "Student data fetched", {
+            round: {
+                id: String(round._id),
+                title: round.title,
+                status: round.status,
+            },
+            items,
+            groups: Array.from(groupedMap.values()),
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+        });
+    }
 
     const filter = {};
 
@@ -1420,4 +1910,8 @@ export {
     dataMatching,
     deleteApplication,
     bulkEnrollmentImport,
+    listRounds,
+    createRound,
+    updateRoundStatus,
+    listRoundStudents,
 };

@@ -1,6 +1,8 @@
 import Application from "../Models/application.model.js";
 import Document from "../Models/document.model.js";
 import Payment from "../Models/payment.model.js";
+import AdmissionRound from "../Models/admissionRound.model.js";
+import RoundCandidate from "../Models/roundCandidate.model.js";
 import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
@@ -44,6 +46,35 @@ function isAllowedFileUrl(fileUrl) {
     } catch {
         return false;
     }
+}
+
+function normalizeNameKey(value = "") {
+    return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .trim();
+}
+
+function normalizePhoneKey(value = "") {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+function matchesByPhone(candidate, studentPhoneKey, fatherPhoneKey) {
+    const candidatePhones = [
+        normalizePhoneKey(candidate?.studentPhone || ""),
+        normalizePhoneKey(candidate?.fatherPhone || ""),
+        normalizePhoneKey(candidate?.motherPhone || ""),
+        normalizePhoneKey(candidate?.studentPhoneKey || ""),
+        normalizePhoneKey(candidate?.fatherPhoneKey || ""),
+        normalizePhoneKey(candidate?.motherPhoneKey || ""),
+    ].filter(Boolean);
+
+    if (!studentPhoneKey && !fatherPhoneKey) {
+        return false;
+    }
+
+    return candidatePhones.includes(studentPhoneKey) || candidatePhones.includes(fatherPhoneKey);
 }
 
 const uploadDocumentFile = asyncHandler(async (req, res) => {
@@ -103,12 +134,85 @@ const updateApplication = asyncHandler(async (req, res) => {
         }
     }
 
-    const app = await Application.findOneAndUpdate(
-        { student: req.user.id, status: { $in: ["draft", "re_upload", "submitted", "under_review"] } },
-        { $set: updates },
-        { new: true }
-    );
+    const app = await Application.findOne({
+        student: req.user.id,
+        status: { $in: ["draft", "re_upload", "submitted", "under_review"] },
+    });
     if (!app) throw new ApiError(400, "No editable application found");
+
+    const merged = {
+        fullName: updates.fullName !== undefined ? updates.fullName : app.fullName,
+        fatherName: updates.fatherName !== undefined ? updates.fatherName : app.fatherName,
+        motherName: updates.motherName !== undefined ? updates.motherName : app.motherName,
+        phone: updates.phone !== undefined ? updates.phone : app.phone,
+        fatherPhone: updates.fatherPhone !== undefined ? updates.fatherPhone : app.fatherPhone,
+    };
+
+    const hasAnyIdentityInput = [merged.fullName, merged.fatherName, merged.motherName, merged.phone, merged.fatherPhone]
+        .some((value) => String(value || "").trim() !== "");
+
+    if (hasAnyIdentityInput) {
+        const studentNameKey = normalizeNameKey(merged.fullName);
+        const fatherNameKey = normalizeNameKey(merged.fatherName);
+        const motherNameKey = normalizeNameKey(merged.motherName);
+        const studentPhoneKey = normalizePhoneKey(merged.phone);
+        const fatherPhoneKey = normalizePhoneKey(merged.fatherPhone);
+
+        if (!studentNameKey || !fatherNameKey || !motherNameKey) {
+            throw new ApiError(400, "Student name, father name and mother name are required for round verification");
+        }
+
+        const now = new Date();
+        const activeRound = await AdmissionRound.findOne({
+            status: "active",
+            startDate: { $lte: now },
+            deadline: { $gte: now },
+        })
+            .sort({ startDate: -1, createdAt: -1 })
+            .lean();
+
+        if (!activeRound) {
+            throw new ApiError(400, "No active admission round is currently open for verification");
+        }
+
+        const matchingCandidates = await RoundCandidate.find({
+            round: activeRound._id,
+            studentNameKey,
+            fatherNameKey,
+            motherNameKey,
+        }).lean();
+
+        if (matchingCandidates.length === 0) {
+            throw new ApiError(403, "Your details do not match the active round student list");
+        }
+
+        let matchedCandidate = matchingCandidates[0];
+        if (matchingCandidates.length > 1) {
+            if (!studentPhoneKey && !fatherPhoneKey) {
+                throw new ApiError(403, "Multiple matches found. Enter your phone number or father phone number to verify");
+            }
+
+            matchedCandidate = matchingCandidates.find((candidate) =>
+                matchesByPhone(candidate, studentPhoneKey, fatherPhoneKey)
+            );
+
+            if (!matchedCandidate) {
+                throw new ApiError(403, "Name matched but phone verification failed for this round");
+            }
+        }
+
+        updates.verifiedRound = activeRound._id;
+        updates.verifiedRoundCandidate = matchedCandidate._id;
+        updates.roundEligibilityVerifiedAt = new Date();
+
+        await RoundCandidate.findByIdAndUpdate(matchedCandidate._id, {
+            matchedApplication: app._id,
+            matchedAt: new Date(),
+        });
+    }
+
+    app.set(updates);
+    await app.save();
     return sendSuccess(res, "Application updated", { application: app });
 });
 

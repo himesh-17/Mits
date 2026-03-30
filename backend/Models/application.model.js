@@ -90,6 +90,17 @@ const applicationSchema = new mongoose.Schema(
             default: "draft",
         },
         finalStatus: { type: String, trim: true, default: "" },
+        verifiedRound: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AdmissionRound",
+            default: null,
+        },
+        verifiedRoundCandidate: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "RoundCandidate",
+            default: null,
+        },
+        roundEligibilityVerifiedAt: { type: Date, default: null },
 
         // ── Progress Tracking ──────────────────────────────────────
         progressBar: {

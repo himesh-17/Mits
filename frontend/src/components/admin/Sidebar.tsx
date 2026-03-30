@@ -13,7 +13,6 @@ import {
   FiFileText,
   FiLogOut,
   FiShield,
-  FiUpload,
   FiUsers,
 } from "react-icons/fi";
 
@@ -66,14 +65,6 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             icon={<FiFile className="text-[14px]" />}
             label="Student Data"
             active={pathname === "/admin/student-data"}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
-          <MenuItem
-            href="/admin/excel-upload"
-            icon={<FiUpload className="text-[14px]" />}
-            label="Excel Upload"
-            active={pathname === "/admin/excel-upload"}
             collapsed={collapsed}
             onNavigate={onNavigate}
           />

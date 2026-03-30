@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiRefreshCw, FiPlus, FiUpload } from "react-icons/fi";
+import { FiRefreshCw, FiPlus } from "react-icons/fi";
 import { api } from "../../utils/api";
 
 const StatCards = dynamic(() => import("../../components/admin/StatCards"), {
@@ -37,8 +37,9 @@ export default function AdminDashboard() {
     };
     recentActivity: Array<{
       id: string;
+      rollNo?: string;
       name: string;
-      course: string;
+      program?: string;
       status: string;
       date: string;
     }>;
@@ -118,16 +119,6 @@ export default function AdminDashboard() {
             New Round
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              router.push("/admin/excel-upload");
-            }}
-            className="admin-btn h-9.5 px-4 border border-[#2DA8E1] rounded-md bg-[#2DA8E1] inline-flex items-center gap-2 text-[13px] text-white"
-          >
-            <FiUpload size={14} />
-            Excel Upload
-          </button>
         </div>
       </div>
 

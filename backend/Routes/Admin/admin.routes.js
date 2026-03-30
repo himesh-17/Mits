@@ -14,6 +14,10 @@ import {
     dataMatching,
     deleteApplication,
     bulkEnrollmentImport,
+    listRounds,
+    createRound,
+    updateRoundStatus,
+    listRoundStudents,
 } from "../../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -36,5 +40,10 @@ router.patch("/users/:userId/activate", activateUser);
 router.get("/applications", listAllApplications);
 router.delete("/applications/:applicationId", deleteApplication);
 router.post("/bulk-enrollment", bulkEnrollmentImport);
+
+router.get("/rounds", listRounds);
+router.post("/rounds", createRound);
+router.patch("/rounds/:roundId/status", updateRoundStatus);
+router.get("/rounds/:roundId/students", listRoundStudents);
 
 export default router;

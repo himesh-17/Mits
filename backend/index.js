@@ -41,7 +41,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     credentials: true,
 }));
-app.use(express.json({ limit: "1mb" })); // guard against oversized payloads
+app.use(express.json({ limit: "15mb" })); // support uploaded Excel row payloads from admin round creation
 app.use(cookieParser());
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use("/api", simpleRateLimit);

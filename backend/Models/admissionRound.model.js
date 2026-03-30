@@ -45,6 +45,16 @@ const admissionRoundSchema = new mongoose.Schema(
             ref: "User",
             default: null,
         },
+        totalStudents: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
+        matchedStudents: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
     },
     { timestamps: true }
 );

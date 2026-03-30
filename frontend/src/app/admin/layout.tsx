@@ -63,11 +63,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         />
       </div>
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div
+        className={`relative flex flex-1 min-h-0 overflow-hidden lg:grid ${
+          sidebarCollapsed
+            ? "lg:grid-cols-[4.5rem_minmax(0,1fr)]"
+            : "lg:grid-cols-[23rem_minmax(0,1fr)]"
+        }`}
+      >
         <aside
-          className={`hidden lg:block relative border-r border-black/10 bg-white shrink-0 transition-all duration-200 ${
-            sidebarCollapsed ? "w-18" : "w-92"
-          }`}
+          className="hidden lg:block relative border-r border-black/10 bg-white"
         >
           <Sidebar collapsed={sidebarCollapsed} />
 
@@ -106,7 +110,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </aside>
         </div>
 
-        <main className="admin-page-enter flex-1 min-w-0 overflow-y-auto bg-[#F5F7FA] p-3 sm:p-4 md:p-6 lg:p-8">
+        <main className="admin-page-enter min-w-0 overflow-y-auto bg-[#F5F7FA] p-3 sm:p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>
