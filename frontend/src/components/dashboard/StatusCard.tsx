@@ -27,12 +27,6 @@ export default function StatusCard({ progress, id, nextStepRoute }: Props) {
         >
           CURRENT STATUS
         </span>
-
-        <p className="text-sm text-gray-500 mb-3">
-          <b>
-            ID: <span className="text-[#2DA8E1] font-medium">MK-2026-2910</span>
-          </b>
-        </p>
       </div>
 
       <h2 className="text-2xl font-semibold mt-4">
