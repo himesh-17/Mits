@@ -41,9 +41,6 @@ export default function AdmissionNavbar() {
                     <Link href="/student-dashboard" className="px-4 py-5 text-sm font-semibold text-[#0F172A] hover:text-[#0EA5E9] transition">
                         Dashboard
                     </Link>
-                    <Link href="/admission/payment" className="px-4 py-5 text-sm font-semibold text-[#0F172A] hover:text-[#0EA5E9] transition">
-                        Fees
-                    </Link>
                     <a href="#" className="px-4 py-5 text-sm font-semibold text-[#0F172A] hover:text-[#0EA5E9] transition">
                         Help
                     </a>
@@ -52,10 +49,7 @@ export default function AdmissionNavbar() {
                 {/* Right: App ID + User + Mobile Menu Toggle */}
                 <div className="flex items-center gap-3 md:gap-4">
                     <div className="text-right leading-tight hidden sm:block">
-                        <p className="text-xs font-semibold text-[#0EA5E9]">
-                            OS-2026-6842
-                        </p>
-                        <p className="text-xs text-[#0F172A] font-medium">{userName}</p>
+                        <p className="text-bas text-[#0F172A] font-base">{userName}</p>
                     </div>
                     <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 overflow-hidden">
                         {googleUser?.picture ? (

@@ -12,7 +12,7 @@ import {
     getMyDocuments,
     getMyPayment,
     submitPayment,
-} from "../../controllers/student.controller.js";
+} from "../../Controllers/student.controller.js";
 
 const router = express.Router();
 
