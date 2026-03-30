@@ -21,10 +21,7 @@ export default function AdmissionHeader({
                     Step {step} of 4 • <span className="text-[#0EA5E9]">{title}</span>
                 </p>
             </div>
-            <div className="text-right">
-                <p className="text-sm font-bold text-[#0F172A]">Form Id: <span className="text-[#0EA5E9]">BTEO24O1035</span></p>
-                <p className="text-sm font-bold text-[#0EA5E9] mt-0.5">{percentText}</p>
-            </div>
+           
         </div>
     );
 }
