@@ -4,7 +4,8 @@ function normalizeNameKey(value = "") {
     return String(value || "")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")
-        .trim();
+    .trim()
+    .slice(0, 120);
 }
 
 function normalizePhone(value = "") {
@@ -28,6 +29,15 @@ const roundCandidateSchema = new mongoose.Schema(
         motherPhone: { type: String, trim: true, default: "" },
         email: { type: String, trim: true, lowercase: true, default: "" },
         rollNumber: { type: String, trim: true, default: "" },
+        meritRank: { type: String, trim: true, default: "" },
+        meritMarks: { type: String, trim: true, default: "" },
+        eligibleCategory: { type: String, trim: true, default: "" },
+        allottedCategory: { type: String, trim: true, default: "" },
+        domicileStatus: { type: String, trim: true, default: "" },
+        genderRaw: { type: String, trim: true, default: "" },
+        ewsStatus: { type: String, trim: true, default: "" },
+        allottedRound: { type: String, trim: true, default: "" },
+        finalStatus: { type: String, trim: true, default: "" },
         program: { type: String, trim: true, default: "" },
         branch: { type: String, trim: true, default: "" },
         sourceFile: { type: String, trim: true, default: "" },

@@ -52,7 +52,8 @@ function normalizeNameKey(value = "") {
     return String(value || "")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")
-        .trim();
+    .trim()
+    .slice(0, 120);
 }
 
 function normalizePhoneKey(value = "") {

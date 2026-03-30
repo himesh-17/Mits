@@ -58,6 +58,7 @@ function toIsoDate(value: string): string {
 
 export default function RoundsPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const studentListRef = useRef<HTMLDivElement | null>(null);
 
   const [rounds, setRounds] = useState<AdmissionRound[]>([]);
   const [loadingRounds, setLoadingRounds] = useState(true);
@@ -153,6 +154,12 @@ export default function RoundsPage() {
   useEffect(() => {
     void fetchRoundStudents(selectedRoundId);
   }, [selectedRoundId]);
+
+  const handleViewStudents = async (roundId: string) => {
+    setSelectedRoundId(roundId);
+    await fetchRoundStudents(roundId);
+    studentListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const openCreateForm = () => {
     setFormError("");
@@ -268,6 +275,26 @@ export default function RoundsPage() {
     }
   };
 
+  const onDeleteRound = async (roundId: string) => {
+    const targetRound = rounds.find((round) => round.id === roundId);
+    const confirmed = window.confirm(`Delete round \"${targetRound?.title || "this round"}\"? This will remove its uploaded student list.`);
+    if (!confirmed) return;
+
+    try {
+      setRoundError("");
+      await api.delete(`/api/admin/rounds/${roundId}`);
+
+      const nextRounds = rounds.filter((round) => round.id !== roundId);
+      if (selectedRoundId === roundId) {
+        setSelectedRoundId(nextRounds[0]?.id || "");
+      }
+
+      await fetchRounds();
+    } catch {
+      setRoundError("Failed to delete round.");
+    }
+  };
+
   return (
     <section className="w-full space-y-5 [font-family:var(--font-inter)]">
       <div className="flex items-end justify-between gap-4">
@@ -283,7 +310,7 @@ export default function RoundsPage() {
 
       {showCreateForm ? (
         <div className="w-full rounded-lg border border-[#D2D6DC] bg-white p-6">
-          <div className="w-full max-w-225 space-y-5">
+          <div className="w-full space-y-5">
             <h2 className="font-['Times_New_Roman',Times,serif] text-[32px] leading-tight font-bold text-[#111827]">Create New Round</h2>
 
             <div className="space-y-2">
@@ -351,9 +378,10 @@ export default function RoundsPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                  <button type="button" onClick={() => setSelectedRoundId(round.id)} className="h-8 px-3 rounded-md border border-[#CBD5E1] bg-white text-[12px] font-semibold text-[#334155]">View Students</button>
+                  <button type="button" onClick={() => { void handleViewStudents(round.id); }} className="h-8 px-3 rounded-md border border-[#CBD5E1] bg-white text-[12px] font-semibold text-[#334155]">View Students</button>
                   <button type="button" onClick={() => { void onUpdateRoundStatus(round.id, isFrozen ? "active" : "frozen"); }} disabled={isClosed} className="h-8 px-3 rounded-md text-[12px] font-semibold bg-[#EFF6FF] text-[#1D4ED8] disabled:opacity-45">{isFrozen ? "Unfreeze" : "Freeze"}</button>
                   <button type="button" onClick={() => { void onUpdateRoundStatus(round.id, "closed"); }} disabled={isClosed} className="h-8 px-3 rounded-md text-[12px] font-semibold bg-[#FCDAD8] text-[#E51818] disabled:opacity-45">Close</button>
+                  <button type="button" onClick={() => { void onDeleteRound(round.id); }} className="h-8 px-3 rounded-md text-[12px] font-semibold bg-[#FEE2E2] text-[#B91C1C]">Delete</button>
                 </div>
               </div>
 
@@ -366,7 +394,7 @@ export default function RoundsPage() {
         })}
       </div>
 
-      <div className="rounded-lg border border-[#E2E8F0] bg-white p-5 space-y-4">
+      <div ref={studentListRef} className="rounded-lg border border-[#E2E8F0] bg-white p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-semibold text-[#0F172A] text-[16px]">Round Student List</h3>
           <p className="text-[12px] text-[#64748B]">Data is grouped by uploaded sheet/file for the selected round.</p>

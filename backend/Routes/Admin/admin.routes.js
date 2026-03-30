@@ -17,6 +17,7 @@ import {
     listRounds,
     createRound,
     updateRoundStatus,
+    deleteRound,
     listRoundStudents,
 } from "../../controllers/admin.controller.js";
 
@@ -44,6 +45,7 @@ router.post("/bulk-enrollment", bulkEnrollmentImport);
 router.get("/rounds", listRounds);
 router.post("/rounds", createRound);
 router.patch("/rounds/:roundId/status", updateRoundStatus);
+router.delete("/rounds/:roundId", deleteRound);
 router.get("/rounds/:roundId/students", listRoundStudents);
 
 export default router;

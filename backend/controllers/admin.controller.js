@@ -287,7 +287,8 @@ function normalizeNameKey(value = "") {
     return String(value || "")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")
-        .trim();
+    .trim()
+    .slice(0, 120);
 }
 
 function normalizePhoneKey(value = "") {
@@ -340,6 +341,15 @@ function parseRoundCandidateRows(rows = []) {
         const rawStudentPhone = getFieldValue(row, ["PhoneNo", "Phone No", "Phone Number", "Mobile", "Mobile No", "Student Phone", "Student Contact"]);
         const rawFatherPhone = getFieldValue(row, ["Father Phone", "Father Mobile", "Guardian Phone", "Father Contact", "Father Phone No"]);
         const rawMotherPhone = getFieldValue(row, ["Mother Phone", "Mother Mobile", "Mother Contact", "Mother Phone No"]);
+        const rawRank = getFieldValue(row, ["Rank", "Merit Rank", "CRL", "AIR", "All India Rank"]);
+        const rawMarks = getFieldValue(row, ["Marks", "Score", "Merit Marks", "Percentile", "Percentage"]);
+        const rawEligibleCategory = getFieldValue(row, ["Eligible Category", "Category", "EligibleCategory", "Cat"]);
+        const rawAllottedCategory = getFieldValue(row, ["Alloted Category", "Allotted Category", "AllotedCategory", "AllottedCategory"]);
+        const rawDomicile = getFieldValue(row, ["Domicile", "Domicile Status", "Home State"]);
+        const rawGender = getFieldValue(row, ["Gender", "Sex"]);
+        const rawEws = getFieldValue(row, ["EWS", "Ews", "EWS Status"]);
+        const rawAllottedRound = getFieldValue(row, ["Alloted Round", "Allotted Round", "Round", "Counselling Round"]);
+        const rawFinalStatus = getFieldValue(row, ["Final Status", "Status", "Result"]);
 
         candidates.push({
             studentName,
@@ -350,6 +360,15 @@ function parseRoundCandidateRows(rows = []) {
             motherPhone: cleanImportText(rawMotherPhone),
             email: String(getFieldValue(row, ["Email", "Email Id", "Student Email", "Mail", "E-mail"]) || "").trim().toLowerCase(),
             rollNumber: cleanImportText(getFieldValue(row, ["Roll Number", "Roll No", "RollNo", "Enrollment No", "Registration Number", "Student ID"])),
+            meritRank: cleanImportText(rawRank),
+            meritMarks: cleanImportText(rawMarks),
+            eligibleCategory: cleanImportText(rawEligibleCategory),
+            allottedCategory: cleanImportText(rawAllottedCategory),
+            domicileStatus: cleanImportText(rawDomicile),
+            genderRaw: cleanImportText(rawGender),
+            ewsStatus: cleanImportText(rawEws),
+            allottedRound: cleanImportText(rawAllottedRound),
+            finalStatus: cleanImportText(rawFinalStatus),
             program: programApplied,
             branch,
             sourceFile: cleanImportText(row.__sourceFile),
@@ -810,17 +829,26 @@ const createRound = asyncHandler(async (req, res) => {
 
     const candidateDocs = parsed.candidates.map((candidate) => ({
         round: round._id,
-        studentName: candidate.studentName,
-        fatherName: candidate.fatherName,
-        motherName: candidate.motherName,
-        studentPhone: candidate.studentPhone,
-        fatherPhone: candidate.fatherPhone,
-        motherPhone: candidate.motherPhone,
-        email: candidate.email,
-        rollNumber: candidate.rollNumber,
-        program: candidate.program,
-        branch: candidate.branch,
-        sourceFile: candidate.sourceFile,
+        studentName: cleanImportText(candidate.studentName).slice(0, 180),
+        fatherName: cleanImportText(candidate.fatherName).slice(0, 180),
+        motherName: cleanImportText(candidate.motherName).slice(0, 180),
+        studentPhone: cleanImportText(candidate.studentPhone).slice(0, 20),
+        fatherPhone: cleanImportText(candidate.fatherPhone).slice(0, 20),
+        motherPhone: cleanImportText(candidate.motherPhone).slice(0, 20),
+        email: String(candidate.email || "").trim().toLowerCase().slice(0, 160),
+        rollNumber: cleanImportText(candidate.rollNumber).slice(0, 64),
+        meritRank: cleanImportText(candidate.meritRank).slice(0, 32),
+        meritMarks: cleanImportText(candidate.meritMarks).slice(0, 32),
+        eligibleCategory: cleanImportText(candidate.eligibleCategory).slice(0, 64),
+        allottedCategory: cleanImportText(candidate.allottedCategory).slice(0, 64),
+        domicileStatus: cleanImportText(candidate.domicileStatus).slice(0, 64),
+        genderRaw: cleanImportText(candidate.genderRaw).slice(0, 16),
+        ewsStatus: cleanImportText(candidate.ewsStatus).slice(0, 32),
+        allottedRound: cleanImportText(candidate.allottedRound).slice(0, 48),
+        finalStatus: cleanImportText(candidate.finalStatus).slice(0, 64),
+        program: cleanImportText(candidate.program).slice(0, 32),
+        branch: cleanImportText(candidate.branch).slice(0, 32),
+        sourceFile: cleanImportText(candidate.sourceFile).slice(0, 120),
         studentNameKey: candidate.studentNameKey,
         fatherNameKey: candidate.fatherNameKey,
         motherNameKey: candidate.motherNameKey,
@@ -829,7 +857,36 @@ const createRound = asyncHandler(async (req, res) => {
         motherPhoneKey: candidate.motherPhoneKey,
     }));
 
-    await RoundCandidate.insertMany(candidateDocs, { ordered: false });
+    let insertedCount = 0;
+    let rowFailures = 0;
+    try {
+        const result = await RoundCandidate.collection.insertMany(candidateDocs, { ordered: false });
+        insertedCount = Number(result?.insertedCount || 0);
+    } catch (error) {
+        insertedCount = Number(
+            error?.result?.insertedCount
+            || error?.result?.nInserted
+            || error?.insertedDocs?.length
+            || 0
+        );
+        rowFailures = Number(error?.writeErrors?.length || 0);
+
+        if (insertedCount === 0) {
+            await AdmissionRound.deleteOne({ _id: round._id });
+            throw new ApiError(400, "Failed to save uploaded student list for this round. Please verify sheet data format and try again.");
+        }
+    }
+
+    if (insertedCount !== parsed.candidates.length) {
+        await AdmissionRound.updateOne(
+            { _id: round._id },
+            {
+                $set: {
+                    totalStudents: insertedCount,
+                },
+            }
+        );
+    }
 
     await writeAuditLog({
         req,
@@ -840,8 +897,8 @@ const createRound = asyncHandler(async (req, res) => {
         entityRef: `Round ${round.title}`,
         toStatus: String(round.status || "ACTIVE").toUpperCase(),
         metadata: {
-            importedRows: parsed.candidates.length,
-            skippedRows: parsed.skipped,
+            importedRows: insertedCount,
+            skippedRows: parsed.skipped + rowFailures,
         },
     });
 
@@ -853,12 +910,12 @@ const createRound = asyncHandler(async (req, res) => {
             startDate: round.startDate,
             deadline: round.deadline,
             status: round.status,
-            totalStudents: parsed.candidates.length,
+            totalStudents: insertedCount,
             matchedStudents: 0,
         },
         importSummary: {
-            importedRows: parsed.candidates.length,
-            skippedRows: parsed.skipped,
+            importedRows: insertedCount,
+            skippedRows: parsed.skipped + rowFailures,
         },
     }, 201);
 });
@@ -900,6 +957,44 @@ const updateRoundStatus = asyncHandler(async (req, res) => {
             deadline: round.deadline,
             status: round.status,
         },
+    });
+});
+
+// DELETE /api/admin/rounds/:roundId
+const deleteRound = asyncHandler(async (req, res) => {
+    const roundId = req.params.roundId;
+
+    const round = await AdmissionRound.findById(roundId).lean();
+    if (!round) throw new ApiError(404, "Round not found");
+
+    await Promise.all([
+        RoundCandidate.deleteMany({ round: round._id }),
+        Application.updateMany(
+            { verifiedRound: round._id },
+            {
+                $set: {
+                    verifiedRound: null,
+                    verifiedRoundCandidate: null,
+                    roundEligibilityVerifiedAt: null,
+                },
+            }
+        ),
+        AdmissionRound.deleteOne({ _id: round._id }),
+    ]);
+
+    await writeAuditLog({
+        req,
+        actionLabel: "ROUND_DELETED",
+        module: "admin",
+        entityType: "round",
+        entityId: round._id,
+        entityRef: `Round ${round.title}`,
+        toStatus: "DELETED",
+    });
+
+    return sendSuccess(res, "Round deleted successfully", {
+        deletedRoundId: String(round._id),
+        title: round.title,
     });
 });
 
@@ -1052,21 +1147,37 @@ const listStudentData = asyncHandler(async (req, res) => {
                     id: String(candidate._id),
                     name: cleanImportText(candidate.studentName) || "-",
                     email: cleanImportText(candidate.email) || "-",
-                    rank: application ? cleanImportText(application.meritRank) || "-" : "-",
-                    marks: application ? cleanImportText(application.meritMarks) || "-" : "-",
+                    rank: application
+                        ? cleanImportText(application.meritRank) || cleanImportText(candidate.meritRank) || "-"
+                        : cleanImportText(candidate.meritRank) || "-",
+                    marks: application
+                        ? cleanImportText(application.meritMarks) || cleanImportText(candidate.meritMarks) || "-"
+                        : cleanImportText(candidate.meritMarks) || "-",
                     rollNo: cleanImportText(candidate.rollNumber) || (application ? cleanImportText(application.rollNumber) || "-" : "-"),
                     father: cleanImportText(candidate.fatherName) || "-",
                     mother: cleanImportText(candidate.motherName) || "-",
-                    eligibleCategory: application ? cleanImportText(application.eligibleCategory) || "-" : "-",
-                    allotedCategory: application ? cleanImportText(application.allottedCategory) || "-" : "-",
-                    domicile: application ? cleanImportText(application.domicileStatus) || "-" : "-",
-                    gender: application ? toUiGender(application.genderRaw, application.gender) : "-",
+                    eligibleCategory: application
+                        ? cleanImportText(application.eligibleCategory) || cleanImportText(candidate.eligibleCategory) || "-"
+                        : cleanImportText(candidate.eligibleCategory) || "-",
+                    allotedCategory: application
+                        ? cleanImportText(application.allottedCategory) || cleanImportText(candidate.allottedCategory) || "-"
+                        : cleanImportText(candidate.allottedCategory) || "-",
+                    domicile: application
+                        ? cleanImportText(application.domicileStatus) || cleanImportText(candidate.domicileStatus) || "-"
+                        : cleanImportText(candidate.domicileStatus) || "-",
+                    gender: application
+                        ? toUiGender(application.genderRaw, application.gender)
+                        : toUiGender(candidate.genderRaw, ""),
                     phoneNo: cleanImportText(candidate.studentPhone) || (application ? cleanImportText(application.phone) || "-" : "-"),
-                    ews: application ? cleanImportText(application.ewsStatus) || "-" : "-",
+                    ews: application
+                        ? cleanImportText(application.ewsStatus) || cleanImportText(candidate.ewsStatus) || "-"
+                        : cleanImportText(candidate.ewsStatus) || "-",
                     program: cleanImportText(candidate.program) || (application ? buildProgram(application) : "-"),
                     branch: cleanImportText(candidate.branch) || (application ? normalizeProgram(application.branch || "-") : "-"),
                     status: mappedStatus,
-                    finalStatus: application ? cleanImportText(application.finalStatus) || mappedStatus : mappedStatus,
+                    finalStatus: application
+                        ? cleanImportText(application.finalStatus) || cleanImportText(candidate.finalStatus) || mappedStatus
+                        : cleanImportText(candidate.finalStatus) || mappedStatus,
                     date: application
                         ? new Date(application.submittedAt || application.updatedAt || application.createdAt).toLocaleDateString("en-GB", {
                             day: "2-digit",
@@ -1074,7 +1185,9 @@ const listStudentData = asyncHandler(async (req, res) => {
                             year: "numeric",
                         })
                         : "-",
-                    allotedRound: application ? cleanImportText(application.allottedRound) || "-" : "-",
+                    allotedRound: application
+                        ? cleanImportText(application.allottedRound) || cleanImportText(candidate.allottedRound) || "-"
+                        : cleanImportText(candidate.allottedRound) || "-",
                     sourceFile: cleanImportText(candidate.sourceFile) || "Sheet-Unspecified",
                     roundId: String(round._id),
                     roundTitle: cleanImportText(round.title) || "-",
@@ -1913,5 +2026,6 @@ export {
     listRounds,
     createRound,
     updateRoundStatus,
+    deleteRound,
     listRoundStudents,
 };

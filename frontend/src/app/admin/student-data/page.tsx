@@ -108,11 +108,18 @@ export default function StudentDataPage() {
       const response = await api.get("/api/admin/rounds");
       const items = Array.isArray(response?.data?.data?.rounds) ? response.data.data.rounds : [];
       setRounds(items);
-      if (!selectedRoundId && items.length > 0) {
+      if (items.length === 0) {
+        setSelectedRoundId("");
+        return;
+      }
+
+      const selectedStillExists = items.some((round: RoundOption) => round.id === selectedRoundId);
+      if (!selectedRoundId || !selectedStillExists) {
         setSelectedRoundId(items[0].id);
       }
     } catch {
       setRounds([]);
+      setSelectedRoundId("");
     }
   }, [selectedRoundId]);
 
@@ -170,8 +177,12 @@ export default function StudentDataPage() {
       }));
 
       setGroups(normalizedGroups);
-    } catch {
-      setError("Failed to load round-based student data.");
+    } catch (error: unknown) {
+      const backendMessage =
+        typeof error === "object" && error && "response" in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : "";
+      setError(backendMessage || "Failed to load round-based student data.");
       setGroups([]);
     } finally {
       setIsLoading(false);
