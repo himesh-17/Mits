@@ -27,6 +27,9 @@ export default function AdminDashboard() {
       uploadedToday: number;
       pendingVerifications: number;
       finalized: number;
+      totalEligibleStudents: number;
+      matchedStudents: number;
+      awaitingApplications: number;
     };
     breakdown: {
       finalized: number;

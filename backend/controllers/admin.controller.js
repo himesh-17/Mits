@@ -465,7 +465,7 @@ const getDashboard = asyncHandler(async (req, res) => {
     const now = new Date();
     const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
-    const [totalApplications, uploadedToday, statusAgg, recentApplications] = await Promise.all([
+    const [totalApplications, uploadedToday, statusAgg, recentApplications, totalEligibleStudents, matchedStudents] = await Promise.all([
         Application.countDocuments({}),
         Application.countDocuments({ createdAt: { $gte: todayStart } }),
         Application.aggregate([
@@ -476,6 +476,8 @@ const getDashboard = asyncHandler(async (req, res) => {
             .sort({ updatedAt: -1, createdAt: -1 })
             .limit(recentLimit)
             .lean(),
+        RoundCandidate.countDocuments({}),
+        RoundCandidate.countDocuments({ matchedApplication: { $ne: null } }),
     ]);
 
     const bucket = {
@@ -513,6 +515,9 @@ const getDashboard = asyncHandler(async (req, res) => {
             uploadedToday,
             pendingVerifications: bucket.pending,
             finalized: bucket.finalized,
+            totalEligibleStudents,
+            matchedStudents,
+            awaitingApplications: totalEligibleStudents - matchedStudents,
         },
         breakdown: {
             finalized: bucket.finalized,
