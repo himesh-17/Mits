@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-import { FiBell, FiMenu, FiSearch, FiX } from "react-icons/fi";
+import { FiMenu, FiX } from "react-icons/fi";
 
 type HeaderProps = {
   sidebarOpen?: boolean;
@@ -52,24 +52,7 @@ export default function Header({
         </span>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 text-[#94A3B8] min-w-0">
-        <button
-          type="button"
-          aria-label="Search"
-          className="h-8 w-8 inline-flex items-center justify-center shrink-0"
-        >
-          <FiSearch className="text-[18px]" />
-        </button>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="h-8 w-8 inline-flex items-center justify-center shrink-0"
-        >
-          <FiBell className="text-[18px]" />
-        </button>
-
-        <div className="hidden sm:block h-10 w-px bg-[#D5D4D4]" />
-
+      <div className="flex items-center gap-2 sm:gap-3 text-[#94A3B8] min-w-0">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-[#F1F5F9] text-[#2563EB] text-sm font-semibold flex items-center justify-center shrink-0">
             {initial}

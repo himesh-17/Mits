@@ -83,6 +83,11 @@ const auditLogSchema = new mongoose.Schema(
             trim: true,
             default: "",
         },
+        // Metadata policy:
+        // - Store only sanitized operational counters/flags (no raw request payloads).
+        // - PII (emails, addresses, SSNs, phone numbers) must not be persisted here.
+        // - Keep metadata small and short-lived; callers should rely on canonical entity records
+        //   for long-term retention instead of duplicating sensitive content in audit logs.
         metadata: {
             type: mongoose.Schema.Types.Mixed,
             default: null,

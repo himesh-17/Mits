@@ -62,7 +62,16 @@ export default function UsersPage() {
   const [actionUserId, setActionUserId] = useState<string | null>(null);
   const [roleSavingUserId, setRoleSavingUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<(typeof FILTER_OPTIONS)[number]["value"]>("all");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const toggleUserAccess = async (user: UserRow) => {
     setActionUserId(user._id);
@@ -80,8 +89,11 @@ export default function UsersPage() {
           row._id === user._id ? { ...row, isActive: !row.isActive } : row,
         ),
       );
-    } catch {
-      setError(`Failed to ${user.isActive ? "lock" : "unlock"} user.`);
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        `Failed to ${user.isActive ? "lock" : "unlock"} user.`;
+      setError(message);
     } finally {
       setActionUserId(null);
     }
@@ -101,8 +113,11 @@ export default function UsersPage() {
           row._id === user._id ? { ...row, role: newRole } : row,
         ),
       );
-    } catch {
-      setError("Failed to update role.");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to update role.";
+      setError(message);
     } finally {
       setRoleSavingUserId(null);
     }
@@ -125,8 +140,8 @@ export default function UsersPage() {
           params.role = roleFilter;
         }
 
-        if (search.trim()) {
-          params.search = search.trim();
+        if (debouncedSearch) {
+          params.search = debouncedSearch;
         }
 
         const res = await api.get("/api/admin/users", { params });
@@ -150,7 +165,7 @@ export default function UsersPage() {
     return () => {
       alive = false;
     };
-  }, [roleFilter, search]);
+  }, [roleFilter, debouncedSearch]);
 
   const summary = useMemo(() => {
     const count = {
@@ -179,7 +194,7 @@ export default function UsersPage() {
   ];
 
   return (
-    <section className="w-full max-w-269.75 space-y-4 [font-family:var(--font-inter)]">
+    <section className="admin-section-enter w-full space-y-4 [font-family:var(--font-inter)]">
       <div className="space-y-1">
         <h1 className="font-['Times_New_Roman',Times,serif] text-[38px] leading-10 font-bold text-[#111827]">
           User Management
@@ -262,7 +277,7 @@ export default function UsersPage() {
         ) : null}
 
         {!isLoading && !error
-          ? users.map((user) => {
+          ? users.map((user, index) => {
               const role = user.role || "student";
               const roleClass = ROLE_BADGE_CLASS[role] || ROLE_BADGE_CLASS.student;
               const initial = cleanText(user.name || user.email || "U", "U").charAt(0).toUpperCase();
@@ -270,7 +285,8 @@ export default function UsersPage() {
               return (
                 <div
                   key={user._id}
-                  className="grid grid-cols-[2.2fr_1.8fr_1fr_1fr_0.9fr] h-16 border-b last:border-b-0 border-[#E5E7EB] px-4 items-center"
+                  className="admin-row-enter grid grid-cols-[2.2fr_1.8fr_1fr_1fr_0.9fr] h-16 border-b last:border-b-0 border-[#E5E7EB] px-4 items-center"
+                  style={{ animationDelay: `${Math.min(index * 20, 240)}ms` }}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-8 w-8 rounded-full bg-[#2563EB] text-white text-[14px] font-semibold inline-flex items-center justify-center shrink-0">
@@ -321,7 +337,7 @@ export default function UsersPage() {
                       type="button"
                       disabled={actionUserId === user._id}
                       onClick={() => toggleUserAccess(user)}
-                      className="text-[13px] text-[#DC2626] inline-flex items-center gap-1.5 disabled:opacity-60"
+                      className="admin-btn text-[13px] text-[#DC2626] inline-flex items-center gap-1.5 disabled:opacity-60"
                     >
                       <FiLock className="text-[13px]" />
                       {actionUserId === user._id ? "Saving..." : user.isActive ? "Lock" : "Unlock"}

@@ -22,7 +22,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
   const stats = useMemo(() => {
     if (breakdown) {
       return {
-        approved: breakdown.finalized,
+        finalized: breakdown.finalized,
         pending: breakdown.pending,
         rejected: breakdown.rejected,
         draft: breakdown.draft,
@@ -32,13 +32,13 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
 
     const data = getAdminData() as AdminRow[];
 
-    const approved = data.filter((d) => d.status === "approved").length;
+    const finalized = data.filter((d) => d.status === "approved").length;
     const pending = data.filter((d) => d.status === "pending").length;
     const rejected = data.filter((d) => d.status === "rejected").length;
     const draft = data.filter((d) => d.status === "draft").length;
 
     return {
-      approved,
+      finalized,
       pending,
       rejected,
       draft,
@@ -47,7 +47,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
   }, [refresh, breakdown]);
 
   const pieData = [
-    { name: "Finalized", value: stats.approved, color: "#2DA8E1" },
+    { name: "Finalized", value: stats.finalized, color: "#2DA8E1" },
     { name: "Pending", value: stats.pending, color: "#F59E0B" },
     { name: "Rejected", value: stats.rejected, color: "#EF4444" },
     { name: "Draft", value: stats.draft, color: "#94A3B8" },
@@ -61,7 +61,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
         </div>
 
         <div className="p-4 grid grid-cols-1 lg:grid-cols-[1fr_170px] gap-3 items-center">
-          <div className="h-55 relative">
+          <div className="h-56 relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -113,7 +113,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
         </div>
 
         <div className="p-4 space-y-4">
-          <Progress label="Finalized" value={stats.approved} total={stats.total} color="#2DA8E1" />
+          <Progress label="Finalized" value={stats.finalized} total={stats.total} color="#2DA8E1" />
           <Progress label="Pending" value={stats.pending} total={stats.total} color="#F59E0B" />
           <Progress label="Rejected" value={stats.rejected} total={stats.total} color="#EF4444" />
           <Progress label="Draft" value={stats.draft} total={stats.total} color="#94A3B8" />

@@ -5,8 +5,10 @@ import { getAdminData } from "../../lib/AdminStore";
 
 type Application = {
   id: string;
+  rollNo?: string;
   name: string;
-  course: string;
+  program?: string;
+  course?: string;
   status: string;
   date: string;
 };
@@ -25,6 +27,22 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
     return (getAdminData() as Application[]).slice(0, 6);
   }, [refresh, rows]);
 
+  const statusClass = (status: string): string => {
+    if (status === "Finalized" || status === "Payment Verified" || status === "Documents Verified") {
+      return "bg-[#DCFCE7] text-[#15803D]";
+    }
+
+    if (status === "Payment Pending" || status === "Approval Pending" || status === "Under Review") {
+      return "bg-[#FFEDD5] text-[#C2410C]";
+    }
+
+    if (status === "Rejected" || status === "Document Rejected" || status === "Payment Rejected") {
+      return "bg-[#FEE2E2] text-[#B91C1C]";
+    }
+
+    return "bg-[#F1F5F9] text-[#475569]";
+  };
+
   return (
     <section className="bg-white rounded-lg border border-black/10 overflow-hidden">
       <div className="h-11 px-4 border-b border-black/10 flex items-center">
@@ -32,53 +50,38 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-215">
+        <table className="w-full text-left border-collapse min-w-180">
           <thead>
             <tr className="h-9 bg-[#EEF2F6] text-[12px] font-semibold text-[#334155]">
-              <th className="px-4">ID</th>
+              <th className="px-4">Roll No</th>
               <th className="px-4">Name</th>
-              <th className="px-4">Course</th>
+              <th className="px-4">Program</th>
               <th className="px-4">Status</th>
               <th className="px-4">Date</th>
-              <th className="px-4">Action</th>
             </tr>
           </thead>
 
           <tbody>
             {data.map((item) => {
-              const isPending = item.status === "pending";
+              const normalizedStatus = String(item.status || "Draft");
+              const program = String(item.program || item.course || "-");
 
               return (
                 <tr
                   key={item.id}
                   className="h-12.5 border-t border-[#E2E8F0] text-[13px] text-[#0F1724]"
                 >
-                  <td className="px-4 font-semibold">{item.id}</td>
+                  <td className="px-4 font-semibold">{item.rollNo || "-"}</td>
                   <td className="px-4">{item.name}</td>
-                  <td className="px-4">{item.course}</td>
-                  <td className="px-4 capitalize">
+                  <td className="px-4">{program}</td>
+                  <td className="px-4">
                     <span
-                      className={`inline-flex h-5.5 items-center px-2 rounded-md text-[11px] font-semibold ${
-                        isPending
-                          ? "bg-[#FFF4E5] text-[#9A6200]"
-                          : "bg-[#E8F8EE] text-[#1F7A46]"
-                      }`}
+                      className={`inline-flex h-5.5 items-center px-2 rounded-md text-[11px] font-semibold ${statusClass(normalizedStatus)}`}
                     >
-                      {isPending ? "pending" : "finalized"}
+                      {normalizedStatus}
                     </span>
                   </td>
                   <td className="px-4 text-[#334155]">{item.date}</td>
-                  <td className="px-4">
-                    <button
-                      className={`h-7 px-3 rounded-md text-[11px] font-semibold border ${
-                        isPending
-                          ? "border-[#2DA8E1] text-[#2DA8E1] bg-[#F0FAFF]"
-                          : "border-[#1F7A46] text-[#1F7A46] bg-[#ECFDF3]"
-                      }`}
-                    >
-                      {isPending ? "Review" : "View"}
-                    </button>
-                  </td>
                 </tr>
               );
             })}

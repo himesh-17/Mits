@@ -228,6 +228,8 @@ async function seedApplicationsAndPayments(studentUsers) {
 }
 
 async function seedAuditLogs({ adminUser, staffUsers, studentUsers, applications }) {
+    await AuditLog.deleteMany({ "metadata.seeded": true });
+
     const actorPool = [adminUser, ...staffUsers.slice(1), ...studentUsers.slice(0, 3)].filter(Boolean);
 
     const logTemplates = [

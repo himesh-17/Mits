@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { ReactNode } from "react";
+import { api } from "../../utils/api";
 
 import {
   FiHome,
@@ -17,17 +19,28 @@ import {
 
 type SidebarProps = {
   collapsed?: boolean;
+  onNavigate?: () => void;
 };
 
-export default function Sidebar({ collapsed = false }: SidebarProps) {
+export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("googleUserInfo");
-    localStorage.removeItem("user");
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      const response = await api.post("/api/auth/logout");
+      if (!response || response.status >= 400) {
+        throw new Error("Logout endpoint failed");
+      }
+    } catch (error) {
+      console.error("[AdminSidebar] logout API failed", error);
+    } finally {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("googleUserInfo");
+      localStorage.removeItem("user");
+      router.push("/login");
+    }
   };
 
   return (
@@ -46,6 +59,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Dashboard"
             active={pathname === "/admin"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
           <MenuItem
             href="/admin/student-data"
@@ -53,6 +67,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Student Data"
             active={pathname === "/admin/student-data"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
           <MenuItem
             href="/admin/excel-upload"
@@ -60,6 +75,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Excel Upload"
             active={pathname === "/admin/excel-upload"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
         </div>
 
@@ -76,6 +92,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Users"
             active={pathname === "/admin/users"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
           <MenuItem
             href="/admin/rounds"
@@ -83,6 +100,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Rounds"
             active={pathname === "/admin/rounds"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
           <MenuItem
             href="/admin/reports"
@@ -90,6 +108,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Reports"
             active={pathname === "/admin/reports"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
           <MenuItem
             href="/admin/audit-logs"
@@ -97,6 +116,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             label="Audit Logs"
             active={pathname === "/admin/audit-logs"}
             collapsed={collapsed}
+            onNavigate={onNavigate}
           />
         </div>
       </div>
@@ -115,7 +135,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
         </div>
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutModal(true)}
           className={`mt-3 text-[#FF0303] text-[16px] leading-none font-medium inline-flex items-center ${
             collapsed ? "w-full justify-center" : "gap-2 px-2.5"
           }`}
@@ -124,6 +144,39 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
           {!collapsed ? <span className="text-[16px] leading-none">Logout</span> : null}
         </button>
       </div>
+
+      {showLogoutModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-80 rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="mb-2 text-lg font-semibold text-gray-800">
+              Confirm Logout
+            </h2>
+            <p className="mb-6 text-sm text-gray-600">
+              Are you sure you want to logout from the portal?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="rounded-md bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  void handleLogout();
+                }}
+                className="rounded-md bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -134,17 +187,20 @@ function MenuItem({
   active,
   href,
   collapsed,
+  onNavigate,
 }: {
   icon: ReactNode;
   label: string;
   active?: boolean;
   href: string;
   collapsed?: boolean;
+  onNavigate?: () => void;
 }) {
   return (
     <Link
       href={href}
       title={collapsed ? label : undefined}
+      onClick={onNavigate}
       className={`h-10 flex items-center rounded-md cursor-pointer mb-1
         ${
           active

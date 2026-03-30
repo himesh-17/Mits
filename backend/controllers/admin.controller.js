@@ -94,9 +94,15 @@ function buildStudentDisplayName(application, student) {
 
 function buildStudentEmail(application, student) {
     const appEmail = String(application.email || "").trim().toLowerCase();
-    if (appEmail) return appEmail;
+    if (appEmail) {
+        if (appEmail.endsWith("@import.mits.local")) return "-";
+        return appEmail;
+    }
     const userEmail = String(student?.email || "").trim().toLowerCase();
-    if (userEmail) return userEmail;
+    if (userEmail) {
+        if (userEmail.endsWith("@import.mits.local")) return "-";
+        return userEmail;
+    }
     return "-";
 }
 
@@ -107,7 +113,7 @@ function buildProgram(application) {
     const branch = String(application.branch || "").trim();
     if (branch) return normalizeProgram(branch);
 
-    return "GENERAL";
+    return "-";
 }
 
 function normalizeFieldKey(value = "") {
@@ -146,19 +152,43 @@ function parsePossibleDate(value) {
         return Number.isNaN(date.getTime()) ? null : date;
     }
 
-    const parsed = new Date(String(value));
+    const asString = String(value).trim();
+
+    // Handle common dd-mm-yyyy / dd/mm/yyyy formats from spreadsheet exports.
+    const dayFirstMatch = asString.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+    if (dayFirstMatch) {
+        const day = Number(dayFirstMatch[1]);
+        const month = Number(dayFirstMatch[2]);
+        const yearRaw = Number(dayFirstMatch[3]);
+        const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw;
+        const date = new Date(year, month - 1, day);
+        if (!Number.isNaN(date.getTime())) {
+            return date;
+        }
+    }
+
+    const parsed = new Date(asString);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 const VALID_BRANCHES = new Set(["CSE", "EE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"]);
 
-function detectProgramAndBranch(rawCourse = "") {
-    const normalized = String(rawCourse).trim().toUpperCase();
+function detectProgramAndBranch(rawProgram = "", rawBranch = "", rawCourse = "") {
+    const combinedRaw = [rawProgram, rawBranch, rawCourse]
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+        .join(" ");
+
+    const normalized = combinedRaw.toUpperCase();
     if (!normalized) {
-        return { programApplied: "GENERAL", branch: "" };
+        return { programApplied: "", branch: "" };
     }
 
-    let programApplied = normalized;
+    // Match using tokenized words to avoid false positives like "admitted" => "IT".
+    const normalizedForTokens = normalized.replace(/[^A-Z0-9]+/g, " ").trim();
+    const tokens = new Set(normalizedForTokens.split(/\s+/).filter(Boolean));
+
+    let programApplied = "";
 
     if (normalized.includes("BTECH") || normalized.includes("B.TECH") || normalized.includes("B E") || normalized.includes("BE")) {
         programApplied = "BTECH";
@@ -179,7 +209,7 @@ function detectProgramAndBranch(rawCourse = "") {
     }
 
     const branchToken = ["CSE", "EE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"]
-        .find((branch) => normalized.includes(branch));
+        .find((branch) => tokens.has(branch));
 
     const branch = branchToken && VALID_BRANCHES.has(branchToken)
         ? branchToken
@@ -204,8 +234,51 @@ function mapImportedStatus(rawStatus = "") {
     return "under_review";
 }
 
+function cleanImportText(value = "") {
+    return String(value || "").trim();
+}
+
+function mapImportGender(rawGender = "") {
+    const normalized = cleanImportText(rawGender).toUpperCase();
+    if (normalized === "M" || normalized === "MALE") return "male";
+    if (normalized === "F" || normalized === "FEMALE") return "female";
+    if (normalized === "O" || normalized === "OTHER") return "other";
+    return "";
+}
+
+function toUiGender(rawGender = "", dbGender = "") {
+    const normalizedRaw = cleanImportText(rawGender).toUpperCase();
+    if (normalizedRaw) return normalizedRaw;
+    if (dbGender === "male") return "M";
+    if (dbGender === "female") return "F";
+    if (dbGender === "other") return "OTHER";
+    return "-";
+}
+
 function buildImportGoogleSub(email) {
     return `import-${String(email).toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+}
+
+const SEEDED_DEMO_EMAILS = [
+    "arjun.mehta@gmail.com",
+    "riya.sharma@gmail.com",
+    "vivek.gupta@gmail.com",
+    "nisha.iyer@gmail.com",
+    "karan.singh@gmail.com",
+    "pooja.verma@gmail.com",
+    "rahul.jain@gmail.com",
+    "tanvi.patel@gmail.com",
+    "aman.khan@gmail.com",
+    "sneha.roy@gmail.com",
+    "test_upload@example.com",
+];
+
+function normalizeIdentifier(value = "") {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .slice(0, 64);
 }
 
 function monthKey(date) {
@@ -217,6 +290,14 @@ function monthLabel(date) {
         month: "short",
         year: "2-digit",
     });
+}
+
+function chunkArray(items = [], size = 500) {
+    const chunks = [];
+    for (let i = 0; i < items.length; i += size) {
+        chunks.push(items.slice(i, i + size));
+    }
+    return chunks;
 }
 
 // GET /api/admin/overview
@@ -262,8 +343,8 @@ const getOverview = asyncHandler(async (req, res) => {
 const getDashboard = asyncHandler(async (req, res) => {
     const recentLimit = parseLimit(req.query.recentLimit, 6, 20);
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
     const [totalApplications, uploadedToday, statusAgg, recentApplications] = await Promise.all([
         Application.countDocuments({}),
@@ -292,14 +373,14 @@ const getDashboard = asyncHandler(async (req, res) => {
 
     const recentActivity = recentApplications.map((application) => {
         const student = application.student || null;
-        const bucketStatus = mapRawStatusToDashboardBucket(application.status);
 
         return {
             id: buildStudentId(application._id),
+            rollNo: cleanImportText(application.rollNumber) || "-",
             name: buildStudentDisplayName(application, student),
-            course: buildProgram(application),
-            status: bucketStatus === "finalized" ? "approved" : bucketStatus,
-            date: new Date(application.updatedAt || application.createdAt).toLocaleDateString("en-GB", {
+            program: buildProgram(application),
+            status: mapRawStatusToUi(application.status),
+            date: new Date(application.submittedAt || application.updatedAt || application.createdAt).toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
@@ -370,11 +451,23 @@ const getReports = asyncHandler(async (req, res) => {
         Application.aggregate([
             {
                 $project: {
+                    programRaw: {
+                        $ifNull: [
+                            "$programApplied",
+                            {
+                                $ifNull: ["$branch", "GENERAL"],
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                $project: {
                     program: {
                         $toUpper: {
                             $trim: {
                                 input: {
-                                    $ifNull: ["$programApplied", "$branch"],
+                                    $toString: "$programRaw",
                                 },
                             },
                         },
@@ -403,7 +496,9 @@ const getReports = asyncHandler(async (req, res) => {
                         $toUpper: {
                             $trim: {
                                 input: {
-                                    $ifNull: ["$category", "GENERAL"],
+                                    $toString: {
+                                        $ifNull: ["$eligibleCategory", "GENERAL"],
+                                    },
                                 },
                             },
                         },
@@ -439,7 +534,8 @@ const getReports = asyncHandler(async (req, res) => {
     const statusBreakdown = {
         finalized: 0,
         payment_pending: 0,
-        payment_rejected: 0,
+        payment_verified: 0,
+        application_rejected: 0,
         draft: 0,
     };
 
@@ -452,13 +548,18 @@ const getReports = asyncHandler(async (req, res) => {
             continue;
         }
 
-        if (["payment_pending", "payment_submitted", "payment_verified"].includes(raw)) {
+        if (["payment_pending", "payment_submitted"].includes(raw)) {
             statusBreakdown.payment_pending += count;
             continue;
         }
 
+        if (raw === "payment_verified") {
+            statusBreakdown.payment_verified += count;
+            continue;
+        }
+
         if (raw === "rejected") {
-            statusBreakdown.payment_rejected += count;
+            statusBreakdown.application_rejected += count;
             continue;
         }
 
@@ -580,19 +681,35 @@ const listStudentData = asyncHandler(async (req, res) => {
 
     const items = applications.map((application) => {
         const student = application.student || null;
+        const finalStatus = cleanImportText(application.finalStatus)
+            || mapRawStatusToUi(application.status)
+            || "-";
 
         return {
             id: buildStudentId(application._id),
             name: buildStudentDisplayName(application, student),
             email: buildStudentEmail(application, student),
+            rank: cleanImportText(application.meritRank) || "-",
+            marks: cleanImportText(application.meritMarks) || "-",
+            rollNo: cleanImportText(application.rollNumber) || "-",
+            father: cleanImportText(application.fatherName) || "-",
+            mother: cleanImportText(application.motherName) || "-",
+            eligibleCategory: cleanImportText(application.eligibleCategory) || "-",
+            allotedCategory: cleanImportText(application.allottedCategory) || "-",
+            domicile: cleanImportText(application.domicileStatus) || "-",
+            gender: toUiGender(application.genderRaw, application.gender),
+            phoneNo: cleanImportText(application.phone) || "-",
+            ews: cleanImportText(application.ewsStatus) || "-",
             program: buildProgram(application),
-            branch: normalizeProgram(application.branch || "GENERAL"),
+            branch: normalizeProgram(application.branch || "-"),
             status: mapRawStatusToUi(application.status),
-            date: new Date(application.updatedAt || application.createdAt).toLocaleDateString("en-GB", {
+            finalStatus,
+            date: new Date(application.submittedAt || application.updatedAt || application.createdAt).toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
             }),
+            allotedRound: cleanImportText(application.allottedRound) || "-",
         };
     });
 
@@ -720,10 +837,14 @@ const setUserRole = asyncHandler(async (req, res) => {
 
 // PATCH /api/admin/users/:userId/deactivate
 const deactivateUser = asyncHandler(async (req, res) => {
+    if (String(req.user?.id) === String(req.params.userId)) {
+        throw new ApiError(400, "You cannot lock your own account");
+    }
+
     const user = await User.findByIdAndUpdate(
         req.params.userId,
         { isActive: false },
-        { new: true }
+        { returnDocument: "after" }
     ).select("-googleSub");
     if (!user) throw new ApiError(404, "User not found");
 
@@ -747,7 +868,7 @@ const activateUser = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.params.userId,
         { isActive: true },
-        { new: true }
+        { returnDocument: "after" }
     ).select("-googleSub");
     if (!user) throw new ApiError(404, "User not found");
 
@@ -879,6 +1000,7 @@ const deleteApplication = asyncHandler(async (req, res) => {
 const bulkEnrollmentImport = asyncHandler(async (req, res) => {
     const directRows = Array.isArray(req.body?.rows) ? req.body.rows : [];
     const fileBatches = Array.isArray(req.body?.files) ? req.body.files : [];
+    const replaceExisting = req.body?.replaceExisting === true;
 
     let rows = [...directRows];
 
@@ -896,10 +1018,6 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
                 }
             }
         }
-    }
-
-    if (!Array.isArray(rows)) {
-        throw new ApiError(400, "rows or files payload is required");
     }
 
     if (rows.length === 0) {
@@ -923,6 +1041,24 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
     let usersUpdated = 0;
     let applicationsCreated = 0;
     let applicationsUpdated = 0;
+    let generatedEmailCount = 0;
+    const fieldCoverage = {
+        rank: 0,
+        marks: 0,
+        rollNo: 0,
+        father: 0,
+        mother: 0,
+        eligibleCategory: 0,
+        allotedCategory: 0,
+        domicile: 0,
+        gender: 0,
+        phoneNo: 0,
+        ews: 0,
+        allotedRound: 0,
+        finalStatus: 0,
+    };
+
+    const normalizedRows = [];
 
     for (const row of rows) {
         if (!row || typeof row !== "object") {
@@ -940,25 +1076,63 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
         ]);
         const rawEmail = getFieldValue(row, [
             "Email",
+            "Email Id",
+            "Email ID",
+            "EmailID",
             "Student Email",
+            "Student Mail ID",
             "Mail",
             "E-mail",
             "Email Address",
             "Applicant Email",
         ]);
-        const rawCourse = getFieldValue(row, [
+        const rawIdentifier = getFieldValue(row, [
+            "Roll Number",
+            "Roll No",
+            "RollNo",
+            "Enrollment No",
+            "Enrolment No",
+            "Registration Number",
+            "Registration No",
+            "Application Number",
+            "Application No",
+            "Candidate ID",
+            "Student ID",
+        ]);
+        const rawRank = getFieldValue(row, ["Rank"]);
+        const rawMarks = getFieldValue(row, ["Marks"]);
+        const rawFather = getFieldValue(row, ["Father", "Father Name"]);
+        const rawMother = getFieldValue(row, ["Mother", "Mother Name"]);
+        const rawEligibleCategory = getFieldValue(row, ["Eligible Category"]);
+        const rawAllotedCategory = getFieldValue(row, ["Alloted Category", "Allotted Category"]);
+        const rawDomicile = getFieldValue(row, ["Domicile"]);
+        const rawGender = getFieldValue(row, ["Gender"]);
+        const rawPhoneNo = getFieldValue(row, ["PhoneNo", "Phone No", "Phone Number", "Mobile", "Mobile No"]);
+        const rawEws = getFieldValue(row, ["EWS"]);
+        const rawAllotedRound = getFieldValue(row, ["Alloted Round", "Allotted Round"]);
+        const rawFinalStatus = getFieldValue(row, ["Final Status"]);
+        const rawProgram = getFieldValue(row, [
             "Program",
-            "Course",
+            "Program Name",
             "Program Applied",
-            "Course Applied",
+            "Programme",
+        ]);
+        const rawBranch = getFieldValue(row, [
             "Branch",
+            "Alloted Branch",
+            "Allotted Branch",
             "Department",
             "Specialization",
             "Stream",
-            "Programme",
+        ]);
+        const rawCourse = getFieldValue(row, [
+            "Course",
+            "Course Name",
+            "Course Applied",
         ]);
         const rawStatus = getFieldValue(row, [
             "Status",
+            "Final Status",
             "Application Status",
             "Admission Status",
             "Current Status",
@@ -970,41 +1144,170 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
             "Created At",
             "Submission Date",
             "Applied On",
+            "Date Submitted",
         ]);
 
         const name = String(rawName || "").trim();
-        const email = String(rawEmail || "").trim().toLowerCase();
+        const explicitEmail = String(rawEmail || "").trim().toLowerCase();
+        const identifier = normalizeIdentifier(rawIdentifier);
+        const email = explicitEmail.includes("@")
+            ? explicitEmail
+            : (identifier ? `${identifier}@import.mits.local` : "");
+
+        if (!explicitEmail && email) {
+            generatedEmailCount += 1;
+        }
 
         if (!name || !email || !email.includes("@")) {
             skipped += 1;
             continue;
         }
 
-        const { programApplied, branch } = detectProgramAndBranch(rawCourse);
-        const mappedStatus = mapImportedStatus(rawStatus);
-        const importedDate = parsePossibleDate(rawDate) || new Date();
+        normalizedRows.push({
+            name,
+            email,
+            rawIdentifier,
+            rawRank,
+            rawMarks,
+            rawFather,
+            rawMother,
+            rawEligibleCategory,
+            rawAllotedCategory,
+            rawDomicile,
+            rawGender,
+            rawPhoneNo,
+            rawEws,
+            rawAllotedRound,
+            rawFinalStatus,
+            rawProgram,
+            rawBranch,
+            rawCourse,
+            rawStatus,
+            rawDate,
+            rawRow: row,
+            sourceFile: String(row.__sourceFile || "").trim(),
+        });
 
-        let user = await User.findOne({ email });
-        let userCreatedNow = false;
+        if (cleanImportText(rawRank)) fieldCoverage.rank += 1;
+        if (cleanImportText(rawMarks)) fieldCoverage.marks += 1;
+        if (cleanImportText(rawIdentifier)) fieldCoverage.rollNo += 1;
+        if (cleanImportText(rawFather)) fieldCoverage.father += 1;
+        if (cleanImportText(rawMother)) fieldCoverage.mother += 1;
+        if (cleanImportText(rawEligibleCategory)) fieldCoverage.eligibleCategory += 1;
+        if (cleanImportText(rawAllotedCategory)) fieldCoverage.allotedCategory += 1;
+        if (cleanImportText(rawDomicile)) fieldCoverage.domicile += 1;
+        if (cleanImportText(rawGender)) fieldCoverage.gender += 1;
+        if (cleanImportText(rawPhoneNo)) fieldCoverage.phoneNo += 1;
+        if (cleanImportText(rawEws)) fieldCoverage.ews += 1;
+        if (cleanImportText(rawAllotedRound)) fieldCoverage.allotedRound += 1;
+        if (cleanImportText(rawFinalStatus)) fieldCoverage.finalStatus += 1;
+    }
 
-        if (!user) {
-            user = await User.create({
-                googleSub: buildImportGoogleSub(email),
-                email,
-                name,
-                role: "student",
-                emailVerified: false,
-                isActive: true,
-            });
-            userCreatedNow = true;
-            usersCreated += 1;
-        } else {
-            user.name = name || user.name;
-            await user.save();
-            usersUpdated += 1;
+    if (normalizedRows.length === 0) {
+        return sendSuccess(res, "No valid rows to import", {
+            processed: 0,
+            usersCreated: 0,
+            usersUpdated: 0,
+            applicationsCreated: 0,
+            applicationsUpdated: 0,
+            skipped,
+        });
+    }
+
+    const uniqueRowsByEmail = new Map();
+    for (const row of normalizedRows) {
+        uniqueRowsByEmail.set(row.email, row);
+    }
+
+    const uniqueRows = Array.from(uniqueRowsByEmail.values());
+    const uniqueEmails = uniqueRows.map((row) => row.email);
+
+    let removedSeedApplications = 0;
+    let removedSeedUsers = 0;
+
+    if (replaceExisting) {
+        const seededEmailPattern = /@import\.mits\.local$/i;
+        const seededUsers = await User.find({
+            $or: [
+                { email: seededEmailPattern },
+                { email: { $in: SEEDED_DEMO_EMAILS } },
+            ],
+        }).select("_id").lean();
+        const seededUserIds = seededUsers.map((user) => user._id);
+
+        const applicationDeleteFilter = {
+            $or: [
+                { importSource: { $exists: true, $ne: "" } },
+                { email: seededEmailPattern },
+                { email: { $in: SEEDED_DEMO_EMAILS } },
+                ...(seededUserIds.length ? [{ student: { $in: seededUserIds } }] : []),
+            ],
+        };
+
+        const [deletedApplications, deletedUsers] = await Promise.all([
+            Application.deleteMany(applicationDeleteFilter),
+            User.deleteMany({
+                $or: [
+                    { email: seededEmailPattern },
+                    { email: { $in: SEEDED_DEMO_EMAILS } },
+                ],
+            }),
+        ]);
+
+        removedSeedApplications = Number(deletedApplications?.deletedCount || 0);
+        removedSeedUsers = Number(deletedUsers?.deletedCount || 0);
+    }
+
+    const userOps = uniqueRows.map((row) => ({
+        updateOne: {
+            filter: { email: row.email },
+            update: {
+                $set: { name: row.name },
+                $setOnInsert: {
+                    googleSub: buildImportGoogleSub(row.email),
+                    email: row.email,
+                    role: "student",
+                    emailVerified: false,
+                    isActive: true,
+                },
+            },
+            upsert: true,
+        },
+    }));
+
+    if (userOps.length > 0) {
+        const userBulkResult = await User.bulkWrite(userOps, { ordered: false });
+        usersCreated = Number(userBulkResult?.upsertedCount || 0);
+        usersUpdated = Number(userBulkResult?.matchedCount || 0);
+    }
+
+    const users = await User.find({ email: { $in: uniqueEmails } }).select("_id email").lean();
+    const userIdByEmail = new Map(users.map((user) => [String(user.email || "").toLowerCase(), user._id]));
+
+    const appOps = [];
+
+    for (const row of uniqueRows) {
+        const userId = userIdByEmail.get(row.email);
+        if (!userId) {
+            skipped += 1;
+            continue;
         }
 
-        const existingApplication = await Application.findOne({ student: user._id }).select("_id");
+        const { programApplied, branch } = detectProgramAndBranch(
+            row.rawProgram,
+            row.rawBranch,
+            row.rawCourse
+        );
+        const mappedStatus = mapImportedStatus(row.rawStatus);
+        const importedDate = parsePossibleDate(row.rawDate) || new Date();
+        const gender = mapImportGender(row.rawGender);
+        const finalStatus = cleanImportText(row.rawFinalStatus) || mapRawStatusToUi(mappedStatus);
+        const rank = cleanImportText(row.rawRank);
+        const marks = cleanImportText(row.rawMarks);
+        const rollNo = cleanImportText(row.rawIdentifier);
+        const fatherName = cleanImportText(row.rawFather);
+        const motherName = cleanImportText(row.rawMother);
+        const phoneNo = cleanImportText(row.rawPhoneNo);
 
         const progressBar = {
             formFilled: true,
@@ -1014,41 +1317,58 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
             admissionConfirmed: mappedStatus === "admitted",
         };
 
-        await Application.findOneAndUpdate(
-            { student: user._id },
-            {
-                $set: {
-                    fullName: name,
-                    email,
-                    programApplied,
-                    branch,
-                    status: mappedStatus,
-                    progressBar,
-                    submittedAt: importedDate,
-                    admittedAt: mappedStatus === "admitted" ? importedDate : null,
-                    importSource: String(row.__sourceFile || "").trim(),
+        const applicationSetPayload = {
+            fullName: row.name,
+            email: row.email,
+            fatherName,
+            motherName,
+            programApplied,
+            branch,
+            status: mappedStatus,
+            progressBar,
+            submittedAt: importedDate,
+            gender,
+            genderRaw: cleanImportText(row.rawGender),
+            phone: phoneNo,
+            rollNumber: rollNo,
+            meritRank: rank,
+            meritMarks: marks,
+            eligibleCategory: cleanImportText(row.rawEligibleCategory),
+            allottedCategory: cleanImportText(row.rawAllotedCategory),
+            domicileStatus: cleanImportText(row.rawDomicile),
+            ewsStatus: cleanImportText(row.rawEws),
+            allottedRound: cleanImportText(row.rawAllotedRound),
+            finalStatus,
+            importSource: row.sourceFile,
+        };
+
+        if (mappedStatus === "admitted") {
+            applicationSetPayload.admittedAt = importedDate;
+        }
+
+        appOps.push({
+            updateOne: {
+                filter: { student: userId },
+                update: {
+                    $set: applicationSetPayload,
+                    $setOnInsert: {
+                        student: userId,
+                    },
                 },
-                $setOnInsert: {
-                    fatherName: "",
-                    motherName: "",
-                },
+                upsert: true,
             },
-            { upsert: true, new: true }
-        );
-
-        if (existingApplication) {
-            applicationsUpdated += 1;
-        } else {
-            applicationsCreated += 1;
-        }
-
-        // If imported user was just created and no app could be formed, count as skipped safeguard.
-        if (userCreatedNow && !programApplied) {
-            skipped += 1;
-        }
-
-        processed += 1;
+        });
     }
+
+    const appOpChunks = chunkArray(appOps, 800);
+    for (const chunk of appOpChunks) {
+        if (chunk.length === 0) continue;
+        const appBulkResult = await Application.bulkWrite(chunk, { ordered: false });
+        applicationsCreated += Number(appBulkResult?.upsertedCount || 0);
+        applicationsUpdated += Number(appBulkResult?.matchedCount || 0);
+    }
+
+    processed = uniqueRows.length;
 
     await writeAuditLog({
         req,
@@ -1064,6 +1384,11 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
             applicationsCreated,
             applicationsUpdated,
             skipped,
+            generatedEmailCount,
+            replaceExisting,
+            removedSeedApplications,
+            removedSeedUsers,
+            fieldCoverage,
         },
     });
 
@@ -1074,6 +1399,10 @@ const bulkEnrollmentImport = asyncHandler(async (req, res) => {
         applicationsCreated,
         applicationsUpdated,
         skipped,
+        generatedEmailCount,
+        removedSeedApplications,
+        removedSeedUsers,
+        fieldCoverage,
     });
 });
 

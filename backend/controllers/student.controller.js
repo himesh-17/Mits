@@ -194,7 +194,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
         { upsert: true, new: true }
     );
 
-    if (!app.progressBar.documentsUploaded) {
+    if (!app.progressBar.documentsUploaded || app.status === "re_upload") {
         await Application.findByIdAndUpdate(app._id, {
             "progressBar.documentsUploaded": true,
             status: "under_review",
@@ -253,6 +253,18 @@ const submitPayment = asyncHandler(async (req, res) => {
     const normalizedAmount = Number(amount);
     if (amount === undefined || Number.isNaN(normalizedAmount) || normalizedAmount <= 0) {
         throw new ApiError(400, "amount is required and must be a positive number");
+    }
+
+    const existingPayment = await Payment.findOne({ application: app._id }).select("minLimit maxLimit");
+    if (app.status === "payment_pending") {
+        if (!existingPayment) {
+            throw new ApiError(400, "Payment window is not configured yet. Please contact accounts office.");
+        }
+        const min = Number(existingPayment.minLimit || 0);
+        const max = Number(existingPayment.maxLimit || 0);
+        if (normalizedAmount < min || normalizedAmount > max) {
+            throw new ApiError(400, `amount must be between ${min} and ${max}`);
+        }
     }
 
     // We avoid starting a transaction here because most local MongoDB databases 

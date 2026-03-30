@@ -10,6 +10,15 @@ function escapeRegex(value = "") {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+async function safeWriteAuditLog(payload) {
+    try {
+        await writeAuditLog(payload);
+    } catch (error) {
+        // Keep user-facing flows resilient if audit infrastructure fails.
+        console.error("[GeneralOffice] audit log write failed", error?.message || error);
+    }
+}
+
 // GET /api/general-office/applications
 // Filter applications by status, branch, course, name
 const filterApplications = asyncHandler(async (req, res) => {
@@ -106,7 +115,7 @@ const reviewApplication = asyncHandler(async (req, res) => {
         re_upload: "APPLICATION_REQUEST_REUPLOAD",
     };
 
-    await writeAuditLog({
+    await safeWriteAuditLog({
         req,
         actionLabel: auditActionLabelMap[action] || "APPLICATION_REVIEW_UPDATED",
         actionTone: action === "approve" ? "green" : "slate",
@@ -157,7 +166,7 @@ const assignRole = asyncHandler(async (req, res) => {
         { role },
     );
 
-    await writeAuditLog({
+    await safeWriteAuditLog({
         req,
         actionLabel: "ROLE_ASSIGNED",
         module: "general-office",
@@ -183,7 +192,7 @@ const removeRoleAssignment = asyncHandler(async (req, res) => {
 
     await User.findOneAndUpdate({ email }, { role: "student" });
 
-    await writeAuditLog({
+    await safeWriteAuditLog({
         req,
         actionLabel: "ROLE_REMOVED",
         module: "general-office",

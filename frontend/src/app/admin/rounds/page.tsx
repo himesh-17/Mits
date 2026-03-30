@@ -30,7 +30,11 @@ function loadRounds(): AdmissionRound[] {
 
 function saveRounds(rounds: AdmissionRound[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(rounds));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rounds));
+  } catch (error) {
+    console.error("[Rounds] failed to persist rounds", error);
+  }
 }
 
 function formatDateLabel(input: string): string {
@@ -52,7 +56,7 @@ function getRoundYearLabel(startDate: string): string {
 }
 
 function toIsoDate(value: string): string {
-  return new Date(`${value}T00:00:00`).toISOString();
+  return `${value}T00:00:00Z`;
 }
 
 export default function RoundsPage() {
@@ -76,6 +80,7 @@ export default function RoundsPage() {
   });
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formError, setFormError] = useState("");
+  const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -105,6 +110,7 @@ export default function RoundsPage() {
       startDate: "",
       deadline: "",
     });
+    setDescriptionTouched(false);
   };
 
   const submitCreateRound = () => {
@@ -113,8 +119,10 @@ export default function RoundsPage() {
       return;
     }
 
-    const startMs = new Date(`${formData.startDate}T00:00:00`).getTime();
-    const deadlineMs = new Date(`${formData.deadline}T00:00:00`).getTime();
+    const startIso = toIsoDate(formData.startDate);
+    const deadlineIso = toIsoDate(formData.deadline);
+    const startMs = new Date(startIso).getTime();
+    const deadlineMs = new Date(deadlineIso).getTime();
     if (Number.isNaN(startMs) || Number.isNaN(deadlineMs) || deadlineMs < startMs) {
       setFormError("Application Deadline must be on or after Start Date.");
       return;
@@ -128,9 +136,9 @@ export default function RoundsPage() {
       title: trimmedTitle,
       description:
         roundDescription ||
-        `Main admission round for academic year ${getRoundYearLabel(toIsoDate(formData.startDate))}`,
-      startDate: toIsoDate(formData.startDate),
-      deadline: toIsoDate(formData.deadline),
+        `Main admission round for academic year ${getRoundYearLabel(startIso)}`,
+      startDate: startIso,
+      deadline: deadlineIso,
       status: "active",
     };
 
@@ -152,7 +160,7 @@ export default function RoundsPage() {
   };
 
   return (
-    <section className="w-full max-w-269.75 space-y-5 [font-family:var(--font-inter)]">
+    <section className="w-full space-y-5 [font-family:var(--font-inter)]">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="font-['Times_New_Roman',Times,serif] text-[38px] leading-10 font-bold text-[#111827]">
@@ -189,15 +197,17 @@ export default function RoundsPage() {
                 value={formData.title}
                 onChange={(event) => {
                   const title = event.target.value;
-                  setFormData((prev) => ({ ...prev, title }));
-
-                  if (!formData.description.trim() && /^Admission Round\s+\d{4}-\d{2}$/i.test(title.trim())) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      title,
-                      description: `Main admission round for academic year ${title.trim().replace(/Admission Round\s+/i, "")}`,
-                    }));
-                  }
+                  setFormData((prev) => {
+                    const next = { ...prev, title };
+                    if (
+                      !descriptionTouched
+                      && !String(prev.description || "").trim()
+                      && /^Admission Round\s+\d{4}-\d{2}$/i.test(title.trim())
+                    ) {
+                      next.description = `Main admission round for academic year ${title.trim().replace(/Admission Round\s+/i, "")}`;
+                    }
+                    return next;
+                  });
                 }}
                 placeholder="e.g. Admission Round 2025-26"
                 className="w-full h-10 rounded-md border border-[#D1D5DB] px-3 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2DA8E1]/30"
@@ -211,12 +221,13 @@ export default function RoundsPage() {
               <textarea
                 id="round-description"
                 value={formData.description}
-                onChange={(event) =>
+                onChange={(event) => {
+                  setDescriptionTouched(true);
                   setFormData((prev) => ({
                     ...prev,
                     description: event.target.value,
-                  }))
-                }
+                  }));
+                }}
                 rows={4}
                 placeholder="Main admission round for academic year 2025-26"
                 className="w-full rounded-md border border-[#D1D5DB] px-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2DA8E1]/30 resize-none"

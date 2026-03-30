@@ -102,13 +102,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             }`}
           >
-            <div onClick={() => setSidebarOpen(false)}>
-              <Sidebar collapsed={false} />
-            </div>
+            <Sidebar collapsed={false} onNavigate={() => setSidebarOpen(false)} />
           </aside>
         </div>
 
-        <main className="flex-1 min-w-0 overflow-y-auto bg-[#F5F7FA] p-3 sm:p-4 md:p-6 lg:p-8">
+        <main className="admin-page-enter flex-1 min-w-0 overflow-y-auto bg-[#F5F7FA] p-3 sm:p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

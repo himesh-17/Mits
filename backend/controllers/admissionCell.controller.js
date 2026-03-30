@@ -22,7 +22,7 @@ const listStudents = asyncHandler(async (req, res) => {
         filter.status = { $in: allowedStatuses };
     }
     if (branch) filter.branch = branch;
-    if (course) filter.course = course;
+    if (course) filter.programApplied = course;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [applications, total] = await Promise.all([
@@ -193,6 +193,8 @@ const rejectApplication = asyncHandler(async (req, res) => {
         { $set: { status: "rejected", rejectionReason: reason } },
         { new: true }
     );
+
+    if (!app) throw new ApiError(404, "Application not found");
 
     await writeAuditLog({
         req,

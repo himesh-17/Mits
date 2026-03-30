@@ -51,7 +51,7 @@ export default function StatCards({ refresh, metrics }: StatCardsProps) {
       pending,
       finalized,
     };
-  }, [refresh]);
+  }, [refresh, metrics]);
 
   const cards = [
     { title: "TOTAL APPLICATIONS", value: stats.total, icon: <FiFileText className="text-[#2DA8E1]" /> },

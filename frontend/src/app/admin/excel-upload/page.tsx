@@ -14,6 +14,23 @@ type ImportSummary = {
   applicationsCreated: number;
   applicationsUpdated: number;
   skipped: number;
+  removedSeedApplications: number;
+  removedSeedUsers: number;
+  fieldCoverage?: {
+    rank: number;
+    marks: number;
+    rollNo: number;
+    father: number;
+    mother: number;
+    eligibleCategory: number;
+    allotedCategory: number;
+    domicile: number;
+    gender: number;
+    phoneNo: number;
+    ews: number;
+    allotedRound: number;
+    finalStatus: number;
+  };
 };
 
 export default function ExcelUploadPage() {
@@ -96,6 +113,9 @@ export default function ExcelUploadPage() {
         applicationsCreated: Number(result?.applicationsCreated || 0),
         applicationsUpdated: Number(result?.applicationsUpdated || 0),
         skipped: Number(result?.skipped || 0),
+        removedSeedApplications: Number(result?.removedSeedApplications || 0),
+        removedSeedUsers: Number(result?.removedSeedUsers || 0),
+        fieldCoverage: result?.fieldCoverage || undefined,
       });
     } catch {
       setError("Failed to import file. Please check file headers and try again.");
@@ -105,7 +125,7 @@ export default function ExcelUploadPage() {
   };
 
   return (
-    <section className="w-full max-w-267.5">
+    <section className="w-full">
 
       <div className="mb-6 space-y-1">
         <h1 className="font-['Times_New_Roman',Times,serif] text-[36px] leading-10 font-bold text-[#0F1724]">
@@ -167,7 +187,11 @@ export default function ExcelUploadPage() {
 
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              inputRef.current?.click();
+            }}
             className="inline-flex items-center gap-2 text-[13px] text-[#2DA8E1]"
           >
             <FiUpload className="text-[14px]" />
@@ -188,6 +212,18 @@ export default function ExcelUploadPage() {
               Applications created: {summary.applicationsCreated} | Applications updated: {summary.applicationsUpdated}
             </p>
             <p>Rows skipped: {summary.skipped}</p>
+            <p>
+              Old imported applications removed: {summary.removedSeedApplications} | Placeholder users removed: {summary.removedSeedUsers}
+            </p>
+            {summary.fieldCoverage ? (
+              <p>
+                Parsed fields: Rank {summary.fieldCoverage.rank}, Marks {summary.fieldCoverage.marks}, RollNo {summary.fieldCoverage.rollNo},
+                Father {summary.fieldCoverage.father}, Mother {summary.fieldCoverage.mother}, Eligible {summary.fieldCoverage.eligibleCategory},
+                Alloted Category {summary.fieldCoverage.allotedCategory}, Domicile {summary.fieldCoverage.domicile}, Gender {summary.fieldCoverage.gender},
+                PhoneNo {summary.fieldCoverage.phoneNo}, EWS {summary.fieldCoverage.ews}, Alloted Round {summary.fieldCoverage.allotedRound},
+                Final Status {summary.fieldCoverage.finalStatus}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -21,6 +21,11 @@ import adminRoutes from "./Routes/Admin/admin.routes.js";
 const app = express();
 const port = process.env.PORT || 8080;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const trustProxy = process.env.TRUST_PROXY === "1";
+
+if (trustProxy) {
+    app.set("trust proxy", 1);
+}
 
 // Deduplicate origins so that if FRONTEND_URL === "http://localhost:3000"
 // we don't send two identical entries in the CORS allow-list.

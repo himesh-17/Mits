@@ -20,11 +20,33 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 
 // Module-level constant: evaluated once, not on every render (#15)
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@mitsgwl.ac.in";
 const ADMIN_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
 
 function isAllowedAdminDomain(email: string): boolean {
   const normalizedEmail = String(email || "").toLowerCase();
   return ADMIN_ALLOWED_DOMAINS.some((domain) => normalizedEmail.endsWith(domain));
+}
+
+function getSafeNextPath(rawNext: string | null): string | null {
+  if (!rawNext) return null;
+
+  const candidate = String(rawNext).trim();
+  if (!candidate.startsWith("/")) return null;
+  if (candidate.startsWith("//")) return null;
+
+  try {
+    const base = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+    const parsed = new URL(candidate, base);
+
+    if (typeof window !== "undefined" && parsed.origin !== window.location.origin) {
+      return null;
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
 }
 
 export default function LoginPage() {
@@ -70,9 +92,10 @@ export default function LoginPage() {
 
       const loggedInEmail = String(payload?.email || "").toLowerCase();
       const requestedNext = new URLSearchParams(window.location.search).get("next");
+      const safeNextPath = getSafeNextPath(requestedNext);
 
-      if (requestedNext) {
-        router.push(requestedNext);
+      if (safeNextPath) {
+        router.push(safeNextPath);
       } else if (isAllowedAdminDomain(loggedInEmail)) {
         router.push("/admin");
       } else {
@@ -137,7 +160,7 @@ export default function LoginPage() {
 
           <p className="text-xs text-gray-500">
             Use Valid Mail ID used in MPDTE counselling to login. For any
-            issues, contact us at {"Manaskukreja2910@gmail.com"}
+            issues, contact us at {supportEmail}
           </p>
 
         </div>

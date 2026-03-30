@@ -45,7 +45,8 @@ type CategoryPoint = {
 type StatusBreakdown = {
   finalized: number;
   payment_pending: number;
-  payment_rejected: number;
+  payment_verified: number;
+  application_rejected: number;
   draft: number;
 };
 
@@ -74,7 +75,8 @@ const FALLBACK_DATA: ReportsPayload = {
   statusBreakdown: {
     finalized: 0,
     payment_pending: 0,
-    payment_rejected: 0,
+    payment_verified: 0,
+    application_rejected: 0,
     draft: 0,
   },
 };
@@ -82,49 +84,57 @@ const FALLBACK_DATA: ReportsPayload = {
 const STATUS_COLORS: Record<string, string> = {
   FINALIZED: "#3B82F6",
   PAYMENT_PENDING: "#8B5CF6",
-  PAYMENT_REJECTED: "#10B981",
+  PAYMENT_VERIFIED: "#10B981",
+  APPLICATION_REJECTED: "#EF4444",
+  PAYMENT_REJECTED: "#EF4444",
   DRAFT: "#F59E0B",
 };
 
 const DONUT_COLORS = ["#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6"];
 
+function csvEscape(value: unknown) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 function downloadCsv(payload: ReportsPayload) {
   const lines: string[] = [];
 
   lines.push("Metric,Value");
-  lines.push(`Total Applications,${payload.cards.totalApplications}`);
-  lines.push(`Finalized,${payload.cards.finalized}`);
-  lines.push(`Conversion Rate,${payload.cards.conversionRate}%`);
-  lines.push(`Revenue,${payload.cards.revenue}`);
+  lines.push(`${csvEscape("Total Applications")},${csvEscape(payload.cards.totalApplications)}`);
+  lines.push(`${csvEscape("Finalized")},${csvEscape(payload.cards.finalized)}`);
+  lines.push(`${csvEscape("Conversion Rate")},${csvEscape(`${payload.cards.conversionRate}%`)}`);
+  lines.push(`${csvEscape("Revenue")},${csvEscape(payload.cards.revenue)}`);
   lines.push("");
 
   lines.push("Applications Over Time");
   lines.push("Month,Applications");
   payload.applicationsOverTime.forEach((row) => {
-    lines.push(`${row.label},${row.applications}`);
+    lines.push(`${csvEscape(row.label)},${csvEscape(row.applications)}`);
   });
   lines.push("");
 
   lines.push("Applications By Program");
   lines.push("Program,Applications");
   payload.programDistribution.forEach((row) => {
-    lines.push(`${row.program},${row.applications}`);
+    lines.push(`${csvEscape(row.program)},${csvEscape(row.applications)}`);
   });
   lines.push("");
 
   lines.push("Category Distribution");
   lines.push("Category,Applications");
   payload.categoryDistribution.forEach((row) => {
-    lines.push(`${row.category},${row.value}`);
+    lines.push(`${csvEscape(row.category)},${csvEscape(row.value)}`);
   });
   lines.push("");
 
   lines.push("Application Status Breakdown");
   lines.push("Status,Applications");
-  lines.push(`FINALIZED,${payload.statusBreakdown.finalized}`);
-  lines.push(`PAYMENT_PENDING,${payload.statusBreakdown.payment_pending}`);
-  lines.push(`PAYMENT_REJECTED,${payload.statusBreakdown.payment_rejected}`);
-  lines.push(`DRAFT,${payload.statusBreakdown.draft}`);
+  lines.push(`${csvEscape("FINALIZED")},${csvEscape(payload.statusBreakdown.finalized)}`);
+  lines.push(`${csvEscape("PAYMENT_PENDING")},${csvEscape(payload.statusBreakdown.payment_pending)}`);
+  lines.push(`${csvEscape("PAYMENT_VERIFIED")},${csvEscape(payload.statusBreakdown.payment_verified)}`);
+  lines.push(`${csvEscape("APPLICATION_REJECTED")},${csvEscape(payload.statusBreakdown.application_rejected)}`);
+  lines.push(`${csvEscape("DRAFT")},${csvEscape(payload.statusBreakdown.draft)}`);
 
   const csvContent = lines.join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -188,7 +198,8 @@ export default function AdminReportsPage() {
     () => [
       { name: "FINALIZED", value: reports.statusBreakdown.finalized },
       { name: "PAYMENT_PENDING", value: reports.statusBreakdown.payment_pending },
-      { name: "PAYMENT_REJECTED", value: reports.statusBreakdown.payment_rejected },
+      { name: "PAYMENT_VERIFIED", value: reports.statusBreakdown.payment_verified },
+      { name: "APPLICATION_REJECTED", value: reports.statusBreakdown.application_rejected },
       { name: "DRAFT", value: reports.statusBreakdown.draft },
     ],
     [reports.statusBreakdown],
@@ -197,7 +208,7 @@ export default function AdminReportsPage() {
   const maxStatusValue = Math.max(1, ...statusRows.map((row) => row.value));
 
   return (
-    <section className="w-full max-w-300 space-y-8">
+    <section className="admin-section-enter w-full space-y-8">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="font-['Times_New_Roman',Times,serif] text-[38px] leading-none font-bold text-[#0F1724]">
@@ -209,7 +220,7 @@ export default function AdminReportsPage() {
         <button
           type="button"
           onClick={() => downloadCsv(reports)}
-          className="h-9.5 w-fit rounded-lg border border-black/10 bg-white px-4 text-[14px] font-medium text-[#0F1724] shadow-[0_1px_2px_rgba(0,0,0,0.05)] inline-flex items-center gap-2"
+          className="admin-btn h-9.5 w-fit rounded-lg border border-black/10 bg-white px-4 text-[14px] font-medium text-[#0F1724] shadow-[0_1px_2px_rgba(0,0,0,0.05)] inline-flex items-center gap-2"
         >
           <FiDownload size={14} />
           Export CSV

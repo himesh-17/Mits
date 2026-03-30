@@ -132,7 +132,7 @@ export default function AdminAuditLogsPage() {
   }, [isLoading, logs.length]);
 
   return (
-    <div className="w-full max-w-270">
+    <div className="admin-section-enter w-full">
       <div className="mb-6">
         <h1 className="text-[38px] leading-none font-semibold text-[#0F1724]">
           Audit Logs
@@ -160,10 +160,11 @@ export default function AdminAuditLogsPage() {
             <div className="px-6 py-8 text-sm text-[#94A3B8]">No audit logs found.</div>
           ) : null}
 
-          {logs.map((log) => (
+          {logs.map((log, index) => (
             <article
               key={log.id}
-              className="px-6 py-5 border-b last:border-b-0 border-black/10 flex gap-4"
+              className="admin-row-enter px-6 py-5 border-b last:border-b-0 border-black/10 flex gap-4"
+              style={{ animationDelay: `${Math.min(index * 20, 240)}ms` }}
             >
               <div className="h-9 w-9 rounded-full bg-[#F1F5F9] text-[#475569] text-[14px] font-medium flex items-center justify-center shrink-0 mt-0.5">
                 {log.actorInitial}

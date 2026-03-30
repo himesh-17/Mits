@@ -153,9 +153,9 @@ const setPaymentDetails = asyncHandler(async (req, res) => {
         req,
         actionLabel: "PAYMENT_DETAILS_SET",
         module: "account-office",
-        entityType: "payment",
-        entityId: payment._id,
-        entityRef: `Payment #${String(payment._id).slice(-6).toUpperCase()}`,
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
         fromStatus: previousStatus,
         toStatus: "payment_pending",
     });

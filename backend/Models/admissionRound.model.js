@@ -21,6 +21,14 @@ const admissionRoundSchema = new mongoose.Schema(
         deadline: {
             type: Date,
             required: true,
+            validate: {
+                validator: function(value) {
+                    if (!(value instanceof Date) || Number.isNaN(value.getTime())) return false;
+                    if (!(this.startDate instanceof Date) || Number.isNaN(this.startDate.getTime())) return false;
+                    return value.getTime() > this.startDate.getTime();
+                },
+                message: "deadline must be after startDate",
+            },
         },
         status: {
             type: String,

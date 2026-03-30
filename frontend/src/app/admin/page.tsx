@@ -55,9 +55,13 @@ export default function AdminDashboard() {
       const payload = response?.data?.data || null;
       if (payload?.cards && payload?.breakdown && Array.isArray(payload?.recentActivity)) {
         setDashboardData(payload);
+        return;
       }
+
+      setDashboardData(null);
+      setFetchError("Could not load live dashboard data; no live data available.");
     } catch {
-      setFetchError("Could not load live dashboard data. Showing local data.");
+      setFetchError("Could not load live dashboard data; no live data available.");
       setDashboardData(null);
     }
   };
@@ -82,7 +86,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <section className="w-full space-y-5 [font-family:var(--font-inter)]">
+    <section className="admin-section-enter w-full space-y-5 [font-family:var(--font-inter)]">
       <div className="flex flex-col gap-3 lg:h-17.5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="font-['Times_New_Roman',Times,serif] text-[34px] md:text-[38px] leading-10.5 font-bold text-[#0F172A]">
@@ -96,7 +100,7 @@ export default function AdminDashboard() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleRefresh}
-            className="h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
+            className="admin-btn h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
             type="button"
           >
             <FiRefreshCw size={14} />
@@ -107,7 +111,7 @@ export default function AdminDashboard() {
             onClick={() => {
               router.push("/admin/rounds");
             }}
-            className="h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
+            className="admin-btn h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
             type="button"
           >
             <FiPlus size={14} />
@@ -119,7 +123,7 @@ export default function AdminDashboard() {
             onClick={() => {
               router.push("/admin/excel-upload");
             }}
-            className="h-9.5 px-4 border border-[#2DA8E1] rounded-md bg-[#2DA8E1] inline-flex items-center gap-2 text-[13px] text-white"
+            className="admin-btn h-9.5 px-4 border border-[#2DA8E1] rounded-md bg-[#2DA8E1] inline-flex items-center gap-2 text-[13px] text-white"
           >
             <FiUpload size={14} />
             Excel Upload
