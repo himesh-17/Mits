@@ -12,6 +12,11 @@ export const personalSchema = z.object({
         .min(3, "Name must be between 3 and 50 characters")
         .max(50, "Name must be between 3 and 50 characters")
         .regex(/^[A-Za-z ]+$/, "Name must contain only letters"),
+    motherName: z
+        .string()
+        .min(3, "Name must be between 3 and 50 characters")
+        .max(50, "Name must be between 3 and 50 characters")
+        .regex(/^[A-Za-z ]+$/, "Name must contain only letters"),
     dob: z
         .string()
         .min(1, "Date of Birth is required")

@@ -62,6 +62,7 @@ export default function AdmissionPage() {
         const snapshot = JSON.stringify({
             fullName: formData.fullName,
             fatherName: formData.fatherName,
+            motherName: formData.motherName,
             dob: formData.dob,
             gender: formData.gender,
             email: formData.email,
@@ -80,6 +81,7 @@ export default function AdmissionPage() {
         methods.reset({
             fullName: formData.fullName,
             fatherName: formData.fatherName,
+            motherName: formData.motherName,
             dob: formData.dob,
             gender: formData.gender,
             email: formData.email,

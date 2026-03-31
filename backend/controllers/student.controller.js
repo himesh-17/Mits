@@ -3,6 +3,7 @@ import Document from "../Models/document.model.js";
 import Payment from "../Models/payment.model.js";
 import AdmissionRound from "../Models/admissionRound.model.js";
 import RoundCandidate from "../Models/roundCandidate.model.js";
+import RoundMismatchAttempt from "../Models/roundMismatchAttempt.model.js";
 import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
@@ -75,6 +76,64 @@ function matchesByPhone(candidate, studentPhoneKey, fatherPhoneKey) {
     }
 
     return candidatePhones.includes(studentPhoneKey) || candidatePhones.includes(fatherPhoneKey);
+}
+
+function parseBypassEmails() {
+    return String(process.env.ROUND_MATCH_BYPASS_EMAILS || "")
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean);
+}
+
+function getBypassDecision(req, app) {
+    const appEmail = String(app?.email || "").trim().toLowerCase();
+    const allowlistedEmails = parseBypassEmails();
+
+    if (appEmail && allowlistedEmails.includes(appEmail)) {
+        return { enabled: true, source: "email_whitelist" };
+    }
+
+    const providedToken = String(req.headers["x-round-bypass-token"] || "").trim();
+    const expectedToken = String(process.env.ROUND_MATCH_BYPASS_TOKEN || "").trim();
+
+    if (providedToken && expectedToken && providedToken === expectedToken) {
+        return { enabled: true, source: "header_token" };
+    }
+
+    return { enabled: false, source: "none" };
+}
+
+async function recordRoundMismatchAttempt({
+    app,
+    activeRound,
+    reasonCode,
+    reasonMessage,
+    bypassed,
+    bypassSource,
+    candidateCount = 0,
+}) {
+    try {
+        await RoundMismatchAttempt.create({
+            application: app?._id || null,
+            student: app?.student || null,
+            round: activeRound?._id || null,
+            fullName: String(app?.fullName || ""),
+            fatherName: String(app?.fatherName || ""),
+            motherName: String(app?.motherName || ""),
+            email: String(app?.email || ""),
+            studentPhone: String(app?.phone || ""),
+            fatherPhone: String(app?.fatherPhone || ""),
+            reasonCode,
+            reasonMessage,
+            bypassed: Boolean(bypassed),
+            bypassSource: bypassSource || "none",
+            candidateCount: Number(candidateCount || 0),
+            activeRoundTitle: String(activeRound?.title || ""),
+            attemptedAt: new Date(),
+        });
+    } catch {
+        // Non-blocking log write: submission flow should not fail because of report logging.
+    }
 }
 
 const uploadDocumentFile = asyncHandler(async (req, res) => {
@@ -289,13 +348,67 @@ const submitApplication = asyncHandler(async (req, res) => {
         motherNameKey,
     }).lean();
 
+    const bypassDecision = getBypassDecision(req, app);
+
     if (matchingCandidates.length === 0) {
+        const msg = "Your details do not match the active round student list. Please verify your information is correct.";
+        await recordRoundMismatchAttempt({
+            app,
+            activeRound,
+            reasonCode: "no_match",
+            reasonMessage: msg,
+            bypassed: bypassDecision.enabled,
+            bypassSource: bypassDecision.source,
+            candidateCount: 0,
+        });
+
+        if (bypassDecision.enabled) {
+            app.verifiedRound = activeRound._id;
+            app.verifiedRoundCandidate = null;
+            app.roundEligibilityVerifiedAt = new Date();
+
+            if (["draft", "re_upload"].includes(app.status)) {
+                app.status = "submitted";
+                app.progressBar.formFilled = true;
+                app.submittedAt = new Date();
+            }
+
+            await app.save();
+            return sendSuccess(res, "Application submitted (test bypass enabled)", { application: app });
+        }
+
         throw new ApiError(403, "Your details do not match the active round student list. Please verify your information is correct.");
     }
 
     let matchedCandidate = matchingCandidates[0];
     if (matchingCandidates.length > 1) {
         if (!studentPhoneKey && !fatherPhoneKey) {
+            const msg = "Multiple matches found. Enter your phone number or father phone number to verify";
+            await recordRoundMismatchAttempt({
+                app,
+                activeRound,
+                reasonCode: "multiple_without_phone",
+                reasonMessage: msg,
+                bypassed: bypassDecision.enabled,
+                bypassSource: bypassDecision.source,
+                candidateCount: matchingCandidates.length,
+            });
+
+            if (bypassDecision.enabled) {
+                app.verifiedRound = activeRound._id;
+                app.verifiedRoundCandidate = null;
+                app.roundEligibilityVerifiedAt = new Date();
+
+                if (["draft", "re_upload"].includes(app.status)) {
+                    app.status = "submitted";
+                    app.progressBar.formFilled = true;
+                    app.submittedAt = new Date();
+                }
+
+                await app.save();
+                return sendSuccess(res, "Application submitted (test bypass enabled)", { application: app });
+            }
+
             throw new ApiError(403, "Multiple matches found. Enter your phone number or father phone number to verify");
         }
 
@@ -304,6 +417,32 @@ const submitApplication = asyncHandler(async (req, res) => {
         );
 
         if (!matchedCandidate) {
+            const msg = "Name matched but phone verification failed for this round";
+            await recordRoundMismatchAttempt({
+                app,
+                activeRound,
+                reasonCode: "phone_mismatch",
+                reasonMessage: msg,
+                bypassed: bypassDecision.enabled,
+                bypassSource: bypassDecision.source,
+                candidateCount: matchingCandidates.length,
+            });
+
+            if (bypassDecision.enabled) {
+                app.verifiedRound = activeRound._id;
+                app.verifiedRoundCandidate = null;
+                app.roundEligibilityVerifiedAt = new Date();
+
+                if (["draft", "re_upload"].includes(app.status)) {
+                    app.status = "submitted";
+                    app.progressBar.formFilled = true;
+                    app.submittedAt = new Date();
+                }
+
+                await app.save();
+                return sendSuccess(res, "Application submitted (test bypass enabled)", { application: app });
+            }
+
             throw new ApiError(403, "Name matched but phone verification failed for this round");
         }
     }

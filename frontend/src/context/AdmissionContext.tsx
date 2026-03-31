@@ -8,6 +8,7 @@ export interface AdmissionFormData {
     // Step 1: Personal
     fullName: string;
     fatherName: string;
+    motherName: string;
     dob: string;
     gender: string;
     email: string;
@@ -44,6 +45,7 @@ export interface AdmissionFormData {
 const defaultFormData: AdmissionFormData = {
     fullName: "",
     fatherName: "",
+    motherName: "",
     dob: "",
     gender: "",
     email: "",
@@ -75,6 +77,7 @@ function toBackendPayload(data: AdmissionFormData): Record<string, unknown> {
     return {
         fullName:             data.fullName,
         fatherName:           data.fatherName,
+        motherName:           data.motherName,
         dateOfBirth:          data.dob,
         gender:               data.gender,
         email:                data.email,
@@ -103,6 +106,7 @@ function fromBackendApplication(app: Record<string, any>): Partial<AdmissionForm
     return {
         fullName:       app.fullName             ?? "",
         fatherName:     app.fatherName           ?? "",
+        motherName:     app.motherName           ?? "",
         dob:            app.dateOfBirth          ?? "",
         gender:         app.gender               ?? "",
         email:          app.email                ?? "",

@@ -7,6 +7,7 @@ import RoleAssignment from "../Models/roleAssignment.model.js";
 import AuditLog from "../Models/auditLog.model.js";
 import AdmissionRound from "../Models/admissionRound.model.js";
 import RoundCandidate from "../Models/roundCandidate.model.js";
+import RoundMismatchAttempt from "../Models/roundMismatchAttempt.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -546,6 +547,8 @@ const getReports = asyncHandler(async (req, res) => {
         });
     }
 
+    const last7Days = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+
     const [
         totalApplications,
         finalized,
@@ -554,6 +557,10 @@ const getReports = asyncHandler(async (req, res) => {
         programAgg,
         categoryAgg,
         revenueAgg,
+        mismatchTotal,
+        mismatchBypassed,
+        mismatchLast7Days,
+        recentMismatches,
     ] = await Promise.all([
         Application.countDocuments({}),
         Application.countDocuments({ status: "admitted" }),
@@ -653,6 +660,14 @@ const getReports = asyncHandler(async (req, res) => {
                 },
             },
         ]),
+        RoundMismatchAttempt.countDocuments({}),
+        RoundMismatchAttempt.countDocuments({ bypassed: true }),
+        RoundMismatchAttempt.countDocuments({ attemptedAt: { $gte: last7Days } }),
+        RoundMismatchAttempt.find({})
+            .sort({ attemptedAt: -1, createdAt: -1 })
+            .limit(25)
+            .populate("student", "name email")
+            .lean(),
     ]);
 
     const statusBreakdown = {
@@ -720,6 +735,25 @@ const getReports = asyncHandler(async (req, res) => {
         ? categoryDistributionRaw
         : [{ category: "GENERAL", value: totalApplications }];
 
+    const mismatchSummary = {
+        total: Number(mismatchTotal || 0),
+        bypassed: Number(mismatchBypassed || 0),
+        pendingReview: Math.max(0, Number(mismatchTotal || 0) - Number(mismatchBypassed || 0)),
+        last7Days: Number(mismatchLast7Days || 0),
+    };
+
+    const recentMismatchRows = recentMismatches.map((item) => ({
+        id: String(item._id),
+        attemptedAt: item.attemptedAt || item.createdAt || null,
+        studentName: cleanImportText(item.fullName) || cleanImportText(item?.student?.name) || "-",
+        email: cleanImportText(item.email) || cleanImportText(item?.student?.email) || "-",
+        reasonCode: cleanImportText(item.reasonCode) || "no_match",
+        reasonMessage: cleanImportText(item.reasonMessage) || "Not matched",
+        bypassed: Boolean(item.bypassed),
+        bypassSource: cleanImportText(item.bypassSource) || "none",
+        activeRoundTitle: cleanImportText(item.activeRoundTitle) || "-",
+    }));
+
     return sendSuccess(res, "Reports fetched", {
         cards: {
             totalApplications,
@@ -731,6 +765,8 @@ const getReports = asyncHandler(async (req, res) => {
         programDistribution,
         categoryDistribution,
         statusBreakdown,
+        mismatchSummary,
+        recentMismatches: recentMismatchRows,
     });
 });
 
