@@ -88,6 +88,16 @@ function parseBypassEmails() {
 function getBypassDecision(req, app) {
     const appEmail = String(app?.email || "").trim().toLowerCase();
     const allowlistedEmails = parseBypassEmails();
+    const bypassEnabledFlag = String(process.env.ROUND_MATCH_BYPASS_ENABLED || "").trim().toLowerCase();
+
+    // Local/dev safety valve: enabled by default outside production unless explicitly turned off.
+    const bypassGloballyEnabled = bypassEnabledFlag
+        ? ["1", "true", "yes", "on"].includes(bypassEnabledFlag)
+        : process.env.NODE_ENV !== "production";
+
+    if (bypassGloballyEnabled) {
+        return { enabled: true, source: "env_flag" };
+    }
 
     if (appEmail && allowlistedEmails.includes(appEmail)) {
         return { enabled: true, source: "email_whitelist" };
@@ -180,6 +190,7 @@ const updateApplication = asyncHandler(async (req, res) => {
     // arrive as strings and Mongoose stores null, which breaks submitApplication's
     // required-field check.
     const numberFields = new Set(["tenthMarks", "twelfthMarks", "tenthPassingYear", "twelfthPassingYear"]);
+    const dateFields = new Set(["dateOfBirth"]);
 
     const updates = {};
     for (const f of allowed) {
@@ -188,16 +199,27 @@ const updateApplication = asyncHandler(async (req, res) => {
         if (numberFields.has(f)) {
             const n = Number(raw);
             updates[f] = (raw === "" || raw === null || Number.isNaN(n)) ? null : n;
+        } else if (dateFields.has(f)) {
+            if (raw === "" || raw === null) {
+                updates[f] = null;
+            } else {
+                const parsed = new Date(raw);
+                updates[f] = Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
         } else {
             updates[f] = raw;
         }
     }
 
-    const app = await Application.findOne({
-        student: req.user.id,
-        status: { $in: ["draft", "re_upload", "submitted", "under_review"] },
-    });
-    if (!app) throw new ApiError(400, "No editable application found");
+    let app = await Application.findOne({ student: req.user.id });
+    if (!app) {
+        app = await Application.create({ student: req.user.id });
+    }
+
+    // Keep autosave quiet for locked applications instead of throwing 400 in UI.
+    if (app.status === "admitted") {
+        return sendSuccess(res, "Application is locked; draft sync skipped", { application: app });
+    }
 
     // FIX #1: On PATCH, just save the data without verification.
     // Round verification happens at submitApplication time, not during draft saves.
@@ -501,7 +523,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
             verifiedBy: null,
             verifiedAt: null,
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
     );
 
     if (!app.progressBar.documentsUploaded || app.status === "re_upload") {
@@ -593,7 +615,7 @@ const submitPayment = asyncHandler(async (req, res) => {
                 status: "submitted",
             },
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
     );
 
     await Application.findByIdAndUpdate(

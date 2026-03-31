@@ -130,7 +130,7 @@ const markEmailSent = asyncHandler(async (req, res) => {
                 remarksAdmissionCell: remarks || "Email sent to student",
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     );
     if (!app) throw new ApiError(404, "Application not found");
 
@@ -191,7 +191,7 @@ const rejectApplication = asyncHandler(async (req, res) => {
     const app = await Application.findByIdAndUpdate(
         req.params.applicationId,
         { $set: { status: "rejected", rejectionReason: reason } },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!app) throw new ApiError(404, "Application not found");

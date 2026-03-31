@@ -73,7 +73,7 @@ const verifyDocument = asyncHandler(async (req, res) => {
                 verifiedAt: new Date(),
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     // If all docs for this application are verified, update app status
@@ -144,7 +144,7 @@ const setPaymentDetails = asyncHandler(async (req, res) => {
                 status: "pending",
             },
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
     );
 
     await Application.findByIdAndUpdate(app._id, { status: "payment_pending" });
@@ -191,7 +191,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
                 verifiedAt: new Date(),
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (action === "verified") {

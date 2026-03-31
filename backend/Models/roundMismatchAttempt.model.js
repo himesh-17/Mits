@@ -36,7 +36,7 @@ const roundMismatchAttemptSchema = new mongoose.Schema(
         bypassed: { type: Boolean, default: false, index: true },
         bypassSource: {
             type: String,
-            enum: ["none", "email_whitelist", "header_token"],
+            enum: ["none", "email_whitelist", "header_token", "env_flag"],
             default: "none",
         },
         candidateCount: { type: Number, default: 0 },

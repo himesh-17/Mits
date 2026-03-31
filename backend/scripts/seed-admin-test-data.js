@@ -39,7 +39,7 @@ async function upsertUser({ email, name, role, picture = "", emailVerified = tru
         },
         {
             upsert: true,
-            new: true,
+            returnDocument: "after",
         }
     );
 
@@ -83,7 +83,7 @@ async function seedUsers() {
                         assignedBy: staffUsers[0]?._id || user._id,
                     },
                 },
-                { upsert: true, new: true }
+                { upsert: true, returnDocument: "after" }
             );
         }
     }
@@ -176,7 +176,7 @@ async function seedApplicationsAndPayments(studentUsers) {
                     remarksAccountOffice: ["payment_pending", "payment_submitted", "payment_verified", "admitted"].includes(status) ? "Payment tracked" : "",
                 },
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: "after" }
         );
 
         // Spread data across months for reports charts.
@@ -217,7 +217,7 @@ async function seedApplicationsAndPayments(studentUsers) {
                         verifiedAt: paymentStatus === "verified" ? createdAt : null,
                     },
                 },
-                { upsert: true, new: true }
+                { upsert: true, returnDocument: "after" }
             );
         }
 

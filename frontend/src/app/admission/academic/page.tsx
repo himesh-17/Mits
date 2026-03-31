@@ -10,6 +10,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAdmissionForm } from "../../../context/AdmissionContext";
 import { academicSchema, AcademicFormData } from "../../../lib/validationSchemas";
+import { getAdmissionProgress } from "../../../lib/admissionProgress";
 
 import AdmissionHeader from "../../../components/admission/AdmissionHeader";
 import ProgressBar from "../../../components/admission/ProgressBar";
@@ -88,6 +89,8 @@ export default function AcademicPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [updateFormData]);
 
+    const progress = getAdmissionProgress(formData);
+
     return (
         <FormProvider {...methods}>
             <div className="min-h-screen bg-[#F8FAFC]">
@@ -96,8 +99,8 @@ export default function AcademicPage() {
                 {/* MAIN CONTENT */}
                 <main className="max-w-[900px] mx-auto py-6 md:py-8 px-4">
                     <div className="mb-2">
-                        <AdmissionHeader step={2} title="Academic Information" percentText="25% Completed" />
-                        <ProgressBar percent={25} />
+                        <AdmissionHeader step={2} title="Academic Information" percentText={`${progress}% Completed`} />
+                        <ProgressBar percent={progress} />
                     </div>
 
                     <div className="mb-6">
