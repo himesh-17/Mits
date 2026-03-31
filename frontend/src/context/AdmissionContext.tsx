@@ -235,8 +235,11 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
         try {
             setIsSyncing(true);
             await api.patch("/api/student/application", toBackendPayload(data));
-        } catch {
-            // Silent — data is still safe in localStorage
+        } catch (error) {
+            // Data is still safe in localStorage, but log the error for debugging
+            console.error("Failed to sync form data to backend:", error);
+            // Optional: Add toast notification here if using a toast library
+            // eg: toast.error("Failed to save draft. Your changes are saved locally.");
         } finally {
             setIsSyncing(false);
         }

@@ -140,75 +140,83 @@ const updateApplication = asyncHandler(async (req, res) => {
     });
     if (!app) throw new ApiError(400, "No editable application found");
 
-    const merged = {
-        fullName: updates.fullName !== undefined ? updates.fullName : app.fullName,
-        fatherName: updates.fatherName !== undefined ? updates.fatherName : app.fatherName,
-        motherName: updates.motherName !== undefined ? updates.motherName : app.motherName,
-        phone: updates.phone !== undefined ? updates.phone : app.phone,
-        fatherPhone: updates.fatherPhone !== undefined ? updates.fatherPhone : app.fatherPhone,
-    };
+    // FIX #1: On PATCH, just save the data without verification.
+    // Round verification happens at submitApplication time, not during draft saves.
+    // This prevents 400 errors when user is still filling in partial data.
+    // Only do verification if explicitly marked (e.g., via X-Verify header or query param)
+    const shouldVerify = req.query.verify === "true" || req.headers["x-verify"] === "true";
 
-    const hasAnyIdentityInput = [merged.fullName, merged.fatherName, merged.motherName, merged.phone, merged.fatherPhone]
-        .some((value) => String(value || "").trim() !== "");
+    if (shouldVerify) {
+        const merged = {
+            fullName: updates.fullName !== undefined ? updates.fullName : app.fullName,
+            fatherName: updates.fatherName !== undefined ? updates.fatherName : app.fatherName,
+            motherName: updates.motherName !== undefined ? updates.motherName : app.motherName,
+            phone: updates.phone !== undefined ? updates.phone : app.phone,
+            fatherPhone: updates.fatherPhone !== undefined ? updates.fatherPhone : app.fatherPhone,
+        };
 
-    if (hasAnyIdentityInput) {
-        const studentNameKey = normalizeNameKey(merged.fullName);
-        const fatherNameKey = normalizeNameKey(merged.fatherName);
-        const motherNameKey = normalizeNameKey(merged.motherName);
-        const studentPhoneKey = normalizePhoneKey(merged.phone);
-        const fatherPhoneKey = normalizePhoneKey(merged.fatherPhone);
+        const hasAnyIdentityInput = [merged.fullName, merged.fatherName, merged.motherName, merged.phone, merged.fatherPhone]
+            .some((value) => String(value || "").trim() !== "");
 
-        if (!studentNameKey || !fatherNameKey || !motherNameKey) {
-            throw new ApiError(400, "Student name, father name and mother name are required for round verification");
-        }
+        if (hasAnyIdentityInput) {
+            const studentNameKey = normalizeNameKey(merged.fullName);
+            const fatherNameKey = normalizeNameKey(merged.fatherName);
+            const motherNameKey = normalizeNameKey(merged.motherName);
+            const studentPhoneKey = normalizePhoneKey(merged.phone);
+            const fatherPhoneKey = normalizePhoneKey(merged.fatherPhone);
 
-        const now = new Date();
-        const activeRound = await AdmissionRound.findOne({
-            status: "active",
-            startDate: { $lte: now },
-            deadline: { $gte: now },
-        })
-            .sort({ startDate: -1, createdAt: -1 })
-            .lean();
-
-        if (!activeRound) {
-            throw new ApiError(400, "No active admission round is currently open for verification");
-        }
-
-        const matchingCandidates = await RoundCandidate.find({
-            round: activeRound._id,
-            studentNameKey,
-            fatherNameKey,
-            motherNameKey,
-        }).lean();
-
-        if (matchingCandidates.length === 0) {
-            throw new ApiError(403, "Your details do not match the active round student list");
-        }
-
-        let matchedCandidate = matchingCandidates[0];
-        if (matchingCandidates.length > 1) {
-            if (!studentPhoneKey && !fatherPhoneKey) {
-                throw new ApiError(403, "Multiple matches found. Enter your phone number or father phone number to verify");
+            if (!studentNameKey || !fatherNameKey || !motherNameKey) {
+                throw new ApiError(400, "Student name, father name and mother name are required for round verification");
             }
 
-            matchedCandidate = matchingCandidates.find((candidate) =>
-                matchesByPhone(candidate, studentPhoneKey, fatherPhoneKey)
-            );
+            const now = new Date();
+            const activeRound = await AdmissionRound.findOne({
+                status: "active",
+                startDate: { $lte: now },
+                deadline: { $gte: now },
+            })
+                .sort({ startDate: -1, createdAt: -1 })
+                .lean();
 
-            if (!matchedCandidate) {
-                throw new ApiError(403, "Name matched but phone verification failed for this round");
+            if (!activeRound) {
+                throw new ApiError(400, "No active admission round is currently open for verification");
             }
+
+            const matchingCandidates = await RoundCandidate.find({
+                round: activeRound._id,
+                studentNameKey,
+                fatherNameKey,
+                motherNameKey,
+            }).lean();
+
+            if (matchingCandidates.length === 0) {
+                throw new ApiError(403, "Your details do not match the active round student list");
+            }
+
+            let matchedCandidate = matchingCandidates[0];
+            if (matchingCandidates.length > 1) {
+                if (!studentPhoneKey && !fatherPhoneKey) {
+                    throw new ApiError(403, "Multiple matches found. Enter your phone number or father phone number to verify");
+                }
+
+                matchedCandidate = matchingCandidates.find((candidate) =>
+                    matchesByPhone(candidate, studentPhoneKey, fatherPhoneKey)
+                );
+
+                if (!matchedCandidate) {
+                    throw new ApiError(403, "Name matched but phone verification failed for this round");
+                }
+            }
+
+            updates.verifiedRound = activeRound._id;
+            updates.verifiedRoundCandidate = matchedCandidate._id;
+            updates.roundEligibilityVerifiedAt = new Date();
+
+            await RoundCandidate.findByIdAndUpdate(matchedCandidate._id, {
+                matchedApplication: app._id,
+                matchedAt: new Date(),
+            });
         }
-
-        updates.verifiedRound = activeRound._id;
-        updates.verifiedRoundCandidate = matchedCandidate._id;
-        updates.roundEligibilityVerifiedAt = new Date();
-
-        await RoundCandidate.findByIdAndUpdate(matchedCandidate._id, {
-            matchedApplication: app._id,
-            matchedAt: new Date(),
-        });
     }
 
     app.set(updates);
@@ -249,7 +257,66 @@ const submitApplication = asyncHandler(async (req, res) => {
         const readable = missing.join(", ");
         throw new ApiError(400, `Please complete your form before submitting. Missing fields: ${readable}`);
     }
+    // NOW verify admission round eligibility (after required field check)
+    // This is the only place we verify - NOT during draft saves
+    const studentNameKey = normalizeNameKey(app.fullName);
+    const fatherNameKey = normalizeNameKey(app.fatherName);
+    const motherNameKey = normalizeNameKey(app.motherName);
+    const studentPhoneKey = normalizePhoneKey(app.phone);
+    const fatherPhoneKey = normalizePhoneKey(app.fatherPhone);
 
+    if (!studentNameKey || !fatherNameKey || !motherNameKey) {
+        throw new ApiError(400, "Student name, father name and mother name are required for round verification");
+    }
+
+    const now = new Date();
+    const activeRound = await AdmissionRound.findOne({
+        status: "active",
+        startDate: { $lte: now },
+        deadline: { $gte: now },
+    })
+        .sort({ startDate: -1, createdAt: -1 })
+        .lean();
+
+    if (!activeRound) {
+        throw new ApiError(400, "No active admission round is currently open. Please check back later.");
+    }
+
+    const matchingCandidates = await RoundCandidate.find({
+        round: activeRound._id,
+        studentNameKey,
+        fatherNameKey,
+        motherNameKey,
+    }).lean();
+
+    if (matchingCandidates.length === 0) {
+        throw new ApiError(403, "Your details do not match the active round student list. Please verify your information is correct.");
+    }
+
+    let matchedCandidate = matchingCandidates[0];
+    if (matchingCandidates.length > 1) {
+        if (!studentPhoneKey && !fatherPhoneKey) {
+            throw new ApiError(403, "Multiple matches found. Enter your phone number or father phone number to verify");
+        }
+
+        matchedCandidate = matchingCandidates.find((candidate) =>
+            matchesByPhone(candidate, studentPhoneKey, fatherPhoneKey)
+        );
+
+        if (!matchedCandidate) {
+            throw new ApiError(403, "Name matched but phone verification failed for this round");
+        }
+    }
+
+    // Mark as verified
+    app.verifiedRound = activeRound._id;
+    app.verifiedRoundCandidate = matchedCandidate._id;
+    app.roundEligibilityVerifiedAt = new Date();
+
+    await RoundCandidate.findByIdAndUpdate(matchedCandidate._id, {
+        matchedApplication: app._id,
+        matchedAt: new Date(),
+    });
     // Only transition to "submitted" if the app is still in a form-editable state.
     if (["draft", "re_upload"].includes(app.status)) {
         app.status = "submitted";
