@@ -16,6 +16,9 @@ const RecentActivity = dynamic(
 const Charts = dynamic(() => import("../../components/admin/Charts"), {
   ssr: false,
 });
+const VerificationCards = dynamic(() => import("../../components/admin/VerificationCards"), {
+  ssr: false,
+});
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -90,14 +93,14 @@ export default function AdminDashboard() {
   };
 
   return (
-    <section className="admin-section-enter w-full space-y-5 [font-family:var(--font-inter)]">
+    <section className="admin-section-enter w-full space-y-8 [font-family:var(--font-inter)]">
       <div className="flex flex-col gap-3 lg:h-17.5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="font-['Times_New_Roman',Times,serif] text-[34px] md:text-[38px] leading-10.5 font-bold text-[#0F172A]">
-            Admission Dashboard
+          <h1 className="font-['Times_New_Roman',Times,serif] text-[34px] md:text-[38px] font-bold text-[#0F172A]">
+            Verification Queue
           </h1>
           <p className="text-[15px] leading-5.5 text-[#94A3B8]">
-            Review your daily metrics and student data uploads.
+            Review and verify student documents
           </p>
         </div>
 
@@ -110,28 +113,16 @@ export default function AdminDashboard() {
             <FiRefreshCw size={14} />
             {loading ? "Refreshing..." : "Refresh"}
           </button>
-
-          <button
-            onClick={() => {
-              router.push("/admin/rounds");
-            }}
-            className="admin-btn h-9.5 px-4 border border-black/10 rounded-md bg-white inline-flex items-center gap-2 text-[13px] text-[#0F1724]"
-            type="button"
-          >
-            <FiPlus size={14} />
-            New Round
-          </button>
-
         </div>
       </div>
 
-      {fetchError ? (
-        <p className="text-[13px] text-[#B45309]">{fetchError}</p>
-      ) : null}
+      <VerificationCards
+        waitingReview={dashboardData?.breakdown?.draft || 0}
+        underReview={dashboardData?.breakdown?.pending || 0}
+        docsRejected={dashboardData?.breakdown?.rejected || 0}
+      />
 
-      <StatCards refresh={refresh} metrics={dashboardData?.cards || null} />
       <RecentActivity refresh={refresh} rows={dashboardData?.recentActivity || null} />
-      <Charts refresh={refresh} breakdown={dashboardData?.breakdown || null} />
     </section>
   );
 }

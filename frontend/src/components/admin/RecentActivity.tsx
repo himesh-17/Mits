@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
+import { FiArrowRight } from "react-icons/fi";
 import { getAdminData } from "../../lib/AdminStore";
 
 type Application = {
@@ -32,7 +34,7 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
       return "bg-[#DCFCE7] text-[#15803D]";
     }
 
-    if (status === "Payment Pending" || status === "Approval Pending" || status === "Under Review") {
+    if (status === "Payment Pending" || status === "Approval Pending" || status === "Under Review" || status === "Withdrawal") {
       return "bg-[#FFEDD5] text-[#C2410C]";
     }
 
@@ -44,49 +46,68 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
   };
 
   return (
-    <section className="bg-white rounded-lg border border-black/10 overflow-hidden">
-      <div className="h-11 px-4 border-b border-black/10 flex items-center">
-        <h2 className="font-['Times_New_Roman',Times,serif] text-[16px] leading-6 font-bold text-[#0F1724]">Recent Activity</h2>
+    <section className="space-y-4">
+      <div className="flex items-center justify-between py-2">
+        <h2 className="font-['Times_New_Roman',Times,serif] text-[20px] font-bold text-[#0F1724]">
+          Applications Pending Verification
+        </h2>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-180">
-          <thead>
-            <tr className="h-9 bg-[#EEF2F6] text-[12px] font-semibold text-[#334155]">
-              <th className="px-4">Roll No</th>
-              <th className="px-4">Name</th>
-              <th className="px-4">Program</th>
-              <th className="px-4">Status</th>
-              <th className="px-4">Date</th>
-            </tr>
-          </thead>
+      <div className="space-y-3">
+        {data.map((item, idx) => {
+          const normalizedStatus = String(item.status || "Draft");
+          const program = String(item.program || item.course || "-");
 
-          <tbody>
-            {data.map((item) => {
-              const normalizedStatus = String(item.status || "Draft");
-              const program = String(item.program || item.course || "-");
+          return (
+            <div
+              key={item.id}
+              className="group flex items-center justify-between rounded-xl border border-black/[0.05] bg-white p-5 shadow-sm transition-all hover:border-[#2DA8E1]/30 hover:shadow-md"
+            >
+              <div className="flex items-center gap-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2563EB] text-lg font-bold text-white shadow-inner">
+                  {item.name.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[#0F1724] group-hover:text-[#2563EB] transition-colors">
+                    {item.name}
+                  </h3>
+                  <p className="text-[13px] text-[#8A98A8]">
+                    student{idx + 1}@gmail.com • {program}
+                  </p>
+                </div>
+              </div>
 
-              return (
-                <tr
-                  key={item.id}
-                  className="h-12.5 border-t border-[#E2E8F0] text-[13px] text-[#0F1724]"
+              <div className="flex items-center gap-12">
+                <div className="hidden sm:block text-center border-r border-black/[0.05] pr-12 last:border-0 last:pr-0">
+                  <p className="text-[10px] font-bold text-[#8A98A8] uppercase tracking-wider mb-1">Documents</p>
+                  <p className="text-[14px] font-bold text-[#0F1724]">0 files</p>
+                </div>
+
+                <div className="min-w-[120px] text-center">
+                  <span
+                    className={`inline-flex h-7 items-center px-4 rounded-full text-[11px] font-bold uppercase tracking-wider ${statusClass(normalizedStatus)}`}
+                  >
+                    {normalizedStatus}
+                  </span>
+                </div>
+
+                <Link
+                  href={`/admin/applications/${item.id}`}
+                  className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#2563EB] px-6 text-[14px] font-bold text-white transition-all hover:bg-[#1D4ED8] hover:shadow-lg active:scale-95"
                 >
-                  <td className="px-4 font-semibold">{item.rollNo || "-"}</td>
-                  <td className="px-4">{item.name}</td>
-                  <td className="px-4">{program}</td>
-                  <td className="px-4">
-                    <span
-                      className={`inline-flex h-5.5 items-center px-2 rounded-md text-[11px] font-semibold ${statusClass(normalizedStatus)}`}
-                    >
-                      {normalizedStatus}
-                    </span>
-                  </td>
-                  <td className="px-4 text-[#334155]">{item.date}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  Review
+                  <FiArrowRight />
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+
+        {data.length === 0 && (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#CFD7E3] bg-white py-16">
+            <p className="text-[#64748B] font-medium">No applications pending verification.</p>
+          </div>
+        )}
       </div>
     </section>
   );

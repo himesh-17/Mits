@@ -1,19 +1,14 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "../../utils/api";
-
 import {
   FiHome,
   FiBarChart,
-  FiFile,
-  FiFileText,
+  FiInbox,
   FiLogOut,
-  FiShield,
-  FiUsers,
 } from "react-icons/fi";
 
 type SidebarProps = {
@@ -28,10 +23,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
 
   const handleLogout = async () => {
     try {
-      const response = await api.post("/api/auth/logout");
-      if (!response || response.status >= 400) {
-        throw new Error("Logout endpoint failed");
-      }
+      await api.post("/api/auth/logout");
     } catch (error) {
       console.error("[AdminSidebar] logout API failed", error);
     } finally {
@@ -43,114 +35,77 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
   };
 
   return (
-    <div className="h-full bg-white flex flex-col min-h-0 overflow-x-hidden">
-      <div className={`flex-1 min-h-0 overflow-y-auto pt-3 pb-6 ${collapsed ? "px-1" : "px-3"}`}>
-        {!collapsed ? (
-          <p className="px-2.5 mb-2.5 text-[11px] font-bold tracking-[0.4px] uppercase text-[#94A3B8]">
-            Admission Office
+    <div className="h-full bg-white flex flex-col min-h-0 overflow-x-hidden border-r border-[#E2E8F0]">
+      <div className={`flex-1 min-h-0 overflow-y-auto pt-6 pb-6 ${collapsed ? "px-1" : "px-3"}`}>
+        {!collapsed && (
+          <p className="px-3 mb-4 text-[11px] font-bold tracking-[0.5px] uppercase text-[#94A3B8]">
+            Main Menu
           </p>
-        ) : null}
+        )}
 
         <div className="space-y-1">
           <MenuItem
             href="/admin"
-            icon={<FiHome className="text-[14px]" />}
+            icon={<FiHome />}
             label="Dashboard"
             active={pathname === "/admin"}
             collapsed={collapsed}
             onNavigate={onNavigate}
           />
           <MenuItem
-            href="/admin/student-data"
-            icon={<FiFile className="text-[14px]" />}
-            label="Student Data"
-            active={pathname === "/admin/student-data"}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
-        </div>
-
-        {!collapsed ? (
-          <p className="px-2.5 mt-5 mb-2.5 text-[11px] font-bold tracking-[0.4px] uppercase text-[#94A3B8]">
-            Management
-          </p>
-        ) : null}
-
-        <div className="space-y-1">
-          <MenuItem
-            href="/admin/users"
-            icon={<FiUsers className="text-[14px]" />}
-            label="Users"
-            active={pathname === "/admin/users"}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
-          <MenuItem
-            href="/admin/rounds"
-            icon={<FiShield className="text-[14px]" />}
-            label="Rounds"
-            active={pathname === "/admin/rounds"}
+            href="/admin/applications"
+            icon={<FiInbox />}
+            label="All Applications"
+            active={pathname?.startsWith("/admin/applications") || false}
             collapsed={collapsed}
             onNavigate={onNavigate}
           />
           <MenuItem
             href="/admin/reports"
-            icon={<FiBarChart className="text-[14px]" />}
+            icon={<FiBarChart />}
             label="Reports"
             active={pathname === "/admin/reports"}
             collapsed={collapsed}
             onNavigate={onNavigate}
           />
-          <MenuItem
-            href="/admin/audit-logs"
-            icon={<FiFileText className="text-[14px]" />}
-            label="Audit Logs"
-            active={pathname === "/admin/audit-logs"}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
         </div>
       </div>
 
-      <div className={`border-t border-[#E2E8F0] py-3 shrink-0 ${collapsed ? "px-1" : "px-3"}`}>
-        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-          <div className="h-9 w-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center text-sm font-semibold">
-            S
+      <div className={`border-t border-[#E2E8F0] py-4 shrink-0 ${collapsed ? "px-1" : "px-3"}`}>
+        <div className={`flex items-center mb-4 ${collapsed ? "justify-center" : "gap-3 px-3"}`}>
+          <div className="h-9 w-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center text-sm font-bold shadow-sm">
+            A
           </div>
-          {!collapsed ? (
+          {!collapsed && (
             <div>
-              <p className="text-[13px] font-semibold text-[#0F1724]">Super Admin</p>
-              <p className="text-[11px] text-[#94A3B8]">Admin Panel</p>
+              <p className="text-[13px] font-bold text-[#0F1724]">Admission Officer</p>
+              <p className="text-[11px] text-[#94A3B8]">Admission Cell</p>
             </div>
-          ) : null}
+          )}
         </div>
         <button
           type="button"
           onClick={() => setShowLogoutModal(true)}
-          className={`mt-3 text-[#FF0303] text-[16px] leading-none font-medium inline-flex items-center ${
-            collapsed ? "w-full justify-center" : "gap-2 px-2.5"
-          }`}
+          className={`text-[#FF0303] text-[15px] font-bold inline-flex items-center transition-opacity hover:opacity-80 ${collapsed ? "w-full justify-center" : "gap-3 px-3"
+            }`}
         >
-          <FiLogOut className="text-[16px]" />
-          {!collapsed ? <span className="text-[16px] leading-none">Logout</span> : null}
+          <FiLogOut className="text-[18px]" />
+          {!collapsed && <span>Logout</span>}
         </button>
       </div>
 
-      {showLogoutModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-80 rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="mb-2 text-lg font-semibold text-gray-800">
-              Confirm Logout
-            </h2>
-            <p className="mb-6 text-sm text-gray-600">
-              Are you sure you want to logout from the portal?
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="w-80 rounded-2xl bg-white p-6 shadow-2xl border border-black/5">
+            <h2 className="mb-2 text-lg font-bold text-[#0F1724]">Confirm Logout</h2>
+            <p className="mb-6 text-[14px] text-[#64748B] leading-relaxed">
+              Are you sure you want to logout from the admission portal?
             </p>
-
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowLogoutModal(false)}
-                className="rounded-md bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200"
+                className="rounded-xl bg-[#F1F5F9] px-4 py-2 text-[13px] font-bold text-[#64748B] hover:bg-[#E2E8F0] transition-colors"
               >
                 Cancel
               </button>
@@ -160,14 +115,14 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
                   setShowLogoutModal(false);
                   void handleLogout();
                 }}
-                className="rounded-md bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-600"
+                className="rounded-xl bg-[#DC2626] px-4 py-2 text-[13px] font-bold text-white hover:bg-[#B91C1C] transition-colors shadow-lg shadow-red-200"
               >
                 Logout
               </button>
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -192,16 +147,17 @@ function MenuItem({
       href={href}
       title={collapsed ? label : undefined}
       onClick={onNavigate}
-      className={`h-10 flex items-center rounded-md cursor-pointer mb-1
-        ${
-          active
-            ? "bg-[#2DA8E1] text-white"
-            : "text-[#384150] hover:bg-[#F8FAFC]"
+      className={`group flex items-center rounded-xl cursor-pointer transition-all duration-200
+        ${active
+          ? "bg-[#2DA8E1] text-white shadow-lg shadow-blue-100"
+          : "text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F1724]"
         }
-        ${collapsed ? "justify-center h-12 w-12 rounded-xl mx-auto" : "gap-2.5 px-2.5 py-2"}`}
+        ${collapsed ? "h-12 w-12 justify-center mx-auto" : "h-11 gap-3 px-3 mx-1"}`}
     >
-      <span className="text-base">{icon}</span>
-      {!collapsed ? <span className="text-[14px] font-medium">{label}</span> : null}
+      <span className={`text-[18px] ${active ? "text-white" : "text-[#94A3B8] group-hover:text-[#2DA8E1]"}`}>
+        {icon}
+      </span>
+      {!collapsed && <span className="text-[14px] font-bold">{label}</span>}
     </Link>
   );
 }
