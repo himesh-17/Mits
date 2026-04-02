@@ -39,6 +39,7 @@ export default function AdminDashboard() {
       pending: number;
       rejected: number;
       draft: number;
+      changesRequested: number;
       total: number;
     };
     recentActivity: Array<{
@@ -120,6 +121,7 @@ export default function AdminDashboard() {
         waitingReview={dashboardData?.breakdown?.draft || 0}
         underReview={dashboardData?.breakdown?.pending || 0}
         docsRejected={dashboardData?.breakdown?.rejected || 0}
+        reuploadRequested={dashboardData?.breakdown?.changesRequested || 0}
       />
 
       <RecentActivity refresh={refresh} rows={dashboardData?.recentActivity || null} />

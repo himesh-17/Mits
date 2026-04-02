@@ -1,6 +1,6 @@
 "use client";
 
-import { FiClock, FiEye, FiXCircle } from "react-icons/fi";
+import { FiClock, FiEye, FiXCircle, FiRefreshCw } from "react-icons/fi";
 import type { ReactNode } from "react";
 
 type CardData = {
@@ -15,17 +15,19 @@ type VerificationCardsProps = {
     waitingReview: number;
     underReview: number;
     docsRejected: number;
+    reuploadRequested: number;
 };
 
-export default function VerificationCards({ waitingReview, underReview, docsRejected }: VerificationCardsProps) {
+export default function VerificationCards({ waitingReview, underReview, docsRejected, reuploadRequested }: VerificationCardsProps) {
     const cards: CardData[] = [
         { title: "Waiting Review", count: waitingReview, icon: <FiClock />, color: "#F59E0B", bgTint: "#FFFBEB" },
         { title: "Under Review", count: underReview, icon: <FiEye />, color: "#3B82F6", bgTint: "#EFF6FF" },
         { title: "Docs Rejected", count: docsRejected, icon: <FiXCircle />, color: "#EF4444", bgTint: "#FEF2F2" },
+        { title: "Re-upload Requested", count: reuploadRequested, icon: <FiRefreshCw />, color: "#8B5CF6", bgTint: "#F5F3FF" },
     ];
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {cards.map((card) => (
                 <div
                     key={card.title}
