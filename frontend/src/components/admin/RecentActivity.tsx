@@ -69,14 +69,14 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
               return (
                 <tr
                   key={item.id}
-                  className="h-12.5 border-t border-[#E2E8F0] text-[13px] text-[#0F1724]"
+                  className="admin-table-row h-12.5 border-t border-[#E2E8F0] text-[13px] text-[#0F1724]"
                 >
                   <td className="px-4 font-semibold">{item.rollNo || "-"}</td>
                   <td className="px-4">{item.name}</td>
                   <td className="px-4">{program}</td>
                   <td className="px-4">
                     <span
-                      className={`inline-flex h-5.5 items-center px-2 rounded-md text-[11px] font-semibold ${statusClass(normalizedStatus)}`}
+                      className={`admin-status-pill inline-flex h-5.5 items-center px-2 rounded-md text-[11px] font-semibold ${statusClass(normalizedStatus)}`}
                     >
                       {normalizedStatus}
                     </span>

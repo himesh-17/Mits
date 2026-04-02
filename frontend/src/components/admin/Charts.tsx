@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { getAdminData } from "../../lib/AdminStore";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { useAnimatedNumber } from "./useAnimatedNumber";
 type AdminRow = {
   status: string;
 };
@@ -53,6 +54,12 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
     { name: "Draft", value: stats.draft, color: "#94A3B8" },
   ];
 
+  const animatedTotal = useAnimatedNumber(stats.total);
+  const animatedFinalized = useAnimatedNumber(stats.finalized);
+  const animatedPending = useAnimatedNumber(stats.pending);
+  const animatedRejected = useAnimatedNumber(stats.rejected);
+  const animatedDraft = useAnimatedNumber(stats.draft);
+
   return (
     <div className="grid md:grid-cols-2 gap-4">
       <div className="bg-white rounded-lg border border-black/10">
@@ -85,7 +92,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
                 <p className="text-[11px] uppercase tracking-[0.4px] text-[#94A3B8] font-semibold">
                   Total
                 </p>
-                <h3 className="font-['Times_New_Roman',Times,serif] text-[34px] leading-9 font-bold text-[#0F1724]">{stats.total}</h3>
+                <h3 className="font-['Times_New_Roman',Times,serif] text-[34px] leading-9 font-bold text-[#0F1724]">{animatedTotal}</h3>
               </div>
             </div>
           </div>
@@ -113,10 +120,10 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
         </div>
 
         <div className="p-4 space-y-4">
-          <Progress label="Finalized" value={stats.finalized} total={stats.total} color="#2DA8E1" />
-          <Progress label="Pending" value={stats.pending} total={stats.total} color="#F59E0B" />
-          <Progress label="Rejected" value={stats.rejected} total={stats.total} color="#EF4444" />
-          <Progress label="Draft" value={stats.draft} total={stats.total} color="#94A3B8" />
+          <Progress label="Finalized" value={animatedFinalized} total={stats.total} color="#2DA8E1" />
+          <Progress label="Pending" value={animatedPending} total={stats.total} color="#F59E0B" />
+          <Progress label="Rejected" value={animatedRejected} total={stats.total} color="#EF4444" />
+          <Progress label="Draft" value={animatedDraft} total={stats.total} color="#94A3B8" />
         </div>
       </div>
     </div>
@@ -144,7 +151,7 @@ function Progress({ label, value, total, color }: ProgressProps) {
 
       <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
         <div
-          className="h-2 rounded-full"
+          className="admin-progress-fill h-2 rounded-full"
           style={{ width: `${percent}%`, backgroundColor: color }}
         />
       </div>

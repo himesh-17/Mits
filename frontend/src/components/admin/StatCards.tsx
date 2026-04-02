@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { getAdminData } from "../../lib/AdminStore";
 import { FiCheckCircle, FiClock, FiFileText, FiUploadCloud, FiUsers, FiTrendingUp } from "react-icons/fi";
+import { useAnimatedNumber } from "./useAnimatedNumber";
 
 type AdminRow = {
   id: string;
@@ -63,16 +64,16 @@ export default function StatCards({ refresh, metrics }: StatCardsProps) {
   }, [refresh, metrics]);
 
   const cards = [
-    { title: "TOTAL APPLICATIONS", value: stats.total, icon: <FiFileText className="text-[#2DA8E1]" /> },
-    { title: "UPLOADED TODAY", value: stats.uploadedToday, icon: <FiUploadCloud className="text-[#2DA8E1]" /> },
-    { title: "PENDING VERIFICATIONS", value: stats.pending, icon: <FiClock className="text-[#2DA8E1]" /> },
-    { title: "FINALIZED", value: stats.finalized, icon: <FiCheckCircle className="text-[#2DA8E1]" /> },
+    { title: "TOTAL APPLICATIONS", value: useAnimatedNumber(stats.total), icon: <FiFileText className="text-[#2DA8E1]" /> },
+    { title: "UPLOADED TODAY", value: useAnimatedNumber(stats.uploadedToday), icon: <FiUploadCloud className="text-[#2DA8E1]" /> },
+    { title: "PENDING VERIFICATIONS", value: useAnimatedNumber(stats.pending), icon: <FiClock className="text-[#2DA8E1]" /> },
+    { title: "FINALIZED", value: useAnimatedNumber(stats.finalized), icon: <FiCheckCircle className="text-[#2DA8E1]" /> },
   ];
 
   const roundsCards = [
-    { title: "ELIGIBLE STUDENTS", value: stats.totalEligibleStudents, icon: <FiUsers className="text-[#10B981]" /> },
-    { title: "MATCHED APPLICATIONS", value: stats.matchedStudents, icon: <FiCheckCircle className="text-[#10B981]" /> },
-    { title: "AWAITING APPLICATIONS", value: stats.awaitingApplications, icon: <FiTrendingUp className="text-[#F59E0B]" /> },
+    { title: "ELIGIBLE STUDENTS", value: useAnimatedNumber(stats.totalEligibleStudents), icon: <FiUsers className="text-[#10B981]" /> },
+    { title: "MATCHED APPLICATIONS", value: useAnimatedNumber(stats.matchedStudents), icon: <FiCheckCircle className="text-[#10B981]" /> },
+    { title: "AWAITING APPLICATIONS", value: useAnimatedNumber(stats.awaitingApplications), icon: <FiTrendingUp className="text-[#F59E0B]" /> },
   ];
 
   return (
@@ -84,7 +85,8 @@ export default function StatCards({ refresh, metrics }: StatCardsProps) {
           {cards.map((item, i) => (
             <div
               key={i}
-              className="bg-white h-23 px-4 py-3.5 rounded-lg border border-black/10 flex flex-col justify-between"
+              className="admin-card-enter admin-soft-card bg-white h-23 px-4 py-3.5 rounded-lg border border-black/10 flex flex-col justify-between"
+              style={{ animationDelay: `${80 + i * 45}ms` }}
             >
               <div className="flex items-center gap-2.5">
                 <div className="text-[18px] shrink-0">{item.icon}</div>
@@ -108,7 +110,8 @@ export default function StatCards({ refresh, metrics }: StatCardsProps) {
           {roundsCards.map((item, i) => (
             <div
               key={i}
-              className="bg-white h-23 px-4 py-3.5 rounded-lg border border-black/10 flex flex-col justify-between"
+              className="admin-card-enter admin-soft-card bg-white h-23 px-4 py-3.5 rounded-lg border border-black/10 flex flex-col justify-between"
+              style={{ animationDelay: `${120 + i * 45}ms` }}
             >
               <div className="flex items-center gap-2.5">
                 <div className="text-[18px] shrink-0">{item.icon}</div>

@@ -307,13 +307,23 @@ const updateApplication = asyncHandler(async (req, res) => {
 
 // POST /api/student/application/submit
 const submitApplication = asyncHandler(async (req, res) => {
-    // Accept applications in any pre-payment status — the student may be
-    // re-submitting after editing academic data on a previously-submitted app.
-    const app = await Application.findOne({
-        student: req.user.id,
-        status: { $in: ["draft", "re_upload", "submitted", "under_review"] },
-    });
+    const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(400, "No active application found to submit");
+
+    // Keep this endpoint idempotent for already-submitted flows.
+    // The documents page can call submit before moving ahead, even when
+    // payment has already been submitted.
+    const alreadySubmittedStatuses = new Set([
+        "under_review",
+        "documents_verified",
+        "payment_pending",
+        "payment_submitted",
+        "payment_verified",
+        "admitted",
+    ]);
+    if (alreadySubmittedStatuses.has(app.status)) {
+        return sendSuccess(res, "Application already submitted", { application: app });
+    }
 
     const requiredFields = [
         // Identity
@@ -505,7 +515,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
     const app = await Application.findOne({ student: req.user.id });
     if (!app) throw new ApiError(404, "Application not found");
-    if (!app.progressBar.formFilled || !["submitted", "re_upload", "under_review"].includes(app.status)) {
+    if (!app.progressBar.formFilled || !["submitted", "re_upload", "under_review", "payment_submitted"].includes(app.status)) {
         throw new ApiError(400, "Application must be submitted before uploading documents");
     }
 
