@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { FileText, ArrowRight } from "lucide-react";
+import { FileText, ArrowRight, AlertCircle } from "lucide-react";
 
 import { useAdmissionForm } from "../../context/AdmissionContext";
 
@@ -114,6 +114,19 @@ export default function StudentDashboard() {
     });
   }
 
+  if (formData.status === "re_upload") {
+    // Check if there are specific documents flagged
+    const flaggedDocs = Object.entries(formData.docsUploaded || {}).filter(([_, doc]) => doc.status === "re_upload");
+    pendingActions.unshift({
+      title: "Re-upload Documents",
+      description: flaggedDocs.length > 0
+        ? `${flaggedDocs.length} documents need attention`
+        : "Some documents need to be re-uploaded",
+      buttonText: "Fix Now",
+      route: "/admission/documents",
+    });
+  }
+
   const nextStepRoute = pendingActions.length > 0 ? pendingActions[0].route : "/admission/review";
 
 
@@ -139,6 +152,25 @@ export default function StudentDashboard() {
           {activeView === "dashboard" && (
             <>
               <UserProgress name={user.name} progress={user.progress} picture={googleUser?.picture} />
+
+              {/* Status Alert for Re-upload */}
+              {formData.status === "re_upload" && (
+                <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-5 flex items-start gap-4">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-[16px] font-bold text-yellow-800">Action Required: Re-upload Documents</h3>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      The admission office has requested changes to your documents. Please review and re-submit the flagged files to proceed with your application.
+                    </p>
+                    <Link href="/admission/documents" className="inline-flex items-center gap-1.5 text-sm font-bold text-yellow-800 hover:text-yellow-900 mt-3 group">
+                      View Documents
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {/* Start Application Button */}
               <div className="mb-6">

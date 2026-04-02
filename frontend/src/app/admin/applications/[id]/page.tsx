@@ -122,9 +122,22 @@ export default function ApplicationDetailPage() {
     const handleAction = async (action: "approve" | "reject" | "request_changes") => {
         setActionLoading(action);
         try {
-            await api.post(`/api/admin/application/${appId}/${action}`);
+            const apiAction = action === "approve" ? "verify" : action === "reject" ? "reject" : "request-reupload";
+            const payload = action === "request_changes" ? {
+                remarks: "Requested re-upload of documents",
+                documentStatuses: app?.documents.reduce((acc, doc) => {
+                    acc[doc.docType] = doc.status || "pending";
+                    return acc;
+                }, {} as Record<string, string>)
+            } : (action === "reject" ? { reason: "Application rejected by admin" } : {});
+
+            await api.patch(`/api/admission-cell/applications/${appId}/${apiAction}`, payload);
+
             if (app) {
-                const newStatus = action === "approve" ? "Documents Verified" : action === "reject" ? "Rejected" : "Under Review";
+                const newStatus =
+                    action === "approve" ? "Documents Verified" :
+                        action === "reject" ? "Rejected" :
+                            "Changes Requested";
                 setApp({ ...app, status: newStatus });
             }
         } catch {
@@ -278,12 +291,18 @@ export default function ApplicationDetailPage() {
                                                 );
                                                 setApp({ ...app, documents: newDocs });
                                                 setViewingDoc({ ...viewingDoc, status: e.target.value });
+
+                                                // If one doc is marked for re-upload, potentially nudge to click 'Request Re-upload'
+                                                if (e.target.value === "re-upload") {
+                                                    // console.log("Doc marked for re-upload");
+                                                }
                                             }
                                         }}
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="approved">Approved</option>
                                         <option value="rejected">Rejected</option>
+                                        <option value="re-upload">Re-upload Required</option>
                                     </select>
                                 </div>
                             )}

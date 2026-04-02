@@ -31,7 +31,7 @@ export interface AdmissionFormData {
     entranceScore: number | string;
 
     // Step 3: Documents
-    docsUploaded: { [key: string]: { name: string; size?: number; type?: string } };
+    docsUploaded: { [key: string]: { name: string; size?: number; type?: string; status?: string } };
 
     // Step 4: Payment
     upiId: string;
@@ -39,6 +39,7 @@ export interface AdmissionFormData {
 
     // Progression
     highestStep: number;
+    status: string;
 }
 
 const defaultFormData: AdmissionFormData = {
@@ -68,60 +69,73 @@ const defaultFormData: AdmissionFormData = {
     transactionId: "",
 
     highestStep: 1,
+    status: "draft",
 };
 
 /** Map frontend field names → backend Application model field names */
 function toBackendPayload(data: AdmissionFormData): Record<string, unknown> {
     return {
-        fullName:             data.fullName,
-        fatherName:           data.fatherName,
-        dateOfBirth:          data.dob,
-        gender:               data.gender,
-        email:                data.email,
-        phone:                data.mobile,
-        fatherPhone:          data.fatherMobile,
-        motherPhone:          data.motherMobile,
-        address:              data.address,
-        hobbies:              data.hobbies,
-        otherAchievements:    data.achievements,
-        programApplied:       data.programApplied,
-        branch:               data.branch,
-        tenthMarks:           data.marks10th,
-        twelfthMarks:         data.marks12th,
-        tenthBoard:           data.board10th,
-        twelfthBoard:         data.board12th,
-        tenthPassingYear:     data.year10th,
-        twelfthPassingYear:   data.year12th,
-        entranceExam:         data.entranceExam,
-        entranceScoreOrRank:  data.entranceScore,
+        fullName: data.fullName,
+        fatherName: data.fatherName,
+        dateOfBirth: data.dob,
+        gender: data.gender,
+        email: data.email,
+        phone: data.mobile,
+        fatherPhone: data.fatherMobile,
+        motherPhone: data.motherMobile,
+        address: data.address,
+        hobbies: data.hobbies,
+        otherAchievements: data.achievements,
+        programApplied: data.programApplied,
+        branch: data.branch,
+        tenthMarks: data.marks10th,
+        twelfthMarks: data.marks12th,
+        tenthBoard: data.board10th,
+        twelfthBoard: data.board12th,
+        tenthPassingYear: data.year10th,
+        twelfthPassingYear: data.year12th,
+        entranceExam: data.entranceExam,
+        entranceScoreOrRank: data.entranceScore,
     };
 }
 
 /** Map backend Application document → frontend form fields */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function fromBackendApplication(app: Record<string, any>): Partial<AdmissionFormData> {
+function fromBackendApplication(app: Record<string, any>, docs: any[] = []): Partial<AdmissionFormData> {
+    const docsUploaded: AdmissionFormData["docsUploaded"] = {};
+    if (Array.isArray(docs)) {
+        for (const d of docs) {
+            docsUploaded[d.docType] = {
+                name: d.fileName || "Uploaded File",
+                status: d.status || "pending",
+            };
+        }
+    }
+
     return {
-        fullName:       app.fullName             ?? "",
-        fatherName:     app.fatherName           ?? "",
-        dob:            app.dateOfBirth          ?? "",
-        gender:         app.gender               ?? "",
-        email:          app.email                ?? "",
-        mobile:         app.phone                ?? "",
-        fatherMobile:   app.fatherPhone          ?? "",
-        motherMobile:   app.motherPhone          ?? "",
-        address:        app.address              ?? "",
-        hobbies:        Array.isArray(app.hobbies) ? app.hobbies : [],
-        achievements:   app.otherAchievements    ?? "",
-        programApplied: app.programApplied       ?? "",
-        branch:         app.branch               ?? "",
-        marks10th:      app.tenthMarks           ?? "",
-        marks12th:      app.twelfthMarks         ?? "",
-        board10th:      app.tenthBoard           ?? "",
-        board12th:      app.twelfthBoard         ?? "",
-        year10th:       app.tenthPassingYear     ?? "",
-        year12th:       app.twelfthPassingYear   ?? "",
-        entranceExam:   app.entranceExam         ?? "",
-        entranceScore:  app.entranceScoreOrRank  ?? "",
+        fullName: app.fullName ?? "",
+        fatherName: app.fatherName ?? "",
+        dob: app.dateOfBirth ?? "",
+        gender: app.gender ?? "",
+        email: app.email ?? "",
+        mobile: app.phone ?? "",
+        fatherMobile: app.fatherPhone ?? "",
+        motherMobile: app.motherPhone ?? "",
+        address: app.address ?? "",
+        hobbies: Array.isArray(app.hobbies) ? app.hobbies : [],
+        achievements: app.otherAchievements ?? "",
+        programApplied: app.programApplied ?? "",
+        branch: app.branch ?? "",
+        marks10th: app.tenthMarks ?? "",
+        marks12th: app.twelfthMarks ?? "",
+        board10th: app.tenthBoard ?? "",
+        board12th: app.twelfthBoard ?? "",
+        year10th: app.tenthPassingYear ?? "",
+        year12th: app.twelfthPassingYear ?? "",
+        entranceExam: app.entranceExam ?? "",
+        entranceScore: app.entranceScoreOrRank ?? "",
+        docsUploaded,
+        status: app.status ?? "draft",
     };
 }
 
@@ -192,8 +206,9 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
                 try {
                     const res = await api.get("/api/student/application");
                     const app = res.data?.data?.application;
+                    const docs = res.data?.data?.documents || [];
                     if (app) {
-                        const backendValues = fromBackendApplication(app);
+                        const backendValues = fromBackendApplication(app, docs);
                         formValues = { ...formValues, ...backendValues };
                     }
                 } catch {
@@ -219,8 +234,8 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
 
             // Auto-fill from Google if fields are empty
             if (userInfo) {
-                if (!formValues.fullName && userInfo.name)  formValues.fullName = userInfo.name;
-                if (!formValues.email && userInfo.email)    formValues.email = userInfo.email;
+                if (!formValues.fullName && userInfo.name) formValues.fullName = userInfo.name;
+                if (!formValues.email && userInfo.email) formValues.email = userInfo.email;
             }
 
             setFormData(formValues);

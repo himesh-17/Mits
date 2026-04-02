@@ -212,6 +212,44 @@ const rejectApplication = asyncHandler(async (req, res) => {
     return sendSuccess(res, "Application rejected", { application: app });
 });
 
+// PATCH /api/admission-cell/applications/:applicationId/request-reupload
+const requestReupload = asyncHandler(async (req, res) => {
+    const { remarks, documentStatuses } = req.body;
+
+    const app = await Application.findById(req.params.applicationId);
+    if (!app) throw new ApiError(404, "Application not found");
+
+    const previousStatus = app.status;
+    app.status = "re_upload";
+    app.remarksAdmissionCell = remarks || "Re-upload requested for documents";
+    await app.save();
+
+    // If document-specific statuses are provided (e.g., { "photo": "re_upload", "aadhar": "verified" })
+    if (documentStatuses && typeof documentStatuses === "object") {
+        const docTypes = Object.keys(documentStatuses);
+        for (const docType of docTypes) {
+            await Document.findOneAndUpdate(
+                { application: app._id, docType },
+                { $set: { status: documentStatuses[docType] === "re-upload" ? "re_upload" : (documentStatuses[docType] === "approved" ? "verified" : (documentStatuses[docType] === "rejected" ? "rejected" : "pending")) } }
+            );
+        }
+    }
+
+    await writeAuditLog({
+        req,
+        actionLabel: "APPLICATION_REUPLOAD_REQUESTED",
+        module: "admission-cell",
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousStatus,
+        toStatus: "re_upload",
+        notes: remarks || "Requested re-upload of documents",
+    });
+
+    return sendSuccess(res, "Re-upload requested", { application: app });
+});
+
 // GET /api/admission-cell/pending-verification
 // All students pending verification
 const getPendingVerification = asyncHandler(async (req, res) => {
@@ -229,5 +267,6 @@ export {
     markEmailSent,
     markVerificationComplete,
     rejectApplication,
+    requestReupload,
     getPendingVerification,
 };

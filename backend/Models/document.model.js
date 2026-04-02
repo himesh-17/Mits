@@ -15,7 +15,7 @@ const documentSchema = new mongoose.Schema(
         docType: {
             type: String,
             enum: [
-                 "photo",
+                "photo",
                 "signature",
                 "aadhar",
                 "marksheet_10",
@@ -26,7 +26,7 @@ const documentSchema = new mongoose.Schema(
                 "income_certificate",
                 "domicile",
                 "jee_result",
-                "other",            
+                "other",
             ],
             required: true,
         },
@@ -35,7 +35,7 @@ const documentSchema = new mongoose.Schema(
         mimeType: { type: String, trim: true, default: "" },
         status: {
             type: String,
-            enum: ["pending", "verified", "rejected"],
+            enum: ["pending", "verified", "rejected", "re_upload"],
             default: "pending",
         },
         rejectionReason: { type: String, trim: true, default: "" },
@@ -51,4 +51,4 @@ const documentSchema = new mongoose.Schema(
 
 const Document = mongoose.model("Document", documentSchema);
 
-export default  Document;
+export default Document;

@@ -25,5 +25,6 @@ router.get("/student-lists", getStudentLists);
 router.patch("/applications/:applicationId/send-email", markEmailSent);
 router.patch("/applications/:applicationId/verify", markVerificationComplete);
 router.patch("/applications/:applicationId/reject", rejectApplication);
+router.patch("/applications/:applicationId/request-reupload", requestReupload);
 
 export default router;

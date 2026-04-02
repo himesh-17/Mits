@@ -34,8 +34,8 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
       return "bg-[#DCFCE7] text-[#15803D]";
     }
 
-    if (status === "Payment Pending" || status === "Approval Pending" || status === "Under Review" || status === "Withdrawal") {
-      return "bg-[#FFEDD5] text-[#C2410C]";
+    if (status === "Payment Pending" || status === "Approval Pending" || status === "Under Review" || status === "Withdrawal" || status === "Changes Requested") {
+      return "bg-[#FEF9C3] text-[#854D0E]";
     }
 
     if (status === "Rejected" || status === "Document Rejected" || status === "Payment Rejected") {

@@ -20,6 +20,8 @@ const STATUS_MAP: Record<string, { bg: string; text: string }> = {
     Draft: { bg: "bg-[#F1F5F9]", text: "text-[#475569]" },
     Withdrawal: { bg: "bg-[#FFEDD5]", text: "text-[#C2410C]" },
     "Not Matched": { bg: "bg-[#F1F5F9]", text: "text-[#475569]" },
+    "Changes Requested": { bg: "bg-[#FEF9C3]", text: "text-[#854D0E]" },
+    "Re-upload Required": { bg: "bg-[#FEF3C7]", text: "text-[#92400E]" },
 };
 
 function getStatusStyle(status: string) {

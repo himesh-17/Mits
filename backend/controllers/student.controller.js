@@ -52,8 +52,8 @@ function normalizeNameKey(value = "") {
     return String(value || "")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")
-    .trim()
-    .slice(0, 120);
+        .trim()
+        .slice(0, 120);
 }
 
 function normalizePhoneKey(value = "") {
@@ -97,7 +97,8 @@ const getOrCreateApplication = asyncHandler(async (req, res) => {
     if (!app) {
         app = await Application.create({ student: req.user.id });
     }
-    return sendSuccess(res, "Application fetched", { application: app });
+    const documents = await Document.find({ application: app._id });
+    return sendSuccess(res, "Application fetched", { application: app, documents });
 });
 
 // PATCH /api/student/application

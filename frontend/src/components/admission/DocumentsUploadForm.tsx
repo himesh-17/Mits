@@ -12,15 +12,15 @@ export default function DocumentsUploadForm() {
 
     // NOTE: ids must match the backend Document model's docType enum
     const documents = [
-        { id: "aadhar",       label: "Identity Proof (Aadhaar/Pan)",   required: true },
-        { id: "marksheet_10", label: "10th Marksheet",                  required: true },
-        { id: "marksheet_12", label: "12th Marksheet",                  required: true },
-        { id: "jee_result",   label: "Entrance Exam Scorecard (Optional)", required: false },
+        { id: "aadhar", label: "Identity Proof (Aadhaar/Pan)", required: true },
+        { id: "marksheet_10", label: "10th Marksheet", required: true },
+        { id: "marksheet_12", label: "12th Marksheet", required: true },
+        { id: "jee_result", label: "Entrance Exam Scorecard (Optional)", required: false },
         { id: "caste_certificate", label: "Category Certificate (if applicable)", required: false },
-        { id: "domicile",     label: "Domicile Certificate",            required: true },
-        { id: "other",        label: "ABC ID",                          required: false },
-        { id: "photo",        label: "Passport size photo",             required: true },
-        { id: "signature",    label: "Signature",                       required: true },
+        { id: "domicile", label: "Domicile Certificate", required: true },
+        { id: "other", label: "ABC ID", required: false },
+        { id: "photo", label: "Passport size photo", required: true },
+        { id: "signature", label: "Signature", required: true },
     ];
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, docId: string) => {
@@ -87,17 +87,29 @@ export default function DocumentsUploadForm() {
                 {documents.map((doc) => {
                     const uploadedDoc = formData.docsUploaded?.[doc.id];
                     const preview = filePreviews[doc.id];
+                    const isReupload = uploadedDoc?.status === "re_upload";
                     const docError = fileErrors[doc.id] || validationErrors[doc.id];
 
                     return (
                         <div key={doc.id}>
                             <div
-                                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg bg-white gap-3 transition-colors ${docError ? 'border-red-300 bg-red-50/30' : 'border-[#E5E7EB]'}`}
+                                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg bg-white gap-3 transition-colors ${docError ? 'border-red-300 bg-red-50/30' :
+                                        isReupload ? 'border-yellow-400 bg-yellow-50/30' :
+                                            'border-[#E5E7EB]'
+                                    }`}
                             >
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[#0F172A] mb-1">
-                                        {doc.label} {doc.required && <span className="text-red-500">*</span>}
-                                    </p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <p className="text-sm font-medium text-[#0F172A]">
+                                            {doc.label} {doc.required && <span className="text-red-500">*</span>}
+                                        </p>
+                                        {isReupload && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 uppercase tracking-tight">
+                                                <AlertCircle className="w-3 h-3" />
+                                                Re-upload Requested
+                                            </span>
+                                        )}
+                                    </div>
                                     {uploadedDoc ? (
                                         <div className="flex items-center gap-2 flex-wrap">
                                             {preview && (
@@ -105,9 +117,13 @@ export default function DocumentsUploadForm() {
                                                     <img src={preview} alt="preview" className="w-full h-full object-cover" />
                                                 </div>
                                             )}
-                                            <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                            <p className="text-sm text-green-600 font-medium truncate" title={uploadedDoc.name}>
-                                                {uploadedDoc.name} <span className="text-xs text-gray-400 font-normal">({(uploadedDoc.size! / 1024 / 1024).toFixed(2)}MB)</span>
+                                            {uploadedDoc.status === "verified" ? (
+                                                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                            ) : (
+                                                <div className={`w-2 h-2 rounded-full ${isReupload ? 'bg-yellow-500' : 'bg-blue-400'} flex-shrink-0`} />
+                                            )}
+                                            <p className={`text-sm ${uploadedDoc.status === 'verified' ? 'text-green-600' : 'text-gray-600'} font-medium truncate`} title={uploadedDoc.name}>
+                                                {uploadedDoc.name} {uploadedDoc.size && <span className="text-xs text-gray-400 font-normal">({(uploadedDoc.size / 1024 / 1024).toFixed(2)}MB)</span>}
                                             </p>
                                             <button
                                                 type="button"
@@ -124,9 +140,9 @@ export default function DocumentsUploadForm() {
                                 </div>
 
                                 <div className="flex-shrink-0">
-                                    <label className="inline-flex items-center gap-2 px-4 h-11 sm:h-9 bg-[#F0F9FF] text-[#0EA5E9] hover:bg-[#E0F2FE] border border-[#bae6fd] hover:border-[#7dd3fc] rounded-md text-sm font-semibold transition-colors cursor-pointer active:scale-[0.97] w-full sm:w-auto justify-center">
+                                    <label className={`inline-flex items-center gap-2 px-4 h-11 sm:h-9 ${isReupload ? 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-600' : 'bg-[#F0F9FF] text-[#0EA5E9] hover:bg-[#E0F2FE] border-[#bae6fd] hover:border-[#7dd3fc]'} border rounded-md text-sm font-semibold transition-colors cursor-pointer active:scale-[0.97] w-full sm:w-auto justify-center`}>
                                         <UploadCloud className="w-4 h-4" />
-                                        {uploadedDoc ? "Change" : "Upload"}
+                                        {uploadedDoc ? (isReupload ? "Re-upload" : "Change") : "Upload"}
                                         <input
                                             type="file"
                                             className="hidden"
@@ -136,6 +152,11 @@ export default function DocumentsUploadForm() {
                                     </label>
                                 </div>
                             </div>
+                            {isReupload && !docError && (
+                                <p className="text-[11px] text-yellow-600 mt-1 ml-1 font-medium italic">
+                                    The previous file was rejected by the admission officer. Please upload a clearer copy.
+                                </p>
+                            )}
                             {docError && (
                                 <div className="flex items-center gap-1.5 mt-1.5 ml-1">
                                     <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
