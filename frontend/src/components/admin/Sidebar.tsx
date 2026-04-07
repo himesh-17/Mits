@@ -59,6 +59,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             active={pathname === "/admin"}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            index={0}
           />
           <MenuItem
             href="/admin/student-data"
@@ -67,6 +68,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             active={pathname === "/admin/student-data"}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            index={1}
           />
         </div>
 
@@ -84,6 +86,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             active={pathname === "/admin/users"}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            index={2}
           />
           <MenuItem
             href="/admin/rounds"
@@ -92,6 +95,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             active={pathname === "/admin/rounds"}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            index={3}
           />
           <MenuItem
             href="/admin/reports"
@@ -100,6 +104,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             active={pathname === "/admin/reports"}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            index={4}
           />
           <MenuItem
             href="/admin/audit-logs"
@@ -108,6 +113,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
             active={pathname === "/admin/audit-logs"}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            index={5}
           />
         </div>
       </div>
@@ -179,6 +185,7 @@ function MenuItem({
   href,
   collapsed,
   onNavigate,
+  index,
 }: {
   icon: ReactNode;
   label: string;
@@ -186,19 +193,21 @@ function MenuItem({
   href: string;
   collapsed?: boolean;
   onNavigate?: () => void;
+  index: number;
 }) {
   return (
     <Link
       href={href}
       title={collapsed ? label : undefined}
       onClick={onNavigate}
-      className={`h-10 flex items-center rounded-md cursor-pointer mb-1
+      className={`admin-card-enter admin-nav-item h-10 flex items-center rounded-md cursor-pointer mb-1
         ${
           active
             ? "bg-[#2DA8E1] text-white"
             : "text-[#384150] hover:bg-[#F8FAFC]"
         }
         ${collapsed ? "justify-center h-12 w-12 rounded-xl mx-auto" : "gap-2.5 px-2.5 py-2"}`}
+      style={{ animationDelay: `${50 + index * 35}ms` }}
     >
       <span className="text-base">{icon}</span>
       {!collapsed ? <span className="text-[14px] font-medium">{label}</span> : null}

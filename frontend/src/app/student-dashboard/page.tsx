@@ -8,6 +8,7 @@ import axios from "axios";
 import { FileText, ArrowRight } from "lucide-react";
 
 import { useAdmissionForm } from "../../context/AdmissionContext";
+import { getAdmissionProgress } from "../../lib/admissionProgress";
 
 // Dynamic imports for improved performance
 const Sidebar = dynamic(() => import("../../components/dashboard/Sidebar"));
@@ -54,12 +55,7 @@ export default function StudentDashboard() {
 
   if (isChecking || !isAuthorized) return null;
 
-  // Calculate dynamic progress
-  let progress = 0;
-  if (formData.fullName && formData.email) progress = 25;
-  if (formData.programApplied && formData.branch) progress = 50;
-  if (formData.docsUploaded && Object.keys(formData.docsUploaded).length > 0) progress = 75;
-  if (formData.transactionId) progress = 100;
+  const progress = getAdmissionProgress(formData);
 
   const user = {
     name: googleUser?.name || "Student",

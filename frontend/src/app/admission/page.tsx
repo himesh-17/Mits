@@ -10,6 +10,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAdmissionForm } from "../../context/AdmissionContext";
 import { personalSchema, PersonalFormData } from "../../lib/validationSchemas";
+import { getAdmissionProgress } from "../../lib/admissionProgress";
 import { api } from "../../utils/api";
 
 import AdmissionHeader from "../../components/admission/AdmissionHeader";
@@ -62,6 +63,7 @@ export default function AdmissionPage() {
         const snapshot = JSON.stringify({
             fullName: formData.fullName,
             fatherName: formData.fatherName,
+            motherName: formData.motherName,
             dob: formData.dob,
             gender: formData.gender,
             email: formData.email,
@@ -80,6 +82,7 @@ export default function AdmissionPage() {
         methods.reset({
             fullName: formData.fullName,
             fatherName: formData.fatherName,
+            motherName: formData.motherName,
             dob: formData.dob,
             gender: formData.gender,
             email: formData.email,
@@ -112,6 +115,8 @@ export default function AdmissionPage() {
 
     if (isChecking || !isAuthorized) return null;
 
+    const progress = getAdmissionProgress(formData);
+
     return (
         <FormProvider {...methods}>
             <div className="min-h-screen bg-[#F8FAFC]">
@@ -121,8 +126,8 @@ export default function AdmissionPage() {
                 <main className="max-w-[900px] mx-auto py-6 md:py-8 px-4">
                     {/* Header & Progress */}
                     <div className="mb-2">
-                        <AdmissionHeader step={1} title="Personal Details" percentText="0% Completed" />
-                        <ProgressBar percent={0} />
+                        <AdmissionHeader step={1} title="Personal Details" percentText={`${progress}% Completed`} />
+                        <ProgressBar percent={progress} />
                     </div>
 
                     {/* Step Navigation */}

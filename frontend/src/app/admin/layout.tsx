@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "../../components/admin/Sidebar";
 import Header from "../../components/admin/Header";
 
@@ -35,6 +37,7 @@ function canAccessAdminFromStorage() {
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -110,8 +113,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </aside>
         </div>
 
-        <main className="admin-page-enter min-w-0 overflow-y-auto bg-[#F5F7FA] p-3 sm:p-4 md:p-6 lg:p-8">
-          {children}
+        <main className="min-w-0 overflow-y-auto bg-[#F5F7FA] p-3 sm:p-4 md:p-6 lg:p-8">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={pathname}
+              className="admin-page-enter"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

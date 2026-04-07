@@ -50,12 +50,33 @@ type StatusBreakdown = {
   draft: number;
 };
 
+type MismatchSummary = {
+  total: number;
+  bypassed: number;
+  pendingReview: number;
+  last7Days: number;
+};
+
+type MismatchRow = {
+  id: string;
+  attemptedAt: string | null;
+  studentName: string;
+  email: string;
+  reasonCode: string;
+  reasonMessage: string;
+  bypassed: boolean;
+  bypassSource: string;
+  activeRoundTitle: string;
+};
+
 type ReportsPayload = {
   cards: ReportCardData;
   applicationsOverTime: TimelinePoint[];
   programDistribution: ProgramPoint[];
   categoryDistribution: CategoryPoint[];
   statusBreakdown: StatusBreakdown;
+  mismatchSummary: MismatchSummary;
+  recentMismatches: MismatchRow[];
 };
 
 const FALLBACK_DATA: ReportsPayload = {
@@ -79,6 +100,13 @@ const FALLBACK_DATA: ReportsPayload = {
     application_rejected: 0,
     draft: 0,
   },
+  mismatchSummary: {
+    total: 0,
+    bypassed: 0,
+    pendingReview: 0,
+    last7Days: 0,
+  },
+  recentMismatches: [],
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -135,6 +163,30 @@ function downloadCsv(payload: ReportsPayload) {
   lines.push(`${csvEscape("PAYMENT_VERIFIED")},${csvEscape(payload.statusBreakdown.payment_verified)}`);
   lines.push(`${csvEscape("APPLICATION_REJECTED")},${csvEscape(payload.statusBreakdown.application_rejected)}`);
   lines.push(`${csvEscape("DRAFT")},${csvEscape(payload.statusBreakdown.draft)}`);
+  lines.push("");
+
+  lines.push("Round Mismatch Summary");
+  lines.push("Metric,Value");
+  lines.push(`${csvEscape("Total Mismatch Attempts")},${csvEscape(payload.mismatchSummary.total)}`);
+  lines.push(`${csvEscape("Bypassed Attempts")},${csvEscape(payload.mismatchSummary.bypassed)}`);
+  lines.push(`${csvEscape("Pending Review")},${csvEscape(payload.mismatchSummary.pendingReview)}`);
+  lines.push(`${csvEscape("Attempts in Last 7 Days")},${csvEscape(payload.mismatchSummary.last7Days)}`);
+  lines.push("");
+
+  lines.push("Recent Round Mismatches");
+  lines.push("Attempted At,Student Name,Email,Round,Reason Code,Reason Message,Bypassed,Bypass Source");
+  payload.recentMismatches.forEach((row) => {
+    lines.push([
+      csvEscape(row.attemptedAt || "-"),
+      csvEscape(row.studentName),
+      csvEscape(row.email),
+      csvEscape(row.activeRoundTitle),
+      csvEscape(row.reasonCode),
+      csvEscape(row.reasonMessage),
+      csvEscape(row.bypassed ? "YES" : "NO"),
+      csvEscape(row.bypassSource),
+    ].join(","));
+  });
 
   const csvContent = lines.join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -171,6 +223,8 @@ export default function AdminReportsPage() {
             programDistribution: Array.isArray(payload.programDistribution) ? payload.programDistribution : [],
             categoryDistribution: Array.isArray(payload.categoryDistribution) ? payload.categoryDistribution : [],
             statusBreakdown: payload.statusBreakdown || FALLBACK_DATA.statusBreakdown,
+            mismatchSummary: payload.mismatchSummary || FALLBACK_DATA.mismatchSummary,
+            recentMismatches: Array.isArray(payload.recentMismatches) ? payload.recentMismatches : [],
           });
           return;
         }
@@ -247,6 +301,33 @@ export default function AdminReportsPage() {
           value={`${reports.cards.conversionRate}%`}
           icon={<FiBarChart2 className="text-[#8B5CF6]" />}
           iconBg="#F5F3FF"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          title="Round Mismatch Attempts"
+          value={String(reports.mismatchSummary.total)}
+          icon={<FiFileText className="text-[#B91C1C]" />}
+          iconBg="#FEF2F2"
+        />
+        <SummaryCard
+          title="Bypassed (Testing)"
+          value={String(reports.mismatchSummary.bypassed)}
+          icon={<FiCheckCircle className="text-[#0F766E]" />}
+          iconBg="#ECFEFF"
+        />
+        <SummaryCard
+          title="Pending Review"
+          value={String(reports.mismatchSummary.pendingReview)}
+          icon={<FiBarChart2 className="text-[#C2410C]" />}
+          iconBg="#FFF7ED"
+        />
+        <SummaryCard
+          title="Mismatch (Last 7 Days)"
+          value={String(reports.mismatchSummary.last7Days)}
+          icon={<FiBarChart2 className="text-[#2563EB]" />}
+          iconBg="#EFF6FF"
         />
       </div>
 
@@ -369,6 +450,71 @@ export default function AdminReportsPage() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="rounded-md border border-black/10 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] md:p-8">
+        <h2 className="font-['Times_New_Roman',Times,serif] text-[24px] font-bold text-[#0F1724]">Recent Round Mismatch Attempts</h2>
+        <p className="mt-1 text-[13px] text-[#8A98A8]">
+          Includes students not found in the active round list and whether testing bypass was used.
+        </p>
+
+        <div className="mt-5 overflow-x-auto">
+          <table className="min-w-full border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-black/10 text-[#64748B]">
+                <th className="px-3 py-2 font-semibold">Attempted At</th>
+                <th className="px-3 py-2 font-semibold">Student</th>
+                <th className="px-3 py-2 font-semibold">Email</th>
+                <th className="px-3 py-2 font-semibold">Round</th>
+                <th className="px-3 py-2 font-semibold">Reason</th>
+                <th className="px-3 py-2 font-semibold">Bypassed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.recentMismatches.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 py-5 text-center text-[#94A3B8]">
+                    No mismatch attempts recorded yet.
+                  </td>
+                </tr>
+              ) : (
+                reports.recentMismatches.map((row) => {
+                  const attemptedAtText = row.attemptedAt
+                    ? new Date(row.attemptedAt).toLocaleString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                    : "-";
+
+                  return (
+                    <tr key={row.id} className="border-b border-black/5 text-[#0F172A]">
+                      <td className="px-3 py-2">{attemptedAtText}</td>
+                      <td className="px-3 py-2 font-medium">{row.studentName || "-"}</td>
+                      <td className="px-3 py-2">{row.email || "-"}</td>
+                      <td className="px-3 py-2">{row.activeRoundTitle || "-"}</td>
+                      <td className="px-3 py-2" title={row.reasonMessage || row.reasonCode}>
+                        {row.reasonCode || "-"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${row.bypassed
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                            }`}
+                        >
+                          {row.bypassed ? `YES (${row.bypassSource || "bypass"})` : "NO"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { UserRound, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdmissionForm } from "../../../context/AdmissionContext";
+import { getAdmissionProgress } from "../../../lib/admissionProgress";
 
 import AdmissionHeader from "../../../components/admission/AdmissionHeader";
 import ProgressBar from "../../../components/admission/ProgressBar";
@@ -18,6 +19,7 @@ import AdmissionNavbar from "../../../components/admission/AdmissionNavbar";
 export default function DocumentsPage() {
     const { formData } = useAdmissionForm();
     const router = useRouter();
+    const progress = getAdmissionProgress(formData);
 
     useEffect(() => {
         if (formData.highestStep < 3) {
@@ -32,8 +34,8 @@ export default function DocumentsPage() {
             {/* MAIN CONTENT */}
             <main className="max-w-[900px] mx-auto py-6 md:py-8 px-4">
                 <div className="mb-2">
-                    <AdmissionHeader step={3} title="Documents" percentText="50% Completed" />
-                    <ProgressBar percent={50} />
+                    <AdmissionHeader step={3} title="Documents" percentText={`${progress}% Completed`} />
+                    <ProgressBar percent={progress} />
                 </div>
 
                 <div className="mb-6">

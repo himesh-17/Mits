@@ -325,8 +325,12 @@ export default function StudentDataPage() {
       {isLoading ? <p className="text-[14px] text-[#64748B]">Loading student data...</p> : null}
       {!isLoading && groups.length === 0 ? <p className="text-[14px] text-[#64748B]">No records found for this round and filters.</p> : null}
 
-      {groups.map((group) => (
-        <div key={group.sheetName} className="bg-white border border-black/10 rounded-lg overflow-hidden">
+      {groups.map((group, groupIndex) => (
+        <div
+          key={group.sheetName}
+          className="admin-card-enter admin-soft-card bg-white border border-black/10 rounded-lg overflow-hidden"
+          style={{ animationDelay: `${80 + Math.min(groupIndex * 55, 260)}ms` }}
+        >
           <div className="px-4 py-2 border-b border-black/10 bg-[#F8FAFC] text-[13px] font-semibold text-[#334155]">
             {group.sheetName} ({group.count})
           </div>
@@ -357,7 +361,7 @@ export default function StudentDataPage() {
               </thead>
               <tbody>
                 {group.items.map((row, index) => (
-                  <tr key={row.id} className="admin-row-enter h-17.5 text-[14px] text-[#0F1724]" style={{ animationDelay: `${Math.min(index * 22, 260)}ms` }}>
+                  <tr key={row.id} className="admin-row-enter admin-table-row h-17.5 text-[14px] text-[#0F1724]" style={{ animationDelay: `${Math.min(index * 22, 260)}ms` }}>
                     <td className="px-6 border-b border-black/10"><div className="leading-4.25 font-medium">{row.name}</div></td>
                     <td className="px-6 border-b border-black/10">{row.email}</td>
                     <td className="px-6 border-b border-black/10">{row.rank}</td>
@@ -373,8 +377,8 @@ export default function StudentDataPage() {
                     <td className="px-6 border-b border-black/10">{row.ews}</td>
                     <td className="px-6 border-b border-black/10"><div className="leading-4.25 font-medium">{row.program}</div></td>
                     <td className="px-6 border-b border-black/10">{row.branch}</td>
-                    <td className="px-6 border-b border-black/10"><span className={`inline-flex items-center h-5.75 px-2.5 rounded text-[12px] font-semibold ${statusClass(row.status)}`}>{row.status}</span></td>
-                    <td className="px-6 border-b border-black/10"><span className={`inline-flex items-center h-5.75 px-2.5 rounded text-[12px] font-semibold ${statusClass(row.finalStatus)}`}>{row.finalStatus}</span></td>
+                    <td className="px-6 border-b border-black/10"><span className={`admin-status-pill inline-flex items-center h-5.75 px-2.5 rounded text-[12px] font-semibold ${statusClass(row.status)}`}>{row.status}</span></td>
+                    <td className="px-6 border-b border-black/10"><span className={`admin-status-pill inline-flex items-center h-5.75 px-2.5 rounded text-[12px] font-semibold ${statusClass(row.finalStatus)}`}>{row.finalStatus}</span></td>
                     <td className="px-6 border-b border-black/10">{row.date}</td>
                     <td className="px-6 border-b border-black/10">{row.allotedRound}</td>
                   </tr>

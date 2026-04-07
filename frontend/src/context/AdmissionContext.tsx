@@ -8,6 +8,7 @@ export interface AdmissionFormData {
     // Step 1: Personal
     fullName: string;
     fatherName: string;
+    motherName: string;
     dob: string;
     gender: string;
     email: string;
@@ -44,6 +45,7 @@ export interface AdmissionFormData {
 const defaultFormData: AdmissionFormData = {
     fullName: "",
     fatherName: "",
+    motherName: "",
     dob: "",
     gender: "",
     email: "",
@@ -75,6 +77,7 @@ function toBackendPayload(data: AdmissionFormData): Record<string, unknown> {
     return {
         fullName:             data.fullName,
         fatherName:           data.fatherName,
+        motherName:           data.motherName,
         dateOfBirth:          data.dob,
         gender:               data.gender,
         email:                data.email,
@@ -103,6 +106,7 @@ function fromBackendApplication(app: Record<string, any>): Partial<AdmissionForm
     return {
         fullName:       app.fullName             ?? "",
         fatherName:     app.fatherName           ?? "",
+        motherName:     app.motherName           ?? "",
         dob:            app.dateOfBirth          ?? "",
         gender:         app.gender               ?? "",
         email:          app.email                ?? "",
@@ -134,6 +138,30 @@ function isValidDraft(value: unknown): value is Partial<AdmissionFormData> {
     if ("hobbies" in value && !Array.isArray(value.hobbies)) return false;
     if ("docsUploaded" in value && !isRecord(value.docsUploaded)) return false;
     return true;
+}
+
+function hasMeaningfulValue(value: unknown): boolean {
+    if (value === undefined || value === null) return false;
+    if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+    return true;
+}
+
+function mergeBackendIntoLocal(
+    local: AdmissionFormData,
+    backend: Partial<AdmissionFormData>
+): AdmissionFormData {
+    const merged: AdmissionFormData = { ...local };
+
+    for (const [key, value] of Object.entries(backend) as [keyof AdmissionFormData, unknown][]) {
+        if (!hasMeaningfulValue(value)) continue;
+        // Backend should only overwrite when it has real values.
+        // This prevents empty backend draft fields from erasing local in-progress data on reload.
+        (merged[key] as unknown) = value;
+    }
+
+    return merged;
 }
 
 export interface GoogleUserInfo {
@@ -186,34 +214,32 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
 
             let formValues = { ...defaultFormData };
 
+            // Always hydrate from local draft first so browser refresh keeps in-progress data.
+            const savedDraft = localStorage.getItem("admissionFormDraft");
+            if (savedDraft) {
+                try {
+                    const parsed: unknown = JSON.parse(savedDraft);
+                    if (isValidDraft(parsed)) {
+                        formValues = { ...formValues, ...parsed };
+                    }
+                } catch {
+                    // ignore malformed local draft
+                }
+            }
+
             const token = localStorage.getItem("authToken");
             if (token) {
-                // Try to load from backend first
+                // Load from backend and merge carefully so empty backend fields
+                // do not wipe local draft values.
                 try {
                     const res = await api.get("/api/student/application");
                     const app = res.data?.data?.application;
                     if (app) {
                         const backendValues = fromBackendApplication(app);
-                        formValues = { ...formValues, ...backendValues };
+                        formValues = mergeBackendIntoLocal(formValues, backendValues);
                     }
                 } catch {
-                    // Not authenticated or server down — fall back to localStorage
-                    const savedDraft = localStorage.getItem("admissionFormDraft");
-                    if (savedDraft) {
-                        try {
-                            const parsed: unknown = JSON.parse(savedDraft);
-                            if (isValidDraft(parsed)) formValues = { ...formValues, ...parsed };
-                        } catch { /* ignore */ }
-                    }
-                }
-            } else {
-                // No token — use localStorage draft only
-                const savedDraft = localStorage.getItem("admissionFormDraft");
-                if (savedDraft) {
-                    try {
-                        const parsed: unknown = JSON.parse(savedDraft);
-                        if (isValidDraft(parsed)) formValues = { ...formValues, ...parsed };
-                    } catch { /* ignore */ }
+                    // Not authenticated or server down — keep local draft already loaded
                 }
             }
 
@@ -235,8 +261,11 @@ export function AdmissionProvider({ children }: { children: React.ReactNode }) {
         try {
             setIsSyncing(true);
             await api.patch("/api/student/application", toBackendPayload(data));
-        } catch {
-            // Silent — data is still safe in localStorage
+        } catch (error) {
+            // Data is still safe in localStorage, but log the error for debugging
+            console.error("Failed to sync form data to backend:", error);
+            // Optional: Add toast notification here if using a toast library
+            // eg: toast.error("Failed to save draft. Your changes are saved locally.");
         } finally {
             setIsSyncing(false);
         }

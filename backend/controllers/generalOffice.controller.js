@@ -157,7 +157,7 @@ const assignRole = asyncHandler(async (req, res) => {
     const assignment = await RoleAssignment.findOneAndUpdate(
         { email: email.toLowerCase() },
         { email: email.toLowerCase(), role, branch: branch || "", assignedBy: req.user.id },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: "after" }
     );
 
     // Update the user's role if they already exist

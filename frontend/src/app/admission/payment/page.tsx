@@ -16,6 +16,7 @@ import PaymentSubmission from "../../../components/admission/PaymentSubmission";
 import PaymentActions from "../../../components/admission/PaymentActions";
 import { useAdmissionForm } from "../../../context/AdmissionContext";
 import { api } from "../../../utils/api";
+import { getAdmissionProgress } from "../../../lib/admissionProgress";
 
 import AdmissionNavbar from "../../../components/admission/AdmissionNavbar";
 
@@ -31,9 +32,9 @@ export default function PaymentPage() {
             );
         }
     }, [formData.highestStep, router]);
-    const [progress, setProgress] = useState(75);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const progress = isSubmitted ? 100 : getAdmissionProgress(formData);
 
     const methods = useForm<PaymentFormData>({
         resolver: zodResolver(paymentSchema),
@@ -103,7 +104,6 @@ export default function PaymentPage() {
                 amount: 75000,
             });
 
-            setProgress(100);
             toast.success("Payment submitted successfully!");
             setTimeout(() => setIsSubmitted(true), 600);
         } catch (error: unknown) {
