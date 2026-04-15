@@ -7,6 +7,7 @@ import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { isAllowedStaffEmail } from "../../lib/portalAccess";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -21,13 +22,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 // Module-level constant: evaluated once, not on every render (#15)
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@mitsgwl.ac.in";
-const ADMIN_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
-
-function isAllowedAdminDomain(email: string): boolean {
-  const normalizedEmail = String(email || "").toLowerCase();
-  return ADMIN_ALLOWED_DOMAINS.some((domain) => normalizedEmail.endsWith(domain));
-}
-
 function getSafeNextPath(rawNext: string | null): string | null {
   if (!rawNext) return null;
 
@@ -77,12 +71,15 @@ export default function LoginPage() {
         localStorage.setItem("authToken", response.data.data.token);
       }
 
+      const serverRole = String(response.data?.data?.user?.role || "");
+
       // Decode JWT to extract user info
       if (payload) {
         const userInfo = {
           name: (payload.name as string) || "",
           email: (payload.email as string) || "",
           picture: (payload.picture as string) || "",
+          role: serverRole,
         };
         localStorage.setItem("googleUserInfo", JSON.stringify(userInfo));
       }
@@ -94,10 +91,10 @@ export default function LoginPage() {
       const requestedNext = new URLSearchParams(window.location.search).get("next");
       const safeNextPath = getSafeNextPath(requestedNext);
 
-      if (safeNextPath) {
+      if (isAllowedStaffEmail(loggedInEmail)) {
+        router.push("/portal");
+      } else if (safeNextPath) {
         router.push(safeNextPath);
-      } else if (isAllowedAdminDomain(loggedInEmail)) {
-        router.push("/admin");
       } else {
         router.push("/student-dashboard");
       }
