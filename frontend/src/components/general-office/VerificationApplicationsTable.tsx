@@ -52,8 +52,8 @@ const StatusBadge = ({ status }: { status: string }) => {
       label: "Pending",
     },
     under_review: {
-      bg: "bg-blue-50",
-      text: "text-blue-700",
+      bg: "bg-[#FEF3C7]",
+      text: "text-[#D97706]",
       label: "Under Review",
     },
     approved: {
@@ -71,7 +71,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   const config = statusConfig[status] || statusConfig.pending;
 
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+    <span className={`rounded-sm px-3 py-1 text-[11px] font-semibold ${config.bg} ${config.text}`}>
       {config.label}
     </span>
   );
@@ -156,19 +156,19 @@ export default function VerificationApplicationsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#D5D4D4] bg-white">
-      <div className="border-b border-[#D5D4D4] px-5 py-4">
-        <h3 className="font-['Times_New_Roman',Times,serif] text-[28px] font-bold text-[#0F1723]">Applications Pending Verification</h3>
+    <div className="overflow-hidden rounded-md border border-[#D5D4D4] bg-white">
+      <div className="border-b border-[#D5D4D4] px-4 py-3">
+        <h3 className="font-[var(--font-poppins)] text-[28px] font-bold text-[#0F1723]">Applications Pending Verification</h3>
       </div>
 
-      <div className="px-5 py-4">
+      <div className="px-4 py-3">
         {applications.length === 0 ? (
           <p className="text-sm text-[#6B7280]">No applications found.</p>
         ) : (
           applications.slice(0, 3).map((app) => (
-            <div key={app._id} className="flex flex-wrap items-center gap-4 border-b border-[#E5E7EB] py-3 last:border-b-0">
+            <div key={app._id} className="flex flex-wrap items-center gap-3 border-b border-[#E5E7EB] py-3 last:border-b-0">
               <div className="flex min-w-56 items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2DA8E1] text-[13px] font-semibold text-white">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2DA8E1] text-[12px] font-semibold text-white">
                   {app.name.charAt(0)}
                 </div>
                 <div>
@@ -179,7 +179,7 @@ export default function VerificationApplicationsTable({
 
               <div className="ml-auto flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-[11px] text-[#6B7280]">Documents</p>
+                  <p className="text-[10px] uppercase tracking-[0.06em] text-[#6B7280]">Documents</p>
                   <p className="text-[13px] font-semibold text-[#0F1723]">{app.documentCount} files</p>
                 </div>
 

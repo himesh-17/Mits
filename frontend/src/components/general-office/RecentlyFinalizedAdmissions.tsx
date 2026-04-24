@@ -14,36 +14,20 @@ export default function RecentlyFinalizedAdmissions({
   admissions,
 }: RecentlyFinalizedAdmissionsProps) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-      <h2 className="text-lg font-semibold text-[#0F1724] mb-6 font-serif">
+    <div className="rounded-md border border-[#D5D4D4] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+      <h2 className="mb-3 font-[var(--font-poppins)] text-[30px] font-bold leading-none text-[#0F1724]">
         Recently Finalized Admissions
       </h2>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {admissions && admissions.length > 0 ? (
           admissions.map((admission) => (
             <div
               key={admission.id}
-              className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+              className="flex items-center justify-between rounded-sm border border-[#E5E7EB] px-3 py-4"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#2DA8E1] bg-opacity-10 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-[#2DA8E1]">
-                    {admission.name.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#0F1724]">
-                    {admission.name}
-                  </p>
-                  <p className="text-xs text-[#7B7B7B]">{admission.date}</p>
-                </div>
-              </div>
-              <div className="px-3 py-1 bg-[#DCFCE7] rounded-full">
-                <span className="text-xs font-medium text-[#15803D]">
-                  Finalized
-                </span>
-              </div>
+              <p className="text-[13px] font-medium text-[#0F1724]">{admission.name}</p>
+              <p className="text-[12px] text-[#7B7B7B]">{admission.date}</p>
             </div>
           ))
         ) : (

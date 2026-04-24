@@ -57,31 +57,28 @@ const StatCard: React.FC<{
   value: number | string;
   icon: React.ReactNode;
   valueColor: string;
-  iconColor: string;
-  borderColor: string;
+  iconChipColor: string;
   loading?: boolean;
-}> = ({ title, value, icon, valueColor, iconColor, borderColor, loading = false }) => (
+}> = ({ title, value, icon, valueColor, iconChipColor, loading = false }) => (
   <div
-    className="rounded-xl border bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-    style={{
-      borderColor: borderColor,
-    }}
+    className="rounded-md border border-[#D5D4D4] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
   >
-    <div className="flex items-start justify-between">
-      <div className="flex-1">
-        <p className="mb-2 text-[12px] font-medium text-[#6B7280]">{title}</p>
-        <div className={`text-[36px] font-bold leading-none ${valueColor}`} style={{ fontFamily: "var(--font-poppins)" }}>
-          {loading ? (
-            <span className="text-gray-300">-</span>
-          ) : typeof value === "number" ? (
-            <AnimatedNumber value={value} />
-          ) : (
-            value
-          )}
-        </div>
+    <div className="mb-4">
+      <div className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${iconChipColor}`}>
+        <span className="h-3.5 w-3.5">{icon}</span>
       </div>
-      <div className={`h-5 w-5 ${iconColor}`}>{icon}</div>
     </div>
+
+    <div className={`text-[39px] font-bold leading-none ${valueColor}`} style={{ fontFamily: "var(--font-poppins)" }}>
+      {loading ? (
+        <span className="text-gray-300">-</span>
+      ) : typeof value === "number" ? (
+        <AnimatedNumber value={value} />
+      ) : (
+        value
+      )}
+    </div>
+    <p className="mt-1 text-[13px] text-[#7B7B7B]">{title}</p>
   </div>
 );
 
@@ -94,38 +91,34 @@ export default function ReportsStats({
       title: "Total Applications",
       value: data.totalApplications,
       icon: <FiFileText className="w-full h-full" />,
-      valueColor: "text-[#2DA8E1]",
-      iconColor: "text-[#2DA8E1]",
-      borderColor: "#DBEAFE",
+      valueColor: "text-[#111827]",
+      iconChipColor: "bg-[#DBEAFE] text-[#2DA8E1]",
     },
     {
       title: "Finalized",
       value: data.finalized,
       icon: <FiCheck className="w-full h-full" />,
-      valueColor: "text-[#10B981]",
-      iconColor: "text-[#10B981]",
-      borderColor: "#D1FAE5",
+      valueColor: "text-[#111827]",
+      iconChipColor: "bg-[#DCFCE7] text-[#16A34A]",
     },
     {
       title: "Awaiting Approval",
       value: data.awaitingApproval,
       icon: <FiClock className="w-full h-full" />,
-      valueColor: "text-[#F59E0B]",
-      iconColor: "text-[#F59E0B]",
-      borderColor: "#FEF3C7",
+      valueColor: "text-[#111827]",
+      iconChipColor: "bg-[#FEF3C7] text-[#D97706]",
     },
     {
       title: "Revenue Collected",
       value: data.revenueCollected,
       icon: <FiTrendingUp className="w-full h-full" />,
-      valueColor: "text-[#A855F7]",
-      iconColor: "text-[#A855F7]",
-      borderColor: "#E9D5FF",
+      valueColor: "text-[#111827]",
+      iconChipColor: "bg-[#F3E8FF] text-[#A855F7]",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, index) => (
         <StatCard
           key={index}
@@ -133,8 +126,7 @@ export default function ReportsStats({
           value={stat.value}
           icon={stat.icon}
           valueColor={stat.valueColor}
-          iconColor={stat.iconColor}
-          borderColor={stat.borderColor}
+          iconChipColor={stat.iconChipColor}
           loading={loading}
         />
       ))}

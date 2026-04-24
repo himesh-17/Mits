@@ -146,11 +146,11 @@ export default function GeneralOfficeApplicationsPage() {
   );
 
   return (
-    <div className="space-y-5 lg:space-y-6 [font-family:var(--font-inter)]">
+    <div className="space-y-4 [font-family:var(--font-poppins)]">
       <section className="relative flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1
-            className="font-['Times_New_Roman',Times,serif] text-[46px] font-bold leading-none text-[#1A1B1E]"
+            className="font-[var(--font-poppins)] text-[43px] font-bold leading-none text-[#1A1B1E]"
           >
             All Applications
           </h1>
@@ -159,13 +159,13 @@ export default function GeneralOfficeApplicationsPage() {
           </p>
         </div>
 
-        <button className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-black/10 bg-white px-4 py-2 text-[13px] font-medium text-[#4B5563] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition hover:bg-[#F8FAFC]">
-          <FiDownload className="h-4 w-4" />
+        <button className="inline-flex shrink-0 items-center gap-2 rounded-md border border-black/10 bg-white px-4 py-1.5 text-[12px] font-medium text-[#4B5563] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition hover:bg-[#F8FAFC]">
+          <FiDownload className="h-3.5 w-3.5" />
           Export CSV
         </button>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <section className="overflow-hidden rounded-md border border-black/10 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         <div className="overflow-x-auto">
           <table className="min-w-263.75 w-full border-collapse">
             <thead>

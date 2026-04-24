@@ -1,5 +1,6 @@
 import User from "../Models/user.model.js";
 import AuditLog from "../Models/auditLog.model.js";
+import RoleAssignment from "../Models/roleAssignment.model.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -89,38 +90,55 @@ const googleLogin = asyncHandler(async (req, res) => {
         await user.save();
     }
 
-    // Domain-based admin access for MITS institutional emails.
-    if (profile.emailVerified && isAllowedAdminDomain(profile.email) && user.role !== "administrator") {
-        const previousRole = user.role || "student";
-        user.role = "administrator";
-        await user.save();
+    // Staff-domain role resolution:
+    // 1) honor explicit RoleAssignment if present (hod/generalOffice/admissionCell/accountOffice/administrator)
+    // 2) otherwise keep existing non-student role
+    // 3) fallback to administrator only for unassigned staff currently marked as student
+    if (profile.emailVerified && isAllowedAdminDomain(profile.email)) {
+        const normalizedEmail = String(profile.email || "").toLowerCase();
+        const assignment = await RoleAssignment.findOne({ email: normalizedEmail });
+        const assignedRole = assignment?.role;
 
-        try {
-            await AuditLog.create({
-                actor: user._id,
-                actorName: user.name || profile.name || "",
-                actorRole: "administrator",
-                actorRoleLabel: "Super Admin",
-                actionLabel: "ROLE_ELEVATED",
-                actionTone: "slate",
-                department: "ADMIN PANEL",
-                departmentTone: "slate",
-                module: "auth",
-                entityType: "user",
-                entityId: String(user._id),
-                entityRef: `User ${String(user.email || profile.email || "").toLowerCase()}`,
-                fromStatus: String(previousRole || "").toUpperCase(),
-                toStatus: "ADMINISTRATOR",
-                notes: "domain-based elevation",
-                metadata: {
-                    securityEvent: true,
-                    previousRole,
-                    newRole: "administrator",
-                    elevationReason: "domain-based elevation",
-                },
-            });
-        } catch (auditError) {
-            console.error("[Auth] failed to write role elevation audit", auditError?.message || auditError);
+        const previousRole = user.role || "student";
+        let nextRole = previousRole;
+
+        if (assignedRole) {
+            nextRole = assignedRole;
+        } else if (previousRole === "student") {
+            nextRole = "administrator";
+        }
+
+        if (nextRole !== previousRole) {
+            user.role = nextRole;
+            await user.save();
+
+            try {
+                await AuditLog.create({
+                    actor: user._id,
+                    actorName: user.name || profile.name || "",
+                    actorRole: nextRole,
+                    actorRoleLabel: nextRole === "administrator" ? "Super Admin" : "Staff",
+                    actionLabel: "ROLE_UPDATED",
+                    actionTone: "slate",
+                    department: "ADMIN PANEL",
+                    departmentTone: "slate",
+                    module: "auth",
+                    entityType: "user",
+                    entityId: String(user._id),
+                    entityRef: `User ${String(user.email || profile.email || "").toLowerCase()}`,
+                    fromStatus: String(previousRole || "").toUpperCase(),
+                    toStatus: String(nextRole || "").toUpperCase(),
+                    notes: assignedRole ? "role-assignment sync" : "domain-based default elevation",
+                    metadata: {
+                        securityEvent: true,
+                        previousRole,
+                        newRole: nextRole,
+                        assignedRole: assignedRole || null,
+                    },
+                });
+            } catch (auditError) {
+                console.error("[Auth] failed to write role update audit", auditError?.message || auditError);
+            }
         }
     }
 

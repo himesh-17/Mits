@@ -265,7 +265,7 @@ export default function AdminReportsPage() {
     <section className="admin-section-enter w-full space-y-8">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-['Times_New_Roman',Times,serif] text-[38px] leading-none font-bold text-[#0F1724]">
+          <h1 className="font-[var(--font-poppins)] text-[38px] leading-none font-bold text-[#0F1724]">
             Reports &amp; Analytics
           </h1>
           <p className="mt-2 text-[15px] text-[#8A98A8]">Comprehensive admission cycle insights</p>
@@ -332,7 +332,7 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="rounded-md border border-black/10 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] md:p-8">
-        <h2 className="font-['Times_New_Roman',Times,serif] text-[24px] font-bold text-[#0F1724]">Applications Over Time</h2>
+        <h2 className="font-[var(--font-poppins)] text-[24px] font-bold text-[#0F1724]">Applications Over Time</h2>
 
         <div className="mt-6 h-75 w-full md:h-85">
           <ResponsiveContainer width="100%" height="100%">
@@ -356,7 +356,7 @@ export default function AdminReportsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-md border border-black/10 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] md:p-8">
-          <h2 className="font-['Times_New_Roman',Times,serif] text-[24px] font-bold text-[#0F1724]">Applications by Program</h2>
+          <h2 className="font-[var(--font-poppins)] text-[24px] font-bold text-[#0F1724]">Applications by Program</h2>
 
           <div className="mt-6 h-65 w-full md:h-75">
             <ResponsiveContainer width="100%" height="100%">
@@ -372,7 +372,7 @@ export default function AdminReportsPage() {
         </div>
 
         <div className="rounded-md border border-black/10 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] md:p-8">
-          <h2 className="font-['Times_New_Roman',Times,serif] text-[24px] font-bold text-[#0F1724]">Category Distribution</h2>
+          <h2 className="font-[var(--font-poppins)] text-[24px] font-bold text-[#0F1724]">Category Distribution</h2>
 
           <div className="mt-6 flex h-65 flex-col items-center justify-center gap-6 md:h-75">
             <div className="h-45 w-45">
@@ -412,7 +412,7 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="rounded-md border border-black/10 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] md:p-8">
-        <h2 className="font-['Times_New_Roman',Times,serif] text-[24px] font-bold text-[#0F1724]">Application Status Breakdown</h2>
+        <h2 className="font-[var(--font-poppins)] text-[24px] font-bold text-[#0F1724]">Application Status Breakdown</h2>
 
         <div className="mt-6 h-70 w-full md:h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -454,7 +454,7 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="rounded-md border border-black/10 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] md:p-8">
-        <h2 className="font-['Times_New_Roman',Times,serif] text-[24px] font-bold text-[#0F1724]">Recent Round Mismatch Attempts</h2>
+        <h2 className="font-[var(--font-poppins)] text-[24px] font-bold text-[#0F1724]">Recent Round Mismatch Attempts</h2>
         <p className="mt-1 text-[13px] text-[#8A98A8]">
           Includes students not found in the active round list and whether testing bypass was used.
         </p>
@@ -542,7 +542,7 @@ function SummaryCard({
       >
         {icon}
       </div>
-      <p className="font-['Times_New_Roman',Times,serif] text-[34px] leading-8 font-bold text-[#0F1724]">{value}</p>
+      <p className="font-[var(--font-poppins)] text-[34px] leading-8 font-bold text-[#0F1724]">{value}</p>
       <p className="mt-2 text-[13px] font-medium text-[#8A98A8]">{title}</p>
     </article>
   );

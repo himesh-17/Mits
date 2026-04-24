@@ -4,12 +4,14 @@ import {
     getAdmittedStudents,
     getAdmittedStudentDetail,
     getBranchStats,
+    getAllowedBranches,
 } from "../../Controllers/hod.controller.js";
 
 const router = express.Router();
 
 router.use(verifyJWT, requireRole("hod", "administrator"));
 
+router.get("/branches", getAllowedBranches);
 router.get("/students", getAdmittedStudents);
 router.get("/students/:applicationId", getAdmittedStudentDetail);
 router.get("/stats", getBranchStats);

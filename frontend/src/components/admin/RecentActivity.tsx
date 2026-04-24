@@ -46,7 +46,7 @@ export default function RecentActivity({ refresh, rows }: RecentActivityProps) {
   return (
     <section className="bg-white rounded-lg border border-black/10 overflow-hidden">
       <div className="h-11 px-4 border-b border-black/10 flex items-center">
-        <h2 className="font-['Times_New_Roman',Times,serif] text-[16px] leading-6 font-bold text-[#0F1724]">Recent Activity</h2>
+        <h2 className="font-[var(--font-poppins)] text-[16px] leading-6 font-bold text-[#0F1724]">Recent Activity</h2>
       </div>
 
       <div className="overflow-x-auto">

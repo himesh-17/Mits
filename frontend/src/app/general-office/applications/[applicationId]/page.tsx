@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { FiArrowLeft, FiCheckCircle, FiClock, FiDownload } from "react-icons/fi";
+import { FiArrowLeft, FiDownload } from "react-icons/fi";
 
 type DocumentStatus = "verified" | "pending";
 
@@ -115,7 +115,7 @@ function mapApiToDetailData(payload: any): DetailData {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-[#D5D4D4] p-3">
+    <div className="rounded-sm border border-[#D5D4D4] p-3">
       <p className="text-[11px] text-[#94A3B8]">{label}</p>
       <p className="mt-1 text-[13px] font-semibold text-[#111827] wrap-break-word">{value || "-"}</p>
     </div>
@@ -198,9 +198,10 @@ export default function GeneralOfficeApplicationDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F7FA] px-3 py-4 sm:px-4 sm:py-4">
+    <main className="min-h-screen bg-[#F5F7FA] px-3 py-2">
       <div className="mx-auto max-w-300 space-y-4">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#2DA8E1]">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[#2DA8E1]">
+          <FiArrowLeft className="h-3.5 w-3.5" />
           <Link href="/general-office" className="hover:text-[#2DA8E1]">
             Tracker
           </Link>
@@ -208,31 +209,26 @@ export default function GeneralOfficeApplicationDetailPage() {
           <span className="text-[#2DA8E1]">#{data.studentId}</span>
         </div>
 
-        <div className="rounded-lg border border-[#D5D4D4] bg-transparent p-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
-              <h1 className="font-['Times_New_Roman',Times,serif] text-[44px] font-bold leading-none text-[#111827]">{data.personal.fullName}</h1>
-              <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#6B7280]">
+              <h1 className="font-[var(--font-poppins)] text-[43px] font-bold leading-none text-[#111827]">{data.personal.fullName}</h1>
+              <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#6B7280]">
                 <span>{data.personal.email}</span>
                 <span>•</span>
                 <span>{data.academic.branch}</span>
               </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-semibold ${statusClass}`}>
-                {data.status}
-              </span>
-              <span className="inline-flex items-center rounded-full bg-[#DBEAFE] px-3 py-1 text-[12px] font-semibold text-[#2DA8E1]">
-                {data.roundLabel}
-              </span>
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+                <span className="rounded-sm bg-[#FEF3C7] px-2.5 py-1 text-[#D97706]">{data.status}</span>
+                <span className="text-[#2DA8E1]">Round: {data.roundLabel}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_285px]">
           <div className="space-y-6">
-            <section className="rounded-lg border border-[#D5D4D4] bg-white p-4">
+            <section className="rounded-md border border-[#D5D4D4] bg-white p-3">
               <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Personal Information</h2>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <InfoRow label="Full Name" value={data.personal.fullName} />
@@ -246,7 +242,7 @@ export default function GeneralOfficeApplicationDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-lg border border-[#D5D4D4] bg-white p-4">
+            <section className="rounded-md border border-[#D5D4D4] bg-white p-3">
               <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Academic Details</h2>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <InfoRow label="Branch Applied" value={data.academic.branch} />
@@ -258,7 +254,7 @@ export default function GeneralOfficeApplicationDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-lg border border-[#D5D4D4] bg-white p-4">
+            <section className="rounded-md border border-[#D5D4D4] bg-white p-3">
               <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Documents ({data.documents.length})</h2>
               <div className="space-y-3">
                 {data.documents.length === 0 ? (
@@ -267,7 +263,7 @@ export default function GeneralOfficeApplicationDetailPage() {
                   data.documents.map((doc, index) => (
                     <div
                       key={`${doc.label}-${index}`}
-                      className="grid grid-cols-1 gap-2 rounded-md border border-[#D5D4D4] p-3 sm:grid-cols-[1fr_auto] sm:items-center"
+                      className="grid grid-cols-1 gap-2 rounded-sm border border-[#D5D4D4] p-3 sm:grid-cols-[1fr_auto] sm:items-center"
                     >
                       <div>
                         <p className="text-[11px] text-[#94A3B8]">{doc.label}</p>
@@ -297,50 +293,31 @@ export default function GeneralOfficeApplicationDetailPage() {
           </div>
 
           <aside className="space-y-6">
-            <section className="rounded-lg border border-[#D5D4D4] bg-white p-4">
+            <section className="rounded-md border border-[#D5D4D4] bg-white p-4">
               <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Payment</h2>
               <div className="space-y-2.5 text-[13px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#6B7280]">Current Status</span>
-                  <span className="font-medium text-[#111827]">{data.payment.status}</span>
-                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#6B7280]">Amount</span>
                   <span className="font-medium text-[#111827]">{data.payment.amount}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#6B7280]">Method</span>
+                  <span className="text-[#6B7280]">UPI</span>
                   <span className="font-medium text-[#111827]">{data.payment.method}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#6B7280]">Transaction ID</span>
+                  <span className="text-[#6B7280]">Txn ID</span>
                   <span className="font-medium text-[#111827] text-right">{data.payment.transactionId || "-"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#6B7280]">Paid On</span>
-                  <span className="font-medium text-[#111827]">{data.payment.paidOn}</span>
+                  <span className="text-[#6B7280]">Status</span>
+                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusClass}`}>
+                    {data.payment.status}
+                  </span>
                 </div>
-              </div>
-            </section>
-
-            <section className="rounded-lg border border-[#D5D4D4] bg-white p-4">
-              <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Quick Actions</h2>
-              <div className="space-y-3">
-                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2DA8E1] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#1F92C0]">
-                  <FiCheckCircle className="h-4 w-4" />
-                  Mark Documents Verified
-                </button>
-                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#D1D5DB] bg-white px-4 py-2 text-[12px] font-semibold text-[#374151] hover:bg-[#F9FAFB]">
-                  <FiClock className="h-4 w-4" />
-                  Put On Hold
-                </button>
-                <Link
-                  href="/general-office/applications"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2DA8E1]/30 bg-[#F0F9FF] px-4 py-2 text-[12px] font-semibold text-[#2DA8E1] hover:bg-[#E0F2FE]"
-                >
-                  <FiArrowLeft className="h-4 w-4" />
-                  Back to Applications
-                </Link>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6B7280]">Verified by</span>
+                  <span className="font-medium text-[#111827]">-</span>
+                </div>
               </div>
             </section>
           </aside>

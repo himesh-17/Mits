@@ -1,49 +1,123 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiClock } from "react-icons/fi";
-import { getStoredGoogleUser, isAllowedStaffEmail } from "../../lib/portalAccess";
+import { FiUsers, FiBarChart2 } from "react-icons/fi";
 
-export default function HodPortalPage() {
-  const router = useRouter();
+interface HodStats {
+  admitted: number;
+  total: number;
+  branch?: string;
+}
+
+export default function HodDashboardPage() {
+  const [stats, setStats] = useState<HodStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const user = getStoredGoogleUser();
+    const fetchOverviewStats = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/hod/stats`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-    if (!token || !user?.email) {
-      router.replace("/login");
-      return;
-    }
+        if (!response.ok) throw new Error("Failed to load HOD stats");
 
-    if (!isAllowedStaffEmail(user.email)) {
-      router.replace("/student-dashboard");
-    }
-  }, [router]);
+        const payload = await response.json();
+        setStats(payload.data);
+      } catch (error) {
+        console.error("Dashboard overview error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOverviewStats();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#0F172A] px-4 py-10 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-3xl flex-col items-start gap-6 rounded-[2rem] border border-white/10 bg-white/8 p-6 backdrop-blur-xl sm:p-8">
-        <p className="inline-flex rounded-full border border-white/10 bg-white/6 px-4 py-1 text-xs uppercase tracking-[0.28em] text-white/65">
-          HOD Portal
+    <div className="space-y-6 [font-family:var(--font-poppins)]">
+      <section>
+        <h1 className="text-[43px] font-bold leading-none text-[#1E293B]">
+          HOD Dashboard
+        </h1>
+        <p className="mt-2 text-[14px] text-[#7B7B7B]">
+          Welcome to the Head of Department portal. Overview of your branch admissions.
         </p>
-        <h1 className="text-3xl font-semibold sm:text-4xl">This portal shell is ready.</h1>
-        <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-          The portal selector can route here now. You can wire the HOD dashboard content next without changing the login flow.
-        </p>
+      </section>
 
-        <div className="flex w-full flex-col gap-3 rounded-3xl border border-white/10 bg-[#111C35] p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3 text-white/80">
-            <FiClock className="text-[18px]" />
-            <span className="text-sm">Dashboard content pending configuration</span>
-          </div>
-          <Link href="/portal" className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#0F172A]">
-            <FiArrowLeft className="text-[16px]" />
-            Back to portal selection
-          </Link>
+      {loading ? (
+        <div className="flex h-32 items-center justify-center rounded-xl border border-[#D5D4D4] bg-white">
+          <p className="text-sm text-[#64748B]">Loading overview...</p>
         </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-xl border border-[#D5D4D4] bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F0F9FF] text-[#2DA8E1]">
+                <FiUsers className="h-5 w-5" />
+              </div>
+              <h3 className="text-[13px] font-semibold text-[#64748B] uppercase tracking-wide">
+                Finalized Admitted
+              </h3>
+            </div>
+            <p className="text-3xl font-bold text-[#0F1724]">
+              {stats?.admitted || 0}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#D5D4D4] bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8FAFC] text-[#64748B]">
+                <FiBarChart2 className="h-5 w-5" />
+              </div>
+              <h3 className="text-[13px] font-semibold text-[#64748B] uppercase tracking-wide">
+                Total Applications
+              </h3>
+            </div>
+            <p className="text-3xl font-bold text-[#0F1724]">
+              {stats?.total || 0}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 mt-8">
+        <Link
+          href="/hod/students"
+          className="group block rounded-xl border border-[#D5D4D4] bg-white p-6 transition-all hover:border-[#2DA8E1] hover:shadow-md"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1E293B] group-hover:text-[#2DA8E1]">
+                View Finalized Students
+              </h3>
+              <p className="mt-1 text-sm text-[#64748B]">
+                See the full list of students admitted to your branch.
+              </p>
+            </div>
+            <FiUsers className="h-6 w-6 text-[#94A3B8] group-hover:text-[#2DA8E1]" />
+          </div>
+        </Link>
+
+        <Link
+          href="/hod/stats"
+          className="group block rounded-xl border border-[#D5D4D4] bg-white p-6 transition-all hover:border-[#2DA8E1] hover:shadow-md"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1E293B] group-hover:text-[#2DA8E1]">
+                View Branch Statistics
+              </h3>
+              <p className="mt-1 text-sm text-[#64748B]">
+                Analyze admission trends and demographic breakdown.
+              </p>
+            </div>
+            <FiBarChart2 className="h-6 w-6 text-[#94A3B8] group-hover:text-[#2DA8E1]" />
+          </div>
+        </Link>
       </div>
     </div>
   );

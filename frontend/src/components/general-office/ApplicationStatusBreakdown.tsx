@@ -16,11 +16,11 @@ const StatusBadge: React.FC<{
   bgColor: string;
   textColor: string;
 }> = ({ label, count, bgColor, textColor }) => (
-  <div className={`rounded-md p-3 text-center ${bgColor}`}>
-    <p className={`text-[20px] font-bold leading-none ${textColor}`} style={{ fontFamily: "var(--font-poppins)" }}>{count}</p>
-    <p className={`mt-2 text-[11px] font-semibold ${textColor} opacity-80`}>
+  <div className="flex items-center justify-between">
+    <span className={`inline-flex rounded-sm px-3 py-1 text-[11px] font-semibold ${bgColor} ${textColor}`}>
       {label}
-    </p>
+    </span>
+    <span className="text-[14px] font-semibold text-[#111827]">{count}</span>
   </div>
 );
 
@@ -28,12 +28,12 @@ export default function ApplicationStatusBreakdown({
   statusData,
 }: ApplicationStatusBreakdownProps) {
   return (
-    <div className="rounded-lg border border-[#D5D4D4] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] md:p-6">
-      <h2 className="mb-5 font-['Times_New_Roman',Times,serif] text-[30px] font-bold leading-none text-[#0F1724]">
+    <div className="rounded-md border border-[#D5D4D4] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+      <h2 className="mb-4 font-[var(--font-poppins)] text-[30px] font-bold leading-none text-[#0F1724]">
         Application Status Breakdown
       </h2>
 
-      <div className="space-y-3">
+      <div className="space-y-5">
         <StatusBadge
           label="Payment Pending"
           count={statusData.paymentPending}

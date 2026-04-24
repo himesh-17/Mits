@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiPlus } from "react-icons/fi";
+import { FiDownload } from "react-icons/fi";
 import ReportsStats from "../../../components/general-office/ReportsStats";
 import BranchwiseSummary from "../../../components/general-office/BranchwiseSummary";
 import ApplicationStatusBreakdown from "../../../components/general-office/ApplicationStatusBreakdown";
@@ -85,22 +85,22 @@ export default function ReportsPage() {
   }, []);
 
   return (
-    <div className="space-y-6 [font-family:var(--font-inter)]">
+    <div className="space-y-4 [font-family:var(--font-poppins)]">
       <section className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1
-            className="font-['Times_New_Roman',Times,serif] text-[46px] font-bold leading-none text-[#0F1724]"
+            className="font-[var(--font-poppins)] text-[43px] font-bold leading-none text-[#0F1724]"
           >
             Reports & Analytics
           </h1>
-          <p className="mt-3 text-[15px] text-[#6B7280]">
+          <p className="mt-2 text-[14px] text-[#6B7280]">
             Institution-wide admission process overview
           </p>
         </div>
 
-        <button className="inline-flex items-center gap-2 rounded-lg border border-[#D5D4D4] bg-white px-4 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition hover:bg-[#F9FAFB]">
-          <FiPlus className="h-4 w-4 text-[#0F1724]" />
-          <span className="text-[13px] font-semibold text-[#0F1724]">Export Full CSV</span>
+        <button className="inline-flex items-center gap-2 rounded-md border border-[#D5D4D4] bg-white px-4 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition hover:bg-[#F9FAFB]">
+          <FiDownload className="h-3.5 w-3.5 text-[#0F1724]" />
+          <span className="text-[12px] font-semibold text-[#0F1724]">Export Full CSV</span>
         </button>
       </section>
 

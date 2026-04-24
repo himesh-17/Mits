@@ -1,12 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  FiAlertCircle,
-  FiFileText,
-  FiCheckCircle,
-  FiActivity,
-} from "react-icons/fi";
 
 interface GeneralOfficeStatsProps {
   stats: {
@@ -22,9 +16,7 @@ interface GeneralOfficeStatsProps {
 interface StatCardConfig {
   title: string;
   value: number;
-  icon: React.ReactNode;
   valueColor: string;
-  iconColor: string;
   lineColor: string;
 }
 
@@ -76,33 +68,25 @@ export default function GeneralOfficeStats({
     {
       title: "Awaiting Verification",
       value: stats.awaitingVerification,
-      icon: <FiAlertCircle className="w-6 h-6" />,
       valueColor: "text-[#F59E0B]",
-      iconColor: "text-[#2DA8E1]",
       lineColor: "bg-[#E5E7EB]",
     },
     {
       title: "Documents Pending",
       value: stats.documentsPending,
-      icon: <FiFileText className="w-6 h-6" />,
       valueColor: "text-[#2F6FE0]",
-      iconColor: "text-[#F59E0B]",
       lineColor: "bg-[#2F6FE0]",
     },
     {
       title: "Final Approvals",
       value: stats.finalApprovals,
-      icon: <FiCheckCircle className="w-6 h-6" />,
       valueColor: "text-[#10B981]",
-      iconColor: "text-[#10B981]",
       lineColor: "bg-[#E5E7EB]",
     },
     {
       title: "Total Active Apps",
       value: stats.totalActiveApps,
-      icon: <FiActivity className="w-6 h-6" />,
       valueColor: "text-[#111827]",
-      iconColor: "text-[#3B82F6]",
       lineColor: "bg-[#9CA3AF]",
     },
   ];
@@ -116,35 +100,33 @@ export default function GeneralOfficeStats({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
       {statCards.map((card, index) => (
         <div
           key={card.title}
-          className="rounded-lg border border-[#D5D4D4] bg-white p-5"
+          className="rounded-md border border-[#D5D4D4] bg-white p-4"
           style={{
             animationDelay: `${index * 100}ms`,
           }}
         >
-          <div className="mb-4 flex items-start justify-between">
-            <h3 className="pr-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
+          <div className="mb-3">
+            <h3 className="pr-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
               {card.title}
             </h3>
-            <div className={card.iconColor}>{card.icon}</div>
           </div>
 
-          <div className="mb-4 flex items-baseline gap-2">
-            <p className={`text-[40px] font-bold leading-none ${card.valueColor}`} style={{ fontFamily: "var(--font-poppins)" }}>
+          <div className="mb-3 flex items-baseline gap-2">
+            <p className={`text-[34px] font-bold leading-none ${card.valueColor}`} style={{ fontFamily: "var(--font-poppins)" }}>
               {loading ? (
                 <span className="animate-pulse">-</span>
               ) : (
                 <AnimatedNumber value={card.value} duration={600} />
               )}
             </p>
-            {!loading && <span className="text-[13px] text-[#9CA3AF]">items</span>}
           </div>
 
-          <div className="h-1 rounded-full bg-[#E5E7EB]">
-            <div className={`h-1 rounded-full ${card.lineColor}`} style={{ width: card.value > 0 ? "35%" : "0%" }} />
+          <div className="h-0.5 rounded-full bg-[#E5E7EB]">
+            <div className={`h-0.5 rounded-full ${card.lineColor}`} style={{ width: card.value > 0 ? "35%" : "0%" }} />
           </div>
         </div>
       ))}

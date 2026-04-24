@@ -194,9 +194,9 @@ export default function UsersPage() {
   ];
 
   return (
-    <section className="admin-section-enter w-full space-y-4 [font-family:var(--font-inter)]">
+    <section className="admin-section-enter w-full space-y-4 [font-family:var(--font-poppins)]">
       <div className="space-y-1">
-        <h1 className="font-['Times_New_Roman',Times,serif] text-[38px] leading-10 font-bold text-[#111827]">
+        <h1 className="font-[var(--font-poppins)] text-[38px] leading-10 font-bold text-[#111827]">
           User Management
         </h1>
         <p className="text-[14px] leading-4.25 text-[#6B7280]">
@@ -210,7 +210,7 @@ export default function UsersPage() {
             <span className={`h-6 px-3 rounded text-[11px] font-bold tracking-[0.24px] inline-flex items-center ${item.tone}`}>
               {item.label}
             </span>
-            <span className="font-['Times_New_Roman',Times,serif] text-[32px] leading-none font-bold text-[#111827]">
+            <span className="font-[var(--font-poppins)] text-[32px] leading-none font-bold text-[#111827]">
               {item.value}
             </span>
           </div>
@@ -223,7 +223,7 @@ export default function UsersPage() {
             <span className={`h-6 px-3 rounded text-[11px] font-bold tracking-[0.24px] inline-flex items-center ${item.tone}`}>
               {item.label}
             </span>
-            <span className="font-['Times_New_Roman',Times,serif] text-[32px] leading-none font-bold text-[#111827]">
+            <span className="font-[var(--font-poppins)] text-[32px] leading-none font-bold text-[#111827]">
               {item.value}
             </span>
           </div>

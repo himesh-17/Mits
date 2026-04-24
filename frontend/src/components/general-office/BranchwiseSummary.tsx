@@ -36,23 +36,24 @@ export default function BranchwiseSummary({
   branchData,
 }: BranchwiseSummaryProps) {
   return (
-    <div className="rounded-lg border border-[#D5D4D4] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] md:p-6">
-      <h2 className="mb-5 font-['Times_New_Roman',Times,serif] text-[30px] font-bold leading-none text-[#0F1724]">
+    <div className="rounded-md border border-[#D5D4D4] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+      <h2 className="mb-4 font-[var(--font-poppins)] text-[30px] font-bold leading-none text-[#0F1724]">
         Branch-wise Summary
       </h2>
 
-      <div className="space-y-5">
+      <div className="space-y-3">
         {branchData.map((branch, index) => (
-          <div key={index} className="rounded-md border border-[#E5E7EB] p-4">
-            <div className="flex justify-between items-start mb-3">
+          <div key={index} className="rounded-sm border border-[#E5E7EB] p-3">
+            <div className="mb-2 flex items-start justify-between">
               <h3 className="text-[13px] font-semibold text-[#0F1724]">
                 {branch.name}
               </h3>
-              <span className="text-[12px] font-medium text-[#7B7B7B]">
-                {branch.revenue}
+              <span className="text-[11px] text-[#7B7B7B]">
+                {branch.finalized}/{branch.total} finalized
               </span>
             </div>
             <ProgressBar finalized={branch.finalized} total={branch.total} />
+            <p className="mt-2 text-[11px] text-[#7B7B7B]">Revenue: {branch.revenue}</p>
           </div>
         ))}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import GeneralOfficeStats from "../../components/general-office/GeneralOfficeStats";
 import VerificationApplicationsTable from "../../components/general-office/VerificationApplicationsTable";
@@ -13,42 +13,48 @@ export default function GeneralOfficePage() {
     totalActiveApps: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/general-office/dashboard/stats`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to load dashboard statistics");
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/general-office/dashboard/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
+      );
 
-        const payload = await response.json();
-        setStats(payload.data);
-      } catch (error) {
-        console.error("Dashboard stats error:", error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to load dashboard statistics");
       }
-    };
 
-    fetchStats();
+      const payload = await response.json();
+      setStats(payload.data);
+    } catch (error) {
+      console.error("Dashboard stats error:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats, refreshKey]);
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   return (
-    <div className="space-y-6 [font-family:var(--font-inter)]">
+    <div className="space-y-4 [font-family:var(--font-poppins)]">
       <section className="flex items-start justify-between gap-3">
         <div>
           <h1
-            className="font-['Times_New_Roman',Times,serif] text-[48px] font-bold leading-none text-[#1E293B]"
+            className="font-[var(--font-poppins)] text-[43px] font-bold leading-none text-[#1E293B]"
           >
             Student Records Overview
           </h1>
@@ -57,15 +63,19 @@ export default function GeneralOfficePage() {
           </p>
         </div>
 
-        <button className="inline-flex items-center gap-2 rounded-lg border border-[#D5D4D4] bg-white px-4 py-2 text-[13px] font-medium text-[#0F1724] shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-          <FiRefreshCw className="h-3.5 w-3.5" />
+        <button
+          onClick={handleRefresh}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-md border border-[#D5D4D4] bg-white px-4 py-1.5 text-[12px] font-medium text-[#0F1724] shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:bg-[#F5F7FA] transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <FiRefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </section>
 
       <GeneralOfficeStats stats={stats} loading={loading} />
 
-      <VerificationApplicationsTable />
+      <VerificationApplicationsTable key={refreshKey} />
     </div>
   );
 }

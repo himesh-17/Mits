@@ -64,7 +64,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
     <div className="grid md:grid-cols-2 gap-4">
       <div className="bg-white rounded-lg border border-black/10">
         <div className="h-11 px-4 border-b border-black/10 flex items-center">
-          <h2 className="font-['Times_New_Roman',Times,serif] text-[16px] leading-6 font-bold text-[#0F1724]">Application Distribution</h2>
+          <h2 className="font-[var(--font-poppins)] text-[16px] leading-6 font-bold text-[#0F1724]">Application Distribution</h2>
         </div>
 
         <div className="p-4 grid grid-cols-1 lg:grid-cols-[1fr_170px] gap-3 items-center">
@@ -92,7 +92,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
                 <p className="text-[11px] uppercase tracking-[0.4px] text-[#94A3B8] font-semibold">
                   Total
                 </p>
-                <h3 className="font-['Times_New_Roman',Times,serif] text-[34px] leading-9 font-bold text-[#0F1724]">{animatedTotal}</h3>
+                <h3 className="font-[var(--font-poppins)] text-[34px] leading-9 font-bold text-[#0F1724]">{animatedTotal}</h3>
               </div>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function Charts({ refresh, breakdown }: ChartsProps) {
 
       <div className="bg-white rounded-lg border border-black/10">
         <div className="h-11 px-4 border-b border-black/10 flex items-center">
-          <h2 className="font-['Times_New_Roman',Times,serif] text-[16px] leading-6 font-bold text-[#0F1724]">Status Breakdown</h2>
+          <h2 className="font-[var(--font-poppins)] text-[16px] leading-6 font-bold text-[#0F1724]">Status Breakdown</h2>
         </div>
 
         <div className="p-4 space-y-4">

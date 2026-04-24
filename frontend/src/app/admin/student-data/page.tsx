@@ -269,10 +269,10 @@ export default function StudentDataPage() {
   };
 
   return (
-    <section className="admin-section-enter w-full space-y-4 [font-family:var(--font-inter)]">
+    <section className="admin-section-enter w-full space-y-4 [font-family:var(--font-poppins)]">
       <div className="flex flex-col gap-3 lg:h-16.25 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="font-['Times_New_Roman',Times,serif] text-[24px] leading-9 font-bold text-[#0F1724]">Student Data</h1>
+          <h1 className="font-[var(--font-poppins)] text-[24px] leading-9 font-bold text-[#0F1724]">Student Data</h1>
           <p className="text-[14px] leading-5.25 text-[#94A3B8]">Round-wise student data grouped by uploaded sheets</p>
         </div>
 

@@ -60,7 +60,7 @@ export default function PortalLandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] [font-family:var(--font-inter)] text-[#0F1724]">
+    <div className="min-h-screen bg-[#F5F7FA] [font-family:var(--font-poppins)] text-[#0F1724]">
       <div className="w-full border-b border-[#D5D4D4] bg-white">
         <Header />
       </div>

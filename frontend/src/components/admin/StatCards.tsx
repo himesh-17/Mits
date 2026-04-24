@@ -96,7 +96,7 @@ export default function StatCards({ refresh, metrics }: StatCardsProps) {
               </div>
 
               <div>
-                <h2 className="font-['Times_New_Roman',Times,serif] text-[33px] leading-9 font-bold text-[#0F1724]">{item.value}</h2>
+                <h2 className="font-[var(--font-poppins)] text-[33px] leading-9 font-bold text-[#0F1724]">{item.value}</h2>
               </div>
             </div>
           ))}
@@ -121,7 +121,7 @@ export default function StatCards({ refresh, metrics }: StatCardsProps) {
               </div>
 
               <div>
-                <h2 className="font-['Times_New_Roman',Times,serif] text-[33px] leading-9 font-bold text-[#0F1724]">{item.value}</h2>
+                <h2 className="font-[var(--font-poppins)] text-[33px] leading-9 font-bold text-[#0F1724]">{item.value}</h2>
               </div>
             </div>
           ))}

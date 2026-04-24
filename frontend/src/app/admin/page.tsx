@@ -90,10 +90,10 @@ export default function AdminDashboard() {
   };
 
   return (
-    <section className="admin-section-enter w-full space-y-5 [font-family:var(--font-inter)]">
+    <section className="admin-section-enter w-full space-y-5 [font-family:var(--font-poppins)]">
       <div className="flex flex-col gap-3 lg:h-17.5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="font-['Times_New_Roman',Times,serif] text-[34px] md:text-[38px] leading-10.5 font-bold text-[#0F172A]">
+          <h1 className="font-[var(--font-poppins)] text-[34px] md:text-[38px] leading-10.5 font-bold text-[#0F172A]">
             Admission Dashboard
           </h1>
           <p className="text-[15px] leading-5.5 text-[#94A3B8]">

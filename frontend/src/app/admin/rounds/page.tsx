@@ -296,10 +296,10 @@ export default function RoundsPage() {
   };
 
   return (
-    <section className="w-full space-y-5 [font-family:var(--font-inter)]">
+    <section className="w-full space-y-5 [font-family:var(--font-poppins)]">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="font-['Times_New_Roman',Times,serif] text-[38px] leading-10 font-bold text-[#111827]">Admission Rounds</h1>
+          <h1 className="font-[var(--font-poppins)] text-[38px] leading-10 font-bold text-[#111827]">Admission Rounds</h1>
           <p className="text-[14px] leading-4.25 text-[#6B7280] mt-1">Create rounds with Excel upload and view students grouped by uploaded sheets.</p>
         </div>
         <button type="button" onClick={openCreateForm} className="h-9.5 px-4 rounded-md bg-[#2DA8E1] text-white text-[14px] font-medium inline-flex items-center gap-2">
@@ -311,7 +311,7 @@ export default function RoundsPage() {
       {showCreateForm ? (
         <div className="w-full rounded-lg border border-[#D2D6DC] bg-white p-6">
           <div className="w-full space-y-5">
-            <h2 className="font-['Times_New_Roman',Times,serif] text-[32px] leading-tight font-bold text-[#111827]">Create New Round</h2>
+            <h2 className="font-[var(--font-poppins)] text-[32px] leading-tight font-bold text-[#111827]">Create New Round</h2>
 
             <div className="space-y-2">
               <label htmlFor="round-name" className="text-sm font-medium text-[#111827]">Round Name*</label>

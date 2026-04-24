@@ -15,14 +15,14 @@ export const STAFF_PORTAL_OPTIONS: PortalOption[] = [
     key: "admission",
     label: "Admission Cell",
     description: "View admission workflows, document checks, and candidate progress.",
-    href: "/admission",
+    href: "/admission-cell",
     accent: "from-[#0EA5E9] to-[#2563EB]",
   },
   {
     key: "generalOffice",
     label: "General Office",
     description: "Open the General Office dashboard for reports, tracker, and applications.",
-    href: "/general-office/dashboard",
+    href: "/general-office",
     accent: "from-[#14B8A6] to-[#0F766E]",
   },
   {

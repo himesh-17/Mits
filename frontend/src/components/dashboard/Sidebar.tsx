@@ -148,7 +148,13 @@ export default function Sidebar({
               </button>
 
               <button
-                onClick={() => router.push("/login")}
+                onClick={() => {
+                  localStorage.removeItem("authToken");
+                  localStorage.removeItem("googleUserInfo");
+                  localStorage.removeItem("admissionFormDraft");
+                  localStorage.removeItem("user");
+                  router.push("/login");
+                }}
                 className="px-4 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600"
               >
                 Logout

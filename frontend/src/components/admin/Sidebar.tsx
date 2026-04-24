@@ -37,6 +37,7 @@ export default function Sidebar({ collapsed = false, onNavigate }: SidebarProps)
     } finally {
       localStorage.removeItem("authToken");
       localStorage.removeItem("googleUserInfo");
+      localStorage.removeItem("admissionFormDraft");
       localStorage.removeItem("user");
       router.push("/login");
     }

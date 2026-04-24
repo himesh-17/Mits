@@ -88,14 +88,9 @@ function StepProgress({ currentStep }: { currentStep: number }) {
 
 function StudentCell({ row }: { row: TrackerRow }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F1F5F9] text-[#2563EB] font-semibold">
-        {row.name.charAt(0)}
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-[#0F1724]">{row.name}</p>
-        <p className="text-[11px] uppercase tracking-[0.08em] text-[#7B7B7B]">{row.studentId}</p>
-      </div>
+    <div>
+      <p className="text-[14px] font-semibold text-[#0F1724]">{row.name}</p>
+      <p className="text-[11px] uppercase tracking-[0.08em] text-[#7B7B7B]">{row.studentId}</p>
     </div>
   );
 }
@@ -175,21 +170,21 @@ export default function GeneralOfficeProcessTrackerPage() {
   }, []);
 
   return (
-    <div className="space-y-5 lg:space-y-6 [font-family:var(--font-inter)]">
+    <div className="space-y-4 [font-family:var(--font-poppins)]">
       <section className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1
-            className="font-['Times_New_Roman',Times,serif] text-[46px] font-bold leading-none text-[#1E293B]"
+            className="font-[var(--font-poppins)] text-[43px] font-bold leading-none text-[#1E293B]"
           >
             General Office Process Tracker
           </h1>
-          <p className="mt-2 text-[15px] leading-5 text-[#7B7B7B]">
+          <p className="mt-2 text-[14px] leading-5 text-[#7B7B7B]">
             Monitor live progress of student applications through administrative checkpoints.
           </p>
         </div>
 
-        <button className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-black/10 bg-white px-4 py-2 text-[13px] font-medium text-[#0F1724] shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition hover:bg-[#F8FAFC]">
-          <FiDownload className="h-4 w-4" />
+        <button className="inline-flex shrink-0 items-center gap-2 rounded-md border border-black/10 bg-white px-4 py-1.5 text-[12px] font-medium text-[#0F1724] shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition hover:bg-[#F8FAFC]">
+          <FiDownload className="h-3.5 w-3.5" />
           Export CSV/PDF
         </button>
       </section>
@@ -224,7 +219,7 @@ export default function GeneralOfficeProcessTrackerPage() {
         <div className="overflow-x-auto">
           <table className="min-w-245 w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#D5D4D4] bg-[#F9FAFB] text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9AA4B2]">
+              <tr className="border-b border-[#D5D4D4] bg-[#F9FAFB] text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9AA4B2]">
                 <th className="px-6 py-4">Student Information</th>
                 <th className="px-6 py-4">Department</th>
                 <th className="px-6 py-4">Current Progress Status</th>
@@ -240,7 +235,7 @@ export default function GeneralOfficeProcessTrackerPage() {
                     <StudentCell row={row} />
                   </td>
                   <td className="px-6 py-6 align-middle">
-                    <span className={`inline-flex rounded-sm px-3 py-1.5 text-[12px] font-semibold ${row.departmentTone}`}>
+                    <span className={`inline-flex rounded-sm px-3 py-1 text-[11px] font-semibold ${row.departmentTone}`}>
                       {row.department}
                     </span>
                   </td>
