@@ -31,7 +31,7 @@ const allowedOrigins = [...new Set([
 ])];
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: [frontendUrl],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     credentials: true,
@@ -65,7 +65,7 @@ async function startServer() {
         await main();
         console.log("MongoDB is connected");
 
-        app.listen(port, "0.0.0.0", () => {
+        app.listen(port, () => {
             console.log(`Server is listening to the port ${port} on 0.0.0.0`);
         });
     } catch (error) {
