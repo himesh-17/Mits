@@ -7,6 +7,8 @@ import path from "path";
 
 
 import { main } from "./Services/Connections/db.connection.js";
+import { connectRedis } from "./Services/Connections/redis.connection.js";
+import { cacheGetRequests, invalidateCacheOnWrite } from "./middlewares/cache.middleware.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 import { simpleRateLimit } from "./middlewares/rateLimit.middleware.js";
 
@@ -45,6 +47,8 @@ app.use(express.json({ limit: "15mb" })); // support uploaded Excel row payloads
 app.use(cookieParser());
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use("/api", simpleRateLimit);
+app.use(cacheGetRequests);
+app.use(invalidateCacheOnWrite);
 
 app.get("/", (req, res) => {
     res.status(200).json({ status: "ok", message: "Server is healthy" });
@@ -68,7 +72,9 @@ async function startServer() {
         }
 
         await main();
-        console.log("MongoDB is connected");
+    await connectRedis();
+    console.log("MongoDB is connected");
+    console.log("Redis is connected");
 
         app.listen(port, () => {
             console.log(`Server is listening to the port ${port} on 0.0.0.0`);

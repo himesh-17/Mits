@@ -9,6 +9,7 @@
   "scripts": {
     "test": "node --test",
     "dev": "nodemon index.js",
+    "docker:up": "docker compose up --build"
     "seed:admin": "node scripts/seed-admin-test-data.js"
   },
   "dependencies": {
@@ -19,6 +20,8 @@
     "google-auth-library": "^10.6.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.3",
+    "nodemon": "^3.1.14",
+    "redis": "^5.12.1"
     "multer": "^2.1.1",
     "nodemon": "^3.1.14"
   }
