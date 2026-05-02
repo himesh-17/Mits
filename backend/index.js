@@ -2,6 +2,7 @@ import express from "express";
 import 'dotenv/config'
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 
 
@@ -22,15 +23,29 @@ import adminRoutes from "./Routes/Admin/admin.routes.js";
 const app = express();
 const port = process.env.PORT || 8080;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const trustProxy = process.env.TRUST_PROXY === "1";
+
+if (trustProxy) {
+    app.set("trust proxy", 1);
+}
+
+// Deduplicate origins so that if FRONTEND_URL === "http://localhost:3000"
+// we don't send two identical entries in the CORS allow-list.
+const allowedOrigins = [...new Set([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    frontendUrl,
+])];
 
 app.use(cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000", frontendUrl],
+    origin: [frontendUrl],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: "15mb" })); // support uploaded Excel row payloads from admin round creation
 app.use(cookieParser());
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use("/api", simpleRateLimit);
 app.use(cacheGetRequests);
 app.use(invalidateCacheOnWrite);
@@ -61,9 +76,9 @@ async function startServer() {
     console.log("MongoDB is connected");
     console.log("Redis is connected");
 
-    app.listen(port, "0.0.0.0", () => {
-        console.log(`Server is listening to the port ${port} on 0.0.0.0`);
-    });
+        app.listen(port, () => {
+            console.log(`Server is listening to the port ${port} on 0.0.0.0`);
+        });
     } catch (error) {
         console.error("Startup failed:", error);
         process.exit(1);

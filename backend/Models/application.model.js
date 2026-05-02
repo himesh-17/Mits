@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-import User from "../Models/user.model.js";
-import Document from "../Models/document.model.js"; 
+
 const applicationSchema = new mongoose.Schema(
     {
         student: {
@@ -33,31 +32,44 @@ const applicationSchema = new mongoose.Schema(
         // ── Academic Info ──────────────────────────────────────────
         programApplied: { type: String, trim: true, default: "" },
         branch: {
-        type: String,
-        enum: ["", "CSE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
-        default: "",
-    },
-    tenthMarks: { type: Number, default: null },
-    twelfthMarks: { type: Number, default: null },
-    tenthBoard: { type: String, trim: true, default: "" },
-    twelfthBoard: { type: String, trim: true, default: "" },
-    tenthPassingYear: { type: Number, default: null },
-    twelfthPassingYear: { type: Number, default: null },
-    entranceExam: { type: String, trim: true, default: "" },
-    entranceScoreOrRank: { type: String, trim: true, default: "" },
-    
- // Step 3: Documents
-    documents: {
-      identityProof: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      tenthMarksheet: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      twelfthMarksheet: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      entranceScorecard: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      categoryCertificate: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      domicileCertificate: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      abcId: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      passportPhoto: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-      signature: { type : mongoose.Schema.Types.ObjectId , ref : "Document" },
-    },
+            type: String,
+            enum: ["", "CSE", "EE", "ECE", "MECH", "CIVIL", "IOT", "IT", "ET", "AI"],
+            set: (value) => {
+                const normalized = String(value || "").trim();
+                return normalized ? normalized.toUpperCase() : "";
+            },
+            default: "",
+        },
+        tenthMarks: { type: Number, default: null },
+        twelfthMarks: { type: Number, default: null },
+        tenthBoard: { type: String, trim: true, default: "" },
+        twelfthBoard: { type: String, trim: true, default: "" },
+        tenthPassingYear: { type: Number, default: null },
+        twelfthPassingYear: { type: Number, default: null },
+        entranceExam: { type: String, trim: true, default: "" },
+        entranceScoreOrRank: { type: String, trim: true, default: "" },
+        rollNumber: { type: String, trim: true, default: "" },
+        meritRank: { type: String, trim: true, default: "" },
+        meritMarks: { type: String, trim: true, default: "" },
+        eligibleCategory: { type: String, trim: true, default: "" },
+        allottedCategory: { type: String, trim: true, default: "" },
+        allottedRound: { type: String, trim: true, default: "" },
+        domicileStatus: { type: String, trim: true, default: "" },
+        ewsStatus: { type: String, trim: true, default: "" },
+        genderRaw: { type: String, trim: true, default: "" },
+
+        // Step 3: Documents
+        documents: {
+            identityProof: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            tenthMarksheet: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            twelfthMarksheet: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            entranceScorecard: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            categoryCertificate: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            domicileCertificate: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            abcId: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            passportPhoto: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+            signature: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+        },
 
         // ── Application Status ─────────────────────────────────────
         status: {
@@ -77,6 +89,18 @@ const applicationSchema = new mongoose.Schema(
             ],
             default: "draft",
         },
+        finalStatus: { type: String, trim: true, default: "" },
+        verifiedRound: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AdmissionRound",
+            default: null,
+        },
+        verifiedRoundCandidate: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "RoundCandidate",
+            default: null,
+        },
+        roundEligibilityVerifiedAt: { type: Date, default: null },
 
         // ── Progress Tracking ──────────────────────────────────────
         progressBar: {

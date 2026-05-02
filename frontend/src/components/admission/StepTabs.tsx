@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
+import { useAdmissionForm } from "../../context/AdmissionContext";
 
 interface StepTabsProps {
     activeStep?: number;
@@ -16,6 +17,9 @@ const stepRoutes: Record<number, string> = {
 };
 
 export default function StepTabs({ activeStep = 1 }: StepTabsProps) {
+    const { formData } = useAdmissionForm();
+    const highestStep = formData?.highestStep || 1;
+
     const steps = [
         { id: 1, label: "Personal" },
         { id: 2, label: "Academic" },
@@ -28,15 +32,21 @@ export default function StepTabs({ activeStep = 1 }: StepTabsProps) {
             {steps.map((step) => {
                 const isActive = step.id === activeStep;
                 const isCompleted = step.id < activeStep;
+                const isClickable = step.id <= highestStep;
 
                 return (
                     <Link
                         key={step.id}
-                        href={stepRoutes[step.id]}
-                        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-all min-w-fit cursor-pointer hover:opacity-80 ${isActive
+                        href={isClickable ? stepRoutes[step.id] : "#"}
+                        onClick={(e) => {
+                            if (!isClickable) {
+                                e.preventDefault();
+                            }
+                        }}
+                        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-all min-w-fit ${isActive
                             ? 'border-[#0EA5E9] text-[#0EA5E9]'
                             : 'border-transparent text-[#94A3B8]'
-                            }`}
+                            } ${isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-50'}`}
                     >
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${isCompleted
                             ? 'bg-[#16A34A] text-white'

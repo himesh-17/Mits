@@ -1,10 +1,11 @@
 import "./globals.css";
-import { Montserrat, DM_Sans, Poppins } from "next/font/google";
+import { Inter, Montserrat, Poppins } from "next/font/google";
 import ClientProviders from "../components/layout/ClientProviders";
 
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
 });
 
 const montserrat = Montserrat({
@@ -13,12 +14,16 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
 });
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-dmSans",
+  variable: "--font-inter",
 });
-
+export const metadata = {
+  icons: {
+    icon: "/mits.png",
+  },
+};
 export default function RootLayout({
   children,
 }: {
@@ -26,7 +31,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${montserrat.variable} ${dmSans.variable} font-sans`}>
+      <body
+        className={`${poppins.variable} ${montserrat.variable} ${inter.variable} font-sans`}
+      >
         <ClientProviders>
           {children}
         </ClientProviders>

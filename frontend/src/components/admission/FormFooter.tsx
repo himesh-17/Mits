@@ -10,18 +10,22 @@ import { PersonalFormData } from "../../lib/validationSchemas";
 
 export default function FormFooter() {
     const router = useRouter();
-    const { saveAsDraft } = useAdmissionForm();
+    const { saveAsDraft, updateFormData, formData } = useAdmissionForm();
     const { handleSubmit, formState: { isValid } } = useFormContext<PersonalFormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const onSubmit = (data: PersonalFormData) => {
+    const onSubmit = async (data: PersonalFormData) => {
         setIsSubmitting(true);
-        // Simulate brief save (actual save to context happens via watch in parent)
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            await saveAsDraft(data);
+            updateFormData({ highestStep: Math.max(formData.highestStep, 2) });
             toast.success("Personal details saved!");
             router.push('/admission/academic');
-        }, 400);
+        } catch {
+            toast.error("Failed to save personal details. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleInvalid = () => {
@@ -51,6 +55,7 @@ export default function FormFooter() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button
                         type="button"
+                        onClick={() => router.push('/student-dashboard')}
                         className="px-5 h-11 md:h-10 rounded-md border border-[#0F172A] text-sm font-semibold text-[#0F172A] uppercase tracking-wide hover:bg-gray-50 transition cursor-pointer active:scale-[0.97]"
                     >
                         Previous

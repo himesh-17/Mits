@@ -33,6 +33,26 @@ export const verifyGoogleIdToken = async (idToken) => {
         };
 
     } catch (error) {
-        throw new ApiError(401, "Invalid or expired Google token");
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        const rawMessage = String(error?.message || "").toLowerCase();
+        const tokenFailurePatterns = [
+            "invalid",
+            "expired",
+            "wrong recipient",
+            "no pem",
+            "token used too late",
+            "jwt",
+        ];
+        const looksLikeTokenFailure = tokenFailurePatterns.some((pattern) => rawMessage.includes(pattern));
+
+        if (looksLikeTokenFailure) {
+            throw new ApiError(401, "Invalid or expired Google token");
+        }
+
+        console.error("[GoogleAuth] token verification failed", error?.message || error);
+        throw new ApiError(502, "Google authentication service unavailable");
     }
 };

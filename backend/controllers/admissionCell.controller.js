@@ -5,6 +5,7 @@ import User from "../Models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { writeAuditLog } from "../utils/auditLog.js";
 
 // GET /api/admission-cell/students
 // List all submitted/under_review students
@@ -21,7 +22,7 @@ const listStudents = asyncHandler(async (req, res) => {
         filter.status = { $in: allowedStatuses };
     }
     if (branch) filter.branch = branch;
-    if (course) filter.course = course;
+    if (course) filter.programApplied = course;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [applications, total] = await Promise.all([
@@ -96,6 +97,17 @@ const uploadStudentList = asyncHandler(async (req, res) => {
         notAdmittedCount: enriched.length,
     });
 
+    await writeAuditLog({
+        req,
+        actionLabel: "STUDENT_LIST_UPLOADED",
+        module: "admission-cell",
+        entityType: "student_list",
+        entityId: list._id,
+        entityRef: `Student List #${String(list._id).slice(-6).toUpperCase()}`,
+        toStatus: "UPLOADED",
+        notes: `Uploaded ${enriched.length} students`,
+    });
+
     return sendSuccess(res, "Student list uploaded", { list }, 201);
 });
 
@@ -118,9 +130,22 @@ const markEmailSent = asyncHandler(async (req, res) => {
                 remarksAdmissionCell: remarks || "Email sent to student",
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     );
     if (!app) throw new ApiError(404, "Application not found");
+
+    await writeAuditLog({
+        req,
+        actionLabel: "APPLICATION_EMAIL_SENT",
+        module: "admission-cell",
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
+        fromStatus: app.status,
+        toStatus: app.status,
+        notes: remarks || "Email remark saved",
+    });
+
     return sendSuccess(res, "Email remark saved", { application: app });
 });
 
@@ -133,11 +158,24 @@ const markVerificationComplete = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Verification cannot be completed at status: ${app.status}`);
     }
 
+    const previousStatus = app.status;
+
     app.status = "documents_verified";
     app.progressBar.documentsVerified = true;
     app.verifiedBy = req.user.id;
     app.verifiedAt = new Date();
     await app.save();
+
+    await writeAuditLog({
+        req,
+        actionLabel: "APPLICATION_DOCUMENTS_VERIFIED",
+        module: "admission-cell",
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
+        fromStatus: previousStatus,
+        toStatus: app.status,
+    });
 
     return sendSuccess(res, "Verification marked complete", { application: app });
 });
@@ -147,12 +185,30 @@ const rejectApplication = asyncHandler(async (req, res) => {
     const { reason } = req.body;
     if (!reason) throw new ApiError(400, "Rejection reason is required");
 
+    const existingApp = await Application.findById(req.params.applicationId);
+    if (!existingApp) throw new ApiError(404, "Application not found");
+
     const app = await Application.findByIdAndUpdate(
         req.params.applicationId,
         { $set: { status: "rejected", rejectionReason: reason } },
-        { new: true }
+        { returnDocument: "after" }
     );
+
     if (!app) throw new ApiError(404, "Application not found");
+
+    await writeAuditLog({
+        req,
+        actionLabel: "APPLICATION_REJECTED",
+        module: "admission-cell",
+        entityType: "application",
+        entityId: app._id,
+        entityRef: `Application #${String(app._id).slice(-6).toUpperCase()}`,
+        fromStatus: existingApp.status,
+        toStatus: app.status,
+        actionTone: "slate",
+        notes: reason,
+    });
+
     return sendSuccess(res, "Application rejected", { application: app });
 });
 

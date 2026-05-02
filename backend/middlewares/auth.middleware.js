@@ -3,6 +3,13 @@ import { sendError } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
+const STUDENT_ALLOWED_DOMAIN = "@gmail.com";
+const STAFF_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
+
+function isAllowedStaffEmail(email = "") {
+    return STAFF_ALLOWED_DOMAINS.some((domain) => email.endsWith(domain));
+}
+
 const verifyJWT = asyncHandler(async (req, res, next) => {
 
     let token = req.cookies?.token;
@@ -59,6 +66,24 @@ const requireRole = (...allowedRoles) => {
 
         if (!allowedRoles.includes(req.user.role)) {
             return sendError(res, "You are not allowed to access this resource", 403);
+        }
+
+        const email = String(req.user.email || "").toLowerCase();
+
+        if (req.user.role === "student") {
+            if (!email.endsWith(STUDENT_ALLOWED_DOMAIN)) {
+                return sendError(
+                    res,
+                    "Student access is allowed only for @gmail.com accounts",
+                    403
+                );
+            }
+        } else if (!isAllowedStaffEmail(email)) {
+            return sendError(
+                res,
+                "Staff/admin access is allowed only for @mitsgwl.ac.in or @mitsgwalior.ac.in accounts",
+                403
+            );
         }
 
         next();

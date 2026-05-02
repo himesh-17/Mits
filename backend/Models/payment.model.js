@@ -14,7 +14,10 @@ const paymentSchema = new mongoose.Schema(
             required: true,
         },
 
-        utsId: { type: String, trim: true, default: "" },
+        upiId: { type: String, trim: true, default: "" },
+        transactionId: { type: String, trim: true, default: "" },
+    utsId: { type: String, trim: true, default: "" },
+        screenshotUrl: { type: String, trim: true, default: "" },
 
         amount: { type: Number, default: 0 },
         minLimit: { type: Number, default: 0 },
@@ -34,7 +37,6 @@ const paymentSchema = new mongoose.Schema(
             default: "",
         },
 
-        transactionId: { type: String, trim: true, default: "" },
         sendLink: { type: String, trim: true, default: "" },
 
         verifyingOfficer: {

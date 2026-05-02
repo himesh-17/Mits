@@ -5,7 +5,7 @@ function validateRequest(validator) {
         const { error } = validator(req.body);
 
         if (error) {
-            return next(new ApiError(400, error));
+            return next(new ApiError(400, error.message || "Validation failed"));
         }
 
         next();

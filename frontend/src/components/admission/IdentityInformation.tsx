@@ -31,6 +31,7 @@ export default function IdentityInformation() {
                                 e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
                             }
                         })}
+                        maxLength={50}
                         aria-invalid={!!errors.fullName}
                         aria-describedby={errors.fullName ? "fullName-error" : undefined}
                         className={`w-full h-11 md:h-10 px-3 rounded-md border text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9] transition-colors ${errors.fullName ? 'border-red-400 bg-red-50/50' : 'border-[#E5E7EB]'}`}
@@ -71,6 +72,7 @@ export default function IdentityInformation() {
                                 e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
                             }
                         })}
+                        maxLength={50}
                         aria-invalid={!!errors.fatherName}
                         aria-describedby={errors.fatherName ? "fatherName-error" : undefined}
                         className={`w-full h-11 md:h-10 px-3 rounded-md border text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9] transition-colors ${errors.fatherName ? 'border-red-400 bg-red-50/50' : 'border-[#E5E7EB]'}`}
@@ -96,6 +98,31 @@ export default function IdentityInformation() {
                     </select>
                     {errors.gender && (
                         <p id="gender-error" className="text-xs text-red-500 mt-1">{errors.gender.message}</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Row 3: Mother's Full Name */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                        Mother&apos;s Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Mother's Name"
+                        {...register("motherName", {
+                            onChange: (e) => {
+                                e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                            }
+                        })}
+                        maxLength={50}
+                        aria-invalid={!!errors.motherName}
+                        aria-describedby={errors.motherName ? "motherName-error" : undefined}
+                        className={`w-full h-11 md:h-10 px-3 rounded-md border text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9] transition-colors ${errors.motherName ? 'border-red-400 bg-red-50/50' : 'border-[#E5E7EB]'}`}
+                    />
+                    {errors.motherName && (
+                        <p id="motherName-error" className="text-xs text-red-500 mt-1">{errors.motherName.message}</p>
                     )}
                 </div>
             </div>

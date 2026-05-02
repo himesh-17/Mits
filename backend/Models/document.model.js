@@ -15,7 +15,7 @@ const documentSchema = new mongoose.Schema(
         docType: {
             type: String,
             enum: [
-                "photo",
+                 "photo",
                 "signature",
                 "aadhar",
                 "marksheet_10",
@@ -24,9 +24,9 @@ const documentSchema = new mongoose.Schema(
                 "migration_certificate",
                 "caste_certificate",
                 "income_certificate",
-                "domaicile",
+                "domicile",
                 "jee_result",
-                "other",
+                "other",            
             ],
             required: true,
         },

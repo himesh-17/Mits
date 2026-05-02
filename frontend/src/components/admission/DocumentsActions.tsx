@@ -6,23 +6,103 @@ import { Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAdmissionForm } from "../../context/AdmissionContext";
 import { validateDocuments } from "../../lib/validationSchemas";
+import { api } from "../../utils/api";
+
+const requiredDocTypes = [
+    "aadhar",
+    "marksheet_10",
+    "marksheet_12",
+    "domicile",
+    "photo",
+    "signature",
+];
 
 export default function DocumentsActions() {
     const router = useRouter();
-    const { formData, saveAsDraft, setValidationErrors, clearValidationErrors } = useAdmissionForm();
+    const {
+        formData,
+        saveAsDraft,
+        updateFormData,
+        submitApplication,
+        setValidationErrors,
+        clearValidationErrors,
+        selectedFiles,
+    } = useAdmissionForm();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isValid = Object.keys(validateDocuments(formData.docsUploaded || {})).length === 0;
+    const isValid =
+        Object.keys(validateDocuments(formData.docsUploaded || {})).length === 0;
 
-    const handleNext = () => {
-        if (!isValid) return;
+    const handleNext = async () => {
+        // Step 1: Re-validate required docs are present locally
+        const docErrors = validateDocuments(formData.docsUploaded || {});
+        if (Object.keys(docErrors).length > 0) {
+            setValidationErrors(docErrors);
+            toast.error("Please upload all required documents before continuing.");
+            return;
+        }
+        clearValidationErrors();
 
         setIsSubmitting(true);
-        setTimeout(() => {
+        try {
+            await submitApplication();
+
+            const selectedEntries = Object.entries(selectedFiles || {});
+            for (const [docType, file] of selectedEntries) {
+                const form = new FormData();
+                form.append("file", file);
+
+                const uploadRes = await api.post("/api/student/documents/upload", form, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+
+                const uploaded = uploadRes?.data?.data;
+                await api.post("/api/student/documents", {
+                    docType,
+                    fileUrl: uploaded?.fileUrl,
+                    fileName: uploaded?.fileName || file.name,
+                    mimeType: uploaded?.mimeType || file.type,
+                });
+            }
+
+            const docsRes = await api.get("/api/student/documents");
+            const existingDocs = Array.isArray(docsRes?.data?.data?.documents)
+                ? docsRes.data.data.documents
+                : [];
+
+            const existingDocTypes = new Set(
+                existingDocs
+                    .map((doc: { docType?: string }) => doc?.docType)
+                    .filter(Boolean)
+            );
+
+            const missingRequired = requiredDocTypes.filter((docType) => !existingDocTypes.has(docType));
+            if (missingRequired.length > 0) {
+                toast.error("Please upload all required documents before continuing.");
+                return;
+            }
+
+            updateFormData({ highestStep: Math.max(formData.highestStep, 4) });
+            toast.success("Documents saved! Proceeding to payment.");
+            router.push("/admission/payment");
+        } catch (error: unknown) {
+            const axiosErr = error as {
+                response?: { data?: { message?: string }; status?: number };
+                message?: string;
+            };
+            const backendMsg = axiosErr?.response?.data?.message;
+            const httpStatus = axiosErr?.response?.status;
+
+            if (backendMsg) {
+                toast.error(backendMsg);
+            } else if (httpStatus === 500) {
+                toast.error("Server error — please try again or contact support.");
+            } else {
+                toast.error(axiosErr?.message || "Failed to save documents. Please try again.");
+            }
+        } finally {
             setIsSubmitting(false);
-            toast.success("Documents saved!");
-            router.push('/admission/payment');
-        }, 400);
+        }
     };
 
     const handleSaveDraft = () => {
@@ -50,7 +130,7 @@ export default function DocumentsActions() {
                     type="button"
                     onClick={() => {
                         clearValidationErrors();
-                        router.push('/admission/academic');
+                        router.push("/admission/academic");
                     }}
                     className="px-6 h-11 md:h-10 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F172A] text-sm font-bold uppercase tracking-wide rounded-md transition-colors cursor-pointer active:scale-[0.97]"
                 >
@@ -70,10 +150,20 @@ export default function DocumentsActions() {
                         </>
                     ) : (
                         <>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                />
                             </svg>
-                            Upload & Continue
+                            Upload &amp; Continue
                         </>
                     )}
                 </button>

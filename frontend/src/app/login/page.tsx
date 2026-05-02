@@ -6,6 +6,8 @@ import { FcGoogle } from "react-icons/fc";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { isAllowedStaffEmail } from "../../lib/portalAccess";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -17,14 +19,42 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-export default function LoginPage() {
+// Module-level constant: evaluated once, not on every render (#15)
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@mitsgwl.ac.in";
+function getSafeNextPath(rawNext: string | null): string | null {
+  if (!rawNext) return null;
 
+  const candidate = String(rawNext).trim();
+  if (!candidate.startsWith("/")) return null;
+  if (candidate.startsWith("//")) return null;
+
+  try {
+    const base = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+    const parsed = new URL(candidate, base);
+
+    if (typeof window !== "undefined" && parsed.origin !== window.location.origin) {
+      return null;
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+}
+
+export default function LoginPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
 
   const handleLoginSuccess = async (credentialResponse: CredentialResponse) => {
-    if (!credentialResponse.credential) return;
+    if (!credentialResponse.credential) {
+      console.error("No credential received");
+      return;
+    }
+    const payload = decodeJwtPayload(credentialResponse.credential);
+
     try {
       const response = await axios.post(
         `${apiBaseUrl}/api/auth/google`,
@@ -37,26 +67,45 @@ export default function LoginPage() {
       );
 
       // Store token for Authorization header
-      if (response.data.data.token) {
+      if (response.data?.data?.token) {
         localStorage.setItem("authToken", response.data.data.token);
       }
 
+      const serverRole = String(response.data?.data?.user?.role || "");
+
       // Decode JWT to extract user info
-      const payload = decodeJwtPayload(credentialResponse.credential);
       if (payload) {
         const userInfo = {
           name: (payload.name as string) || "",
           email: (payload.email as string) || "",
           picture: (payload.picture as string) || "",
+          role: serverRole,
         };
         localStorage.setItem("googleUserInfo", JSON.stringify(userInfo));
       }
 
-      console.log("Login Success:");
-      router.push("/student-dashboard");
+      console.log("Login Success");
+      toast.success("Login successful!");
+
+      const loggedInEmail = String(payload?.email || "").toLowerCase();
+      const requestedNext = new URLSearchParams(window.location.search).get("next");
+      const safeNextPath = getSafeNextPath(requestedNext);
+
+      if (isAllowedStaffEmail(loggedInEmail)) {
+        router.push("/portal");
+      } else if (safeNextPath) {
+        router.push(safeNextPath);
+      } else {
+        router.push("/student-dashboard");
+      }
 
     } catch (error) {
       console.error("Login failed:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(`Login failed: ${error.message}. Please check if the server is running at ${apiBaseUrl}`);
+      } else {
+        toast.error("An unexpected error occurred during login.");
+      }
     }
   };
 
@@ -69,7 +118,7 @@ export default function LoginPage() {
     <div className="h-screen w-screen flex overflow-hidden">
 
       {/* LEFT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-linear-to-br from-gray-50 to-gray-100">
         <div className="w-full max-w-sm backdrop-blur-lg bg-white/70 border border-gray-200 shadow-xl rounded-2xl p-6 sm:p-10 text-center">
 
           <div className="flex justify-center mb-6">
@@ -83,10 +132,9 @@ export default function LoginPage() {
             application status, updates, and personalized information.
           </p>
 
-          {/* YOUR ORIGINAL GOOGLE BUTTON */}
           <button
             onClick={triggerGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-h-[48px] active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 bg-white hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-h-12 active:scale-[0.98]"
           >
             <FcGoogle size={22} />
             <span className="font-medium text-gray-700">
@@ -94,7 +142,6 @@ export default function LoginPage() {
             </span>
           </button>
 
-          {/* Hidden Google Button */}
           <div className="hidden" ref={googleButtonRef}>
             <GoogleLogin
               onSuccess={handleLoginSuccess}
@@ -110,14 +157,14 @@ export default function LoginPage() {
 
           <p className="text-xs text-gray-500">
             Use Valid Mail ID used in MPDTE counselling to login. For any
-            issues, contact us at {"Manaskukreja2910@gmail.com"}
+            issues, contact us at {supportEmail}
           </p>
 
         </div>
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-sky-500 to-sky-600 items-center justify-center overflow-hidden">
+      <div className="hidden lg:flex w-1/2 relative bg-linear-to-br from-sky-500 to-sky-600 items-center justify-center overflow-hidden">
 
         <div className="absolute top-15 left-16 text-white z-10">
           <h2 className="text-7xl ml-12 font-bold leading-none">

@@ -1,10 +1,18 @@
 import User from "../Models/user.model.js";
+import AuditLog from "../Models/auditLog.model.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { verifyGoogleIdToken } from "../Services/Authentication/googleAuth.service.js";
 import { generateToken } from "../utils/jwt.utils.js";
 import { cookieOptions } from "../utils/cookie.utils.js";
+
+const ADMIN_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
+
+function isAllowedAdminDomain(email = "") {
+    const normalizedEmail = String(email).toLowerCase();
+    return ADMIN_ALLOWED_DOMAINS.some((domain) => normalizedEmail.endsWith(domain));
+}
 
 function sanitizeUser(user) {
     return {
@@ -47,7 +55,7 @@ const googleLogin = asyncHandler(async (req, res) => {
                     ...(profile.emailVerified ? { email: profile.email } : {}),
                 },
                 $setOnInsert: {
-                    role: profile.role || "student",
+                    role: "student",
                 },
             },
             { upsert: true, returnDocument: "after" }
@@ -81,6 +89,41 @@ const googleLogin = asyncHandler(async (req, res) => {
         await user.save();
     }
 
+    // Domain-based admin access for MITS institutional emails.
+    if (profile.emailVerified && isAllowedAdminDomain(profile.email) && user.role !== "administrator") {
+        const previousRole = user.role || "student";
+        user.role = "administrator";
+        await user.save();
+
+        try {
+            await AuditLog.create({
+                actor: user._id,
+                actorName: user.name || profile.name || "",
+                actorRole: "administrator",
+                actorRoleLabel: "Super Admin",
+                actionLabel: "ROLE_ELEVATED",
+                actionTone: "slate",
+                department: "ADMIN PANEL",
+                departmentTone: "slate",
+                module: "auth",
+                entityType: "user",
+                entityId: String(user._id),
+                entityRef: `User ${String(user.email || profile.email || "").toLowerCase()}`,
+                fromStatus: String(previousRole || "").toUpperCase(),
+                toStatus: "ADMINISTRATOR",
+                notes: "domain-based elevation",
+                metadata: {
+                    securityEvent: true,
+                    previousRole,
+                    newRole: "administrator",
+                    elevationReason: "domain-based elevation",
+                },
+            });
+        } catch (auditError) {
+            console.error("[Auth] failed to write role elevation audit", auditError?.message || auditError);
+        }
+    }
+
     const safeUser = sanitizeUser(user);
 
     const token = generateToken(user);
@@ -111,4 +154,15 @@ const getMe = asyncHandler(async (req, res) => {
     );
 });
 
-export { googleLogin, getMe };
+const logout = asyncHandler(async (req, res) => {
+    const clearCookieOptions = {
+        ...cookieOptions,
+        maxAge: undefined,
+    };
+
+    res.clearCookie("token", clearCookieOptions);
+
+    return sendSuccess(res, "Logged out successfully", {}, 200);
+});
+
+export { googleLogin, getMe, logout };
