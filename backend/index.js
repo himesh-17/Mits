@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 
 
 import { main } from "./Services/Connections/db.connection.js";
+import { connectRedis } from "./Services/Connections/redis.connection.js";
+import { cacheGetRequests, invalidateCacheOnWrite } from "./middlewares/cache.middleware.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 import { simpleRateLimit } from "./middlewares/rateLimit.middleware.js";
 
@@ -30,6 +32,8 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api", simpleRateLimit);
+app.use(cacheGetRequests);
+app.use(invalidateCacheOnWrite);
 
 app.get("/", (req, res) => {
     res.status(200).json({ status: "ok", message: "Server is healthy" });
@@ -53,11 +57,13 @@ async function startServer() {
         }
 
         await main();
-        console.log("MongoDB is connected");
+    await connectRedis();
+    console.log("MongoDB is connected");
+    console.log("Redis is connected");
 
-        app.listen(port, "0.0.0.0", () => {
-            console.log(`Server is listening to the port ${port} on 0.0.0.0`);
-        });
+    app.listen(port, "0.0.0.0", () => {
+        console.log(`Server is listening to the port ${port} on 0.0.0.0`);
+    });
     } catch (error) {
         console.error("Startup failed:", error);
         process.exit(1);
