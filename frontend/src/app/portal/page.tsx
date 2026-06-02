@@ -86,6 +86,7 @@ export default function PortalLandingPage() {
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               {STAFF_PORTAL_OPTIONS.map((portal) => {
                 const isGeneralOffice = portal.key === "generalOffice";
+                const isAdmin = portal.key === "admin";
 
                 return (
                   <Link
@@ -104,7 +105,7 @@ export default function PortalLandingPage() {
                       </span>
                     </div>
                     <div className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[#2DA8E1]">
-                      <span>{isGeneralOffice ? "Open dashboard" : "Continue"}</span>
+                      <span>{isGeneralOffice ? "Open dashboard" : isAdmin ? "Open admin" : "Continue"}</span>
                       <FiArrowRight className="text-[14px]" />
                     </div>
                   </Link>
@@ -136,7 +137,7 @@ export default function PortalLandingPage() {
               </div>
               <div className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#94A3B8]">Available Portals</p>
-                <p className="mt-1 text-sm font-medium text-[#334155]">Admission Cell, General Office, HOD, Account Office</p>
+                <p className="mt-1 text-sm font-medium text-[#334155]">Admin, Admission Cell, General Office, HOD, Account Office</p>
               </div>
             </div>
 

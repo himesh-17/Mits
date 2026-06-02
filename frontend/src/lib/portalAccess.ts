@@ -1,6 +1,6 @@
 export const STAFF_ALLOWED_DOMAINS = ["@mitsgwl.ac.in", "@mitsgwalior.ac.in"];
 
-export type PortalKey = "admission" | "generalOffice" | "hod" | "accountOffice";
+export type PortalKey = "admission" | "admin" | "generalOffice" | "hod" | "accountOffice";
 
 export interface PortalOption {
   key: PortalKey;
@@ -17,6 +17,13 @@ export const STAFF_PORTAL_OPTIONS: PortalOption[] = [
     description: "View admission workflows, document checks, and candidate progress.",
     href: "/admission-cell",
     accent: "from-[#0EA5E9] to-[#2563EB]",
+  },
+  {
+    key: "admin",
+    label: "Admin",
+    description: "Open the admin dashboard for oversight, rounds, users, and reports.",
+    href: "/admin",
+    accent: "from-[#334155] to-[#0F172A]",
   },
   {
     key: "generalOffice",
